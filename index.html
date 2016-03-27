@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Philippine historical markers in Wikidata</title>
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+<link rel="stylesheet" href="MarkerCluster.css" />
+<link rel="stylesheet" href="MarkerCluster.Default.css" />
+<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+<script src="leaflet.markercluster.js"></script>
+<style type="text/css">
+
+html, body {
+ margin: 0;
+ padding: 0;
+ height: 100%;
+}
+
+#pane {
+ float: left;
+ height: 100%;
+ width: 250px;
+ font-family: Calibri, Arial, sans-serif;
+ background: #888;
+}
+
+#header {
+ padding: 5px 10px;
+ background: #666;
+}
+
+h1 {
+ margin: 0;
+ padding: 0;
+ font-size: 16px;
+ font-weight: bold;
+ color: #ddd;
+}
+
+#stats {
+ margin-top: 5px;
+ font-size: 11px;
+ color: #aaa;
+}
+
+#list {
+ overflow: auto;
+}
+
+#list div {
+ padding: 5px 10px;
+ color: #fff;
+ font-size: 12px;
+ border-bottom: 1px solid #666;
+ cursor: pointer;
+}
+
+#map {
+ height: 100%;
+ margin-left: 200px;
+}
+
+.popup {
+ font-family: Calibri, Arial, sans-serif;
+}
+
+.popup .title {
+ font-size: 16px;
+ font-weight: bold;
+}
+
+.popup .title a {
+ color: #666;
+ text-decoration: none;
+ border-bottom: 1px dotted #888;
+}
+
+.popup .image {
+ padding-right: 10px;
+ vertical-align: top;
+}
+
+.popup .inscription {
+ vertical-align: top;
+ font-size: 12px;
+}
+
+</style>
+</head>
+<body>
+  <div id="pane">
+    <div id="header"><h1>Philippine Historical Markers in Wikidata</h1></div>
+    <div id="list"><div>Loading...</div></div>
+  </div>
+  <div id="map"></div>
+</body>
+<script type="text/javascript">
+
+// App parameters
+var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+var TILE_LAYER_ATTRIBUTION = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
+var TILE_LAYER_MAX_ZOOM    = 19;
+var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0APREFIX%20p%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2F%3E%0APREFIX%20v%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fstatement%2F%3E%0APREFIX%20q%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fqualifier%2F%3E%0APREFIX%20rdfs%3A%20%3Chttp%3A%2F%2Fwww.w3.org%2F2000%2F01%2Frdf-schema%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Fimage%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20.%20%0A%20%20%3Fmarker%20wdt%3AP625%20%3Fcoord%20.%20%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%20%0A%20%20}%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%20%0A%20%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}%0A';
+
+var Map;          // Leaflet map object
+var Markers = {}; // Hash to contain data about historical markers
+
+// Function to initialize the app once the page has been loaded
+function init() {
+
+  var xhrObject = new XMLHttpRequest();
+
+  // Initialize the map and add the tile layer
+  Map = new L.Map('map');
+  new L.TileLayer(TILE_LAYER_URL, {
+    attribution: TILE_LAYER_ATTRIBUTION,
+    maxZoom: TILE_LAYER_MAX_ZOOM,
+  }).addTo(Map);
+
+  // Query Wikidata
+  xhrObject.onreadystatechange = processWikidataQuery;
+  xhrObject.open('GET', WIKIDATA_QUERY_URL, true);
+  xhrObject.overrideMimeType('text/plain');
+  xhrObject.send(null);
+}
+window.addEventListener('load', init);
+
+// Function to process the results of the Wikidata query
+function processWikidataQuery() {
+
+  if (this.readyState != this.DONE || this.status != 200) return;
+
+  var i;
+  var wikidataId, record, markerData;
+  var mapMarker, mapMarkerCluster, listElem, divElem;
+  var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
+
+  var data = JSON.parse(this.responseText);
+
+  // Initialize cluster and list pane
+  mapMarkerCluster = new L.MarkerClusterGroup({
+    maxClusterRadius: 7,
+  });
+  listElem = document.getElementById('list');
+  listElem.innerHTML = '';
+
+  // Go through each query result
+  for (i = 0; i < data.results.bindings.length; i++) {
+
+    // Parse and store basic historical marker data
+    record = data.results.bindings[i];
+    wikidataId = record.marker.value.split('/')[4];
+    markerData = {};
+    Markers[wikidataId] = markerData;
+    markerData.title = record.markerLabel.value.replace(/ ?historical marker/i, '');
+    markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
+    markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
+    markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
+    markerData.inscription = (record.inscription ? record.inscription.value : '');
+
+    // Update the bounding box containing all markers
+    minLat = Math.min(markerData.lat, minLat);
+    maxLat = Math.max(markerData.lat, maxLat);
+    minLon = Math.min(markerData.lon, minLon);
+    maxLon = Math.max(markerData.lon, maxLon);
+
+    // Create a map marker and add to the cluster
+    mapMarker = L.marker([markerData.lat, markerData.lon]);
+    mapMarker.bindPopup('Loading...');
+    mapMarkerCluster.addLayer(mapMarker);
+    markerData.marker = mapMarker;
+    markerData.popup = mapMarker.getPopup();
+    markerData.marker._wikidataId = wikidataId;
+    markerData.popup._wikidataId = wikidataId;
+
+    // Add the historical marker to the list pane
+    divElem = document.createElement('div');
+    divElem.innerHTML = markerData.title;
+    divElem._wikidataId = wikidataId;
+    divElem.addEventListener('click', function(ev) {
+      var wikidataId = ev.target._wikidataId
+      Map.setView([Markers[wikidataId].lat, Markers[wikidataId].lon], 18);
+      Markers[wikidataId].marker.openPopup();
+    });
+    listElem.appendChild(divElem);
+  }
+
+  // Update the map to add a popup event handler and the cluster, and to update the view
+  Map.on('popupopen', handlePopup);
+  Map.addLayer(mapMarkerCluster);
+  Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
+    padding: new L.Point(50, 50),
+  });
+
+  // Add stats
+  divElem = document.createElement('div');
+  divElem.innerHTML = '<div id="stats">Total of ' + data.results.bindings.length + ' markers</div>';
+  document.getElementById('header').appendChild(divElem);
+
+  // Adjust list pane height to allow scrolling
+  document.getElementById('pane').style.height = window.innerHeight + 'px';
+  listElem.style.height = (
+    document.getElementById('pane'  ).clientHeight -
+    document.getElementById('header').clientHeight
+  ) + 'px';
+}
+
+// Function to handle when a map popup is opened
+function handlePopup(e) {
+
+  var wikidataId = e.popup._wikidataId;
+  var markerData = Markers[e.popup._wikidataId];
+  if (markerData.isPopupSet) return;
+  markerData.isPopupSet = true; 
+
+  var imageUrl = markerData.imageUrl;
+  var titleContent = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
+
+  // Historical marker has an image in Commons
+  if (imageUrl) {
+
+    // Set initial popup content while image thumbnail URL is being fetched
+    e.popup.setContent(
+      '<table class="popup"><tr><td colspan="2" class="title">' + titleContent + '</td></tr>' +
+      '<tr><td class="image">Image loading...</td><td class="inscription">' + markerData.inscription + '</td></tr></table'
+    );
+
+    // Fetch thumbnail URL and then update popup content
+    var apiUrl =
+      'http://commons.wikimedia.org/w/api.php?action=query' +
+      '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
+      '&titles=' + imageUrl;
+    loadJSONP(apiUrl, function(data) {
+      var pageId = Object.keys(data.query.pages)[0];
+      var thumbUrl = data.query.pages[pageId].imageinfo[0].thumburl;
+      var descUrl = data.query.pages[pageId].imageinfo[0].descriptionurl;
+      var popupContent = markerData.popup.getContent();
+      popupContent = popupContent.replace('Image loading...', '<a href="' + descUrl + '"><img src="' + thumbUrl + '"></a>');
+      markerData.popup.setContent(popupContent);
+      markerData.popup.update();
+    });
+  }
+
+  // Historical marker has no image in Commons
+  else {
+    e.popup.setContent(
+      '<table class="popup"><tr><td class="title">' + titleContent + '</td></tr>' +
+      '<tr><td class="inscription">' + markerData.inscription + '</td></tr></table>'
+    );
+  }
+}
+
+// Library function to load JSONP data
+// Sourced from https://gist.github.com/gf3/132080/110d1b68d7328d7bfe7e36617f7df85679a08968
+var loadJSONP = (function(){
+  var unique = 0;
+  return function(url, callback) {
+
+    // initialize
+    var name = "_jsonp_" + unique++;
+    url += "&callback="+name;
+
+    // Create script
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+
+    // Setup handler
+    window[name] = function(data){
+      callback.call(window, data);
+      document.getElementsByTagName('head')[0].removeChild(script);
+      script = null;
+      delete window[name];
+    };
+
+    // Load JSON
+    document.getElementsByTagName('head')[0].appendChild(script);
+  };
+})();
+
+</script>
+</html>
