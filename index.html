@@ -165,20 +165,22 @@ function processWikidataQuery() {
 
     // Create a map marker and add to the cluster
     mapMarker = L.marker([markerData.lat, markerData.lon]);
-    mapMarker.bindPopup('Loading...');
+    mapMarker.bindPopup('Loading...', {maxWidth: 400});
     mapMarkerCluster.addLayer(mapMarker);
     markerData.marker = mapMarker;
     markerData.popup = mapMarker.getPopup();
     markerData.marker._wikidataId = wikidataId;
     markerData.popup._wikidataId = wikidataId;
 
-    // Add the historical marker to the list pane
+    // Add the historical marker to the list pane and add click event handling
     divElem = document.createElement('div');
     divElem.innerHTML = markerData.title;
     divElem._wikidataId = wikidataId;
     divElem.addEventListener('click', function(ev) {
       var wikidataId = ev.target._wikidataId
-      Map.setView([Markers[wikidataId].lat, Markers[wikidataId].lon], TILE_LAYER_MAX_ZOOM);
+      Map.setView([Markers[wikidataId].lat, Markers[wikidataId].lon], TILE_LAYER_MAX_ZOOM, {
+        animate: false,
+      });
       Markers[wikidataId].marker.openPopup();
     });
     listElem.appendChild(divElem);
@@ -234,9 +236,17 @@ function handlePopup(e) {
       var thumbUrl = data.query.pages[pageId].imageinfo[0].thumburl;
       var descUrl = data.query.pages[pageId].imageinfo[0].descriptionurl;
       var popupContent = markerData.popup.getContent();
-      popupContent = popupContent.replace('Image loading...', '<a href="' + descUrl + '"><img src="' + thumbUrl + '"></a>');
+      popupContent = popupContent.replace(
+        'Image loading...',
+        '<a href="' + descUrl + '"><img id="img' + wikidataId + '" src="' + thumbUrl + '"></a>'
+      );
       markerData.popup.setContent(popupContent);
-      markerData.popup.update();
+      setTimeout(function() {
+        var imgElem = document.getElementById('img' + wikidataId);
+        imgElem.addEventListener('load', function() {
+          Markers[wikidataId].popup.update();
+        });
+      }, 100);
     });
   }
 
