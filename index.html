@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Philippine historical markers in Wikidata</title>
-<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
-<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.js"></script>
 <script src="leaflet.markercluster.js"></script>
 <style type="text/css">
 
@@ -88,13 +88,12 @@ h1 {
 </style>
 </head>
 <body>
-  <div id="pane">
-    <div id="header"><h1>Philippine Historical Markers in Wikidata</h1></div>
-    <div id="list"><div>Loading...</div></div>
-  </div>
-  <div id="map"></div>
-</body>
-<script type="text/javascript">
+<div id="pane">
+  <div id="header"><h1>Philippine Historical Markers in Wikidata</h1></div>
+  <div id="list"><div>Loading...</div></div>
+</div>
+<div id="map"></div>
+<script>
 
 // App parameters
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -111,8 +110,8 @@ function init() {
   var xhrObject = new XMLHttpRequest();
 
   // Initialize the map and add the tile layer
-  Map = new L.Map('map');
-  new L.TileLayer(TILE_LAYER_URL, {
+  Map = new L.map('map');
+  new L.tileLayer(TILE_LAYER_URL, {
     attribution: TILE_LAYER_ATTRIBUTION,
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
@@ -138,8 +137,8 @@ function processWikidataQuery() {
   var data = JSON.parse(this.responseText);
 
   // Initialize cluster and list pane
-  mapMarkerCluster = new L.MarkerClusterGroup({
-    maxClusterRadius: 7,
+  mapMarkerCluster = new L.markerClusterGroup({
+    disableClusteringAtZoom: 19,
   });
   listElem = document.getElementById('list');
   listElem.innerHTML = '';
@@ -179,7 +178,7 @@ function processWikidataQuery() {
     divElem._wikidataId = wikidataId;
     divElem.addEventListener('click', function(ev) {
       var wikidataId = ev.target._wikidataId
-      Map.setView([Markers[wikidataId].lat, Markers[wikidataId].lon], 18);
+      Map.setView([Markers[wikidataId].lat, Markers[wikidataId].lon], TILE_LAYER_MAX_ZOOM);
       Markers[wikidataId].marker.openPopup();
     });
     listElem.appendChild(divElem);
@@ -279,4 +278,5 @@ var loadJSONP = (function(){
 })();
 
 </script>
+</body>
 </html>
