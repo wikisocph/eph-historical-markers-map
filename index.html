@@ -75,8 +75,9 @@ h1 {
 }
 
 .popup .title {
- font-size: 16px;
+ font-size: 20px;
  font-weight: bold;
+ font-variant: small-caps;
 }
 
 .popup .title a {
@@ -114,7 +115,7 @@ h1 {
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var TILE_LAYER_ATTRIBUTION = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
-var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Fimage%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20.%20%0A%20%20%3Fmarker%20wdt%3AP625%20%3Fcoord%20.%20%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%20%0A%20%20}%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%20%0A%20%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}%0A';
+var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Ftitle%20%3Fimage%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20.%0A%20%20%3Fmarker%20wdt%3AP625%20%3Fcoord%20.%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP1476%20%3Ftitle%20.%0A%20%20}%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%0A%20%20}%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%0A%20%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}';
 
 var Map;          // Leaflet map object
 var Markers = {}; // Hash to contain data about historical markers
@@ -166,7 +167,7 @@ function processWikidataQuery() {
     wikidataId = record.marker.value.split('/')[4];
     markerData = {};
     Markers[wikidataId] = markerData;
-    markerData.title = record.markerLabel.value.replace(/ ?historical marker/i, '');
+    markerData.title = (record.title ? record.title.value : '') || record.markerLabel.value.replace(/ ?historical marker/i, '');
     markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
