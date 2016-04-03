@@ -1,2 +1,5 @@
-# eph-historical-markers-map
-Web map showing the Philippine historical markers added to Wikidata as part of Wikimedia Philippines' Encyclopedia of Philippine Heritage program 
+# Map of Philippine Historical Markers in Wikidata
+
+This is a simple web application that displays a map of all of the Philippine historical markers that have been added to [Wikidata](https://www.wikidata.org/). To be included in the map, a Wikidata item needs to have its [instance of (P31)](https://www.wikidata.org/wiki/Property:P31) property set to [Philippine historical marker (Q21562164)](https://www.wikidata.org/wiki/Q21562164) and to have a valid [coordinate location (P625)](https://www.wikidata.org/wiki/Property:P625) property set. Each historical marker is represented by a marker on the map that when clicked will open a popup showing a photo of the historical marker (if any) and the inscription (if any) with the historical marker’s title linking to the corresponding item in Wikidata.
+
+This application is managed under [Wikimedia Philippines](http://www.wikimedia.org.ph/)’ Encyclopedia of Philippine Heritage (EPH) program and falls specifically under the [WikiProject Philippine historical markers](https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers) in Wikidata.
