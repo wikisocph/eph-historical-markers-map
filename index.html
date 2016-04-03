@@ -95,6 +95,11 @@ h1 {
  font-size: 12px;
 }
 
+.popup .noinscription {
+ font-style: italic;
+ color: #888;
+}
+
 </style>
 </head>
 <body>
@@ -228,6 +233,7 @@ function handlePopup(e) {
   if (markerData.isPopupSet) return;
   markerData.isPopupSet = true; 
 
+  var apiUrl;
   var imageUrl = markerData.imageUrl;
   var titleContent = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
 
@@ -237,11 +243,12 @@ function handlePopup(e) {
     // Set initial popup content while image thumbnail URL is being fetched
     e.popup.setContent(
       '<table class="popup"><tr><td colspan="2" class="title">' + titleContent + '</td></tr>' +
-      '<tr><td class="image">Image loading...</td><td class="inscription">' + markerData.inscription + '</td></tr></table'
+      '<tr><td class="image">Image loading...</td>' +
+      '<td class="inscription">' + (markerData.inscription || 'Text loading...')+ '</td></tr></table'
     );
 
     // Fetch thumbnail URL and then update popup content
-    var apiUrl =
+    apiUrl =
       'http://commons.wikimedia.org/w/api.php?action=query' +
       '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
       '&titles=' + imageUrl;
@@ -270,6 +277,29 @@ function handlePopup(e) {
       '<table class="popup"><tr><td class="title">' + titleContent + '</td></tr>' +
       '<tr><td class="inscription">' + markerData.inscription + '</td></tr></table>'
     );
+  }
+
+  // Historical marker has no direct inscription
+  if (!markerData.inscription) {
+    apiUrl =
+      'https://www.wikidata.org/w/api.php?action=query' +
+      '&prop=revisions&rvprop=content&format=json' +
+      '&titles=Talk:' + wikidataId;
+    loadJSONP(apiUrl, function(data) {
+      var pageId, talkContent, matches, popupContent;
+      pageId = Object.keys(data.query.pages)[0];
+      if (pageId != '-1') {
+        talkContent = data.query.pages[pageId].revisions[0]['*'];
+        matches = talkContent.match(/{{\s*LongInscription[^]*?\|\s*inscription\s*=\s*([^]*?)(?:\||}})/);
+        if (matches && matches[1]) markerData.inscription = matches[1];
+      }
+      popupContent = markerData.popup.getContent().replace(
+        'Text loading...',
+        markerData.inscription ? markerData.inscription : '<span class="noinscription">No inscription encoded</span>'
+      );
+      markerData.popup.setContent(popupContent);
+      markerData.popup.update();
+    });
   }
 }
 
