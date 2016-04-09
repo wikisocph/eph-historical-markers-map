@@ -71,10 +71,18 @@ h1 {
 }
 
 .popup {
+ width: 400px;
+ border-collapse: collapse;
  font-family: Calibri, Arial, sans-serif;
 }
 
+.popup td {
+ padding: 0;
+ vertical-align: top;
+}
+
 .popup .title {
+ padding-bottom: 8px;
  font-size: 20px;
  font-weight: bold;
  font-variant: small-caps;
@@ -86,17 +94,56 @@ h1 {
  border-bottom: 1px dotted #888;
 }
 
-.popup .image {
- padding-right: 10px;
- vertical-align: top;
-}
-
 .popup .inscription {
- vertical-align: top;
+ width: 240px;
+ padding-right: 10px;
  font-size: 12px;
 }
 
-.popup .noinscription {
+.popup .image {
+ width: 150px;
+}
+
+.popup .image.sized {
+ background: #ccc;
+}
+
+.popup .image a {
+ display: block;
+ text-decoration: none;
+}
+
+.popup .image img {
+ display: block;
+}
+
+.popup .others {
+ padding-top: 8px;
+ width: 150px;
+}
+
+.popup dl {
+ margin: 0;
+ padding: 0;
+}
+
+.popup dt {
+ font-weight: bold;
+ text-transform: uppercase;
+ color: #666;
+}
+
+.popup dd {
+ margin: 0;
+ padding: 0;
+ text-indent: 0;
+}
+
+.popup dd+dt {
+ margin-top: 5px;
+}
+
+.popup .nodata {
  font-style: italic;
  color: #888;
 }
@@ -106,7 +153,7 @@ h1 {
 <body>
 <div id="pane">
   <div id="header"><h1>Philippine Historical Markers in Wikidata</h1></div>
-  <div id="list"><div>Loading...</div></div>
+  <div id="list"><div><img src="spinner1.gif" class="spinner"></div></div>
 </div>
 <div id="map"></div>
 <script>
@@ -115,7 +162,7 @@ h1 {
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var TILE_LAYER_ATTRIBUTION = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
-var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Ftitle%20%3Fimage%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20.%0A%20%20%3Fmarker%20wdt%3AP625%20%3Fcoord%20.%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP1476%20%3Ftitle%20.%0A%20%20}%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%0A%20%20}%0A%20%20OPTIONAL%20{%0A%20%20%20%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%0A%20%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}';
+var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Ftitle%20%3Fimage%20%3Fdate%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20%3B%20wdt%3AP625%20%3Fcoord%20.%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1476%20%3Ftitle%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP571%20%3Fdate%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}';
 
 var Map;          // Leaflet map object
 var Markers = {}; // Hash to contain data about historical markers
@@ -172,6 +219,7 @@ function processWikidataQuery() {
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
     markerData.inscription = (record.inscription ? record.inscription.value : '');
+    markerData.date = (record.date ? record.date.value.substr(0, 4) : '');
 
     // Update the bounding box containing all markers
     minLat = Math.min(markerData.lat, minLat);
@@ -181,7 +229,7 @@ function processWikidataQuery() {
 
     // Create a map marker and add to the cluster
     mapMarker = L.marker([markerData.lat, markerData.lon]);
-    mapMarker.bindPopup('Loading...', {maxWidth: 400});
+    mapMarker.bindPopup('', {maxWidth: 400});
     mapMarkerCluster.addLayer(mapMarker);
     markerData.marker = mapMarker;
     markerData.popup = mapMarker.getPopup();
@@ -238,15 +286,25 @@ function handlePopup(e) {
   var imageUrl = markerData.imageUrl;
   var titleContent = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
 
+  // Create initial popup content
+  var popupContent = document.createElement('table');
+  popupContent.className = 'popup';
+  popupContent.innerHTML =
+    '<tr><td colspan="2" class="title">' + titleContent + '</td></tr>' +
+    '<tr><td rowspan="2" class="inscription">' +
+      (markerData.inscription || '<img src="spinner2.gif" class="spinner">')+ '</td>' +
+    '<td class="image"></td></tr>' +
+    '<tr><td class="others"><dl><dt>Year installed</dt><dd>' +
+      (markerData.date || '<span class="nodata">Unknown</span>') + '</dd></dl></td></tr>';
+  e.popup._content = popupContent;
+
   // Historical marker has an image in Commons
   if (imageUrl) {
 
-    // Set initial popup content while image thumbnail URL is being fetched
-    e.popup.setContent(
-      '<table class="popup"><tr><td colspan="2" class="title">' + titleContent + '</td></tr>' +
-      '<tr><td class="image">Image loading...</td>' +
-      '<td class="inscription">' + (markerData.inscription || 'Text loading...')+ '</td></tr></table'
-    );
+    // Set loading indicator while image thumbnail URL is being fetched
+    popupContent.querySelector('.image').innerHTML = '<img src="spinner2.gif" class="spinner">';
+    e.popup.setContent(popupContent);
+    e.popup.update();
 
     // Fetch thumbnail URL and then update popup content
     apiUrl =
@@ -255,50 +313,41 @@ function handlePopup(e) {
       '&titles=' + imageUrl;
     loadJSONP(apiUrl, function(data) {
       var pageId = Object.keys(data.query.pages)[0];
-      var thumbUrl = data.query.pages[pageId].imageinfo[0].thumburl;
+      var thumbUrl    = data.query.pages[pageId].imageinfo[0].thumburl;
+      var thumbHeight = data.query.pages[pageId].imageinfo[0].thumbheight;
       var descUrl = data.query.pages[pageId].imageinfo[0].descriptionurl;
-      var popupContent = markerData.popup.getContent();
-      popupContent = popupContent.replace(
-        'Image loading...',
-        '<a href="' + descUrl + '"><img id="img' + wikidataId + '" src="' + thumbUrl + '"></a>'
-      );
-      markerData.popup.setContent(popupContent);
-      setTimeout(function() {
-        var imgElem = document.getElementById('img' + wikidataId);
-        imgElem.addEventListener('load', function() {
-          Markers[wikidataId].popup.update();
-        });
-      }, 100);
+      var imageCell = markerData.popup._content.querySelector('.image');
+      imageCell.innerHTML = '<a href="' + descUrl + '"><img id="img' + wikidataId + '" src="' + thumbUrl + '"></a>';
+      imageCell.className = 'image sized';
+      imageCell.style.height = thumbHeight + 'px';
+      markerData.popup.update();
     });
   }
 
   // Historical marker has no image in Commons
   else {
-    e.popup.setContent(
-      '<table class="popup"><tr><td class="title">' + titleContent + '</td></tr>' +
-      '<tr><td class="inscription">' + markerData.inscription + '</td></tr></table>'
-    );
+    popupContent.querySelector('.image').innerHTML = '<span class="nodata">No photo available</span>';
+    e.popup.setContent(popupContent);
+    e.popup.update();
   }
 
-  // Historical marker has no direct inscription
+  // Historical marker has no direct inscription:
+  // try looking for the {{LongInscription}} template
   if (!markerData.inscription) {
     apiUrl =
       'https://www.wikidata.org/w/api.php?action=query' +
       '&prop=revisions&rvprop=content&format=json' +
       '&titles=Talk:' + wikidataId;
     loadJSONP(apiUrl, function(data) {
-      var pageId, talkContent, matches, popupContent;
+      var pageId, talkContent, matches, inscriptionCell;
       pageId = Object.keys(data.query.pages)[0];
       if (pageId != '-1') {
         talkContent = data.query.pages[pageId].revisions[0]['*'];
         matches = talkContent.match(/{{\s*LongInscription[^]*?\|\s*inscription\s*=\s*([^]*?)(?:\||}})/);
         if (matches && matches[1]) markerData.inscription = matches[1];
       }
-      popupContent = markerData.popup.getContent().replace(
-        'Text loading...',
-        markerData.inscription ? markerData.inscription : '<span class="noinscription">No inscription encoded</span>'
-      );
-      markerData.popup.setContent(popupContent);
+      inscriptionCell = markerData.popup._content.querySelector('.inscription');
+      inscriptionCell.innerHTML = markerData.inscription || '<span class="nodata">No inscription encoded</span>';
       markerData.popup.update();
     });
   }
