@@ -163,6 +163,10 @@ var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 var TILE_LAYER_ATTRIBUTION = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
 var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Ftitle%20%3Fimage%20%3Fdate%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20%3B%20wdt%3AP625%20%3Fcoord%20.%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1476%20%3Ftitle%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP571%20%3Fdate%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}';
+var MIN_PH_LAT             =   4.5;
+var MAX_PH_LAT             =  21.0;
+var MIN_PH_LON             = 116.5;
+var MAX_PH_LON             = 126.5;
 
 var Map;          // Leaflet map object
 var Markers = {}; // Hash to contain data about historical markers
@@ -222,10 +226,15 @@ function processWikidataQuery() {
     markerData.date = (record.date ? record.date.value.substr(0, 4) : '');
 
     // Update the bounding box containing all markers
-    minLat = Math.min(markerData.lat, minLat);
-    maxLat = Math.max(markerData.lat, maxLat);
-    minLon = Math.min(markerData.lon, minLon);
-    maxLon = Math.max(markerData.lon, maxLon);
+    if (
+      MIN_PH_LAT <= markerData.lat && markerData.lat <= MAX_PH_LAT &&
+      MIN_PH_LON <= markerData.lon && markerData.lon <= MAX_PH_LON
+    ) {
+      minLat = Math.min(markerData.lat, minLat);
+      maxLat = Math.max(markerData.lat, maxLat);
+      minLon = Math.min(markerData.lon, minLon);
+      maxLon = Math.max(markerData.lon, maxLon);
+    }
 
     // Create a map marker and add to the cluster
     mapMarker = L.marker([markerData.lat, markerData.lon]);
