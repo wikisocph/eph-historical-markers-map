@@ -219,8 +219,8 @@ function processWikidataQuery() {
     markerData = {};
     Markers[wikidataId] = markerData;
     markerData.title = (record.title ? record.title.value : '') || record.markerLabel.value.replace(/ ?historical marker/i, '');
-    markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
-    markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
+    markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
+    markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
     markerData.inscription = (record.inscription ? record.inscription.value : '');
     markerData.date = (record.date ? record.date.value.substr(0, 4) : '');
