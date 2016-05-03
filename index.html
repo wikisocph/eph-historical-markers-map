@@ -53,6 +53,27 @@ h1 {
  color: #aab;
 }
 
+#sort {
+ margin-top: 8px;
+}
+
+.btn {
+ padding: 4px 8px;
+ font-size: 12px;
+ border: 1px solid #555;
+ border-radius: 25px;
+ font-family: Calibri, Arial, sans-serif;
+ text-decoration: none;
+ color: #fff;
+ background: #707070;
+ background-image: linear-gradient(to bottom, #808080, #707070);
+ cursor: pointer;
+}
+.btn::-moz-focus-inner { border: none; }
+.btn:hover {
+ background-image: linear-gradient(to bottom, #abc, #789);
+}
+
 #list {
  overflow: auto;
 }
@@ -170,6 +191,11 @@ var MAX_PH_LON             = 126.5;
 
 var Map;          // Leaflet map object
 var Markers = {}; // Hash to contain data about historical markers
+var SortModes = [
+  { id: 'alpha', label: 'alphabetically' },
+  { id: 'qid',   label: 'by Wikidata ID' },
+];
+var CurrentSortModeIdx;
 
 // Function to initialize the app once the page has been loaded
 function init() {
@@ -198,7 +224,7 @@ function processWikidataQuery() {
 
   var i;
   var wikidataId, record, markerData;
-  var mapMarker, mapMarkerCluster, listElem, divElem;
+  var mapMarker, mapMarkerCluster, listElem, divElem, buttonElem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
 
   var data = JSON.parse(this.responseText);
@@ -256,6 +282,7 @@ function processWikidataQuery() {
       });
       Markers[wikidataId].marker.openPopup();
     });
+    markerData.listItemElem = divElem;
     listElem.appendChild(divElem);
   }
 
@@ -274,6 +301,15 @@ function processWikidataQuery() {
     '<div><a href="' + WIKIDATA_QUERY_URL.replace('sparql?format=json&query=', '#') + '">Explore using the Wikidata Query Service</a></div>' +
     '<div><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">Participate in this project!</a></div>';
   document.getElementById('header').appendChild(divElem);
+
+  // Add sort button and perform initial sort
+  buttonElem = document.createElement('button');
+  buttonElem.id = 'sort';
+  buttonElem.className = 'btn';
+  buttonElem.addEventListener('click', switchSortMode);
+  document.getElementById('header').appendChild(buttonElem);
+  CurrentSortModeIdx = SortModes.length - 1;
+  switchSortMode();
 
   // Adjust list pane height to allow scrolling
   document.getElementById('pane').style.height = window.innerHeight + 'px';
@@ -359,6 +395,44 @@ function handlePopup(e) {
       inscriptionCell.innerHTML = markerData.inscription || '<span class="nodata">No inscription encoded</span>';
       markerData.popup.update();
     });
+  }
+}
+
+// Function to toggle the sort mode and then sort the markers list on the left pane
+function switchSortMode() {
+
+  var i, sortedItems, listElem;
+
+  CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SortModes.length;
+  document.getElementById('sort').innerHTML =
+    'Sort list ' + SortModes[(CurrentSortModeIdx + 1) % SortModes.length].label;
+
+  sorter = function(getKey, compareKey) {
+    return Object.keys(Markers)
+      .map(function(el) {
+        return { key: getKey(el), item: Markers[el].listItemElem };
+      })
+      .sort(compareKey)
+      .map(function(el) { return el.item });
+  };
+
+  if (SortModes[CurrentSortModeIdx].id == 'alpha') {
+    sortedItems = sorter(
+      function(el) { return Markers[el].title; },
+      function(a, b) { return a.key > b.key ? 1 : -1; }
+    );
+  }
+  else { // 'qid'
+    sortedItems = sorter(
+      function(el) { return Number(el.substring(1)); },
+      function(a, b) { return a.key - b.key; }
+    );
+  }
+
+  listElem = document.getElementById('list');
+  listElem.innerHTML = '';
+  for (i = 0; i < sortedItems.length; i++) {
+    listElem.appendChild(sortedItems[i]);
   }
 }
 
