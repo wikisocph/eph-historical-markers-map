@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Philippine historical markers in Wikidata</title>
+<title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
@@ -29,13 +29,24 @@ html, body {
  background: #666;
 }
 
+.superheader {
+ margin: -10px -10px 0 -10px;
+ padding: 6px 10px 3px 10px;
+ font-size: 10px;
+ font-weight: bold;
+ text-transform: uppercase;
+ letter-spacing: 1px;
+ color: #889;
+ background: #555;
+}
+
 h1 {
- margin: 0;
- padding: 0;
- font-size: 16px;
+ margin: -10px -10px 0 -10px;
+ padding: 6px 10px 4px 10px;
+ font-size: 18px;
  font-weight: bold;
  color: #ddd;
- border-bottom: 1px solid #888;
+ background: #555;
 }
 
 #special {
@@ -58,7 +69,7 @@ h1 {
 }
 
 .btn {
- padding: 4px 8px;
+ padding: 3px 6px;
  font-size: 12px;
  border: 1px solid #555;
  border-radius: 25px;
@@ -169,11 +180,23 @@ h1 {
  color: #888;
 }
 
+/* Match Leaflet's control style */
+.powered {
+ line-height: 0.5;
+ background: #fff;
+ box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+ border-radius: 4px;
+ overflow: hidden;
+}
+
 </style>
 </head>
 <body>
 <div id="pane">
-  <div id="header"><h1>Philippine Historical Markers in Wikidata</h1></div>
+  <div id="header">
+   <div class="superheader">Encyclopedia of Philippine Heritage</div>
+   <h1>Historical Markers Map</h1>
+  </div>
   <div id="list"><div><img src="spinner1.gif" class="spinner"></div></div>
 </div>
 <div id="map"></div>
@@ -181,7 +204,7 @@ h1 {
 
 // App parameters
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-var TILE_LAYER_ATTRIBUTION = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
+var TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
 var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Ftitle%20%3Fimage%20%3Fdate%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20%3B%20wdt%3AP625%20%3Fcoord%20.%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1476%20%3Ftitle%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP571%20%3Fdate%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}';
 var MIN_PH_LAT             =   4.5;
@@ -208,6 +231,16 @@ function init() {
     attribution: TILE_LAYER_ATTRIBUTION,
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
+
+  // Add powered by Wikidata map control
+  var powered = L.control({position: 'bottomleft'});
+  powered.onAdd = function(Map) {
+    var divElem = L.DomUtil.create('div', 'powered');
+    divElem.innerHTML =
+      '<a href="https://www.wikidata.org/"><img src="powered_by_wikidata.png"></a>';
+    return divElem;
+  };
+  powered.addTo(Map);
 
   // Query Wikidata
   xhrObject.onreadystatechange = processWikidataQuery;
