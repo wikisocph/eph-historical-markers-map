@@ -70,18 +70,20 @@ h1 {
 
 .btn {
  padding: 3px 6px;
- font-size: 12px;
+ font-size: 11px;
  border: 1px solid #555;
  border-radius: 25px;
  font-family: Calibri, Arial, sans-serif;
  text-decoration: none;
- color: #fff;
+ text-transform: uppercase;
+ color: #ccc;
  background: #707070;
  background-image: linear-gradient(to bottom, #808080, #707070);
  cursor: pointer;
 }
 .btn::-moz-focus-inner { border: none; }
 .btn:hover {
+ color: #fff;
  background-image: linear-gradient(to bottom, #abc, #789);
 }
 
@@ -89,7 +91,12 @@ h1 {
  overflow: auto;
 }
 
-#list div {
+#left-spinner {
+ display: block;
+ margin: 8px auto;
+}
+
+#list .marker-li {
  padding: 5px 10px;
  color: #fff;
  font-size: 12px;
@@ -102,10 +109,33 @@ h1 {
  margin-left: 200px;
 }
 
+.leaflet-popup-content-wrapper {
+ overflow: hidden;
+}
+
 .popup {
+ font-family: Calibri, Arial, sans-serif;
+}
+
+.popup h2 {
+ margin: -14px -20px 14px;
+ padding: 10px 20px 8px;
+ font-size: 20px;
+ font-weight: bold;
+ font-variant: small-caps;
+ background: #666;
+}
+
+.popup h2 a {
+ color: #ddd;
+ text-decoration: none;
+ border-bottom: 1px dotted #99a;
+}
+.popup h2 a:hover { color: #bbf; }
+
+.popup table {
  width: 400px;
  border-collapse: collapse;
- font-family: Calibri, Arial, sans-serif;
 }
 
 .popup td {
@@ -113,22 +143,9 @@ h1 {
  vertical-align: top;
 }
 
-.popup .title {
- padding-bottom: 8px;
- font-size: 20px;
- font-weight: bold;
- font-variant: small-caps;
-}
-
-.popup .title a {
- color: #666;
- text-decoration: none;
- border-bottom: 1px dotted #888;
-}
-
 .popup .inscription {
- width: 240px;
- padding-right: 10px;
+ width: 235px;
+ padding-right: 15px;
  font-size: 12px;
 }
 
@@ -197,7 +214,7 @@ h1 {
    <div class="superheader">Encyclopedia of Philippine Heritage</div>
    <h1>Historical Markers Map</h1>
   </div>
-  <div id="list"><div><img src="spinner1.gif" class="spinner"></div></div>
+  <div id="list"><img src="spinner1.gif" id="left-spinner"></div>
 </div>
 <div id="map"></div>
 <script>
@@ -223,6 +240,7 @@ var CurrentSortModeIdx;
 // Function to initialize the app once the page has been loaded
 function init() {
 
+  var powered, divElem, buttonElem;
   var xhrObject = new XMLHttpRequest();
 
   // Initialize the map and add the tile layer
@@ -232,8 +250,25 @@ function init() {
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
 
+  // Add placeholder for total number, link to Wikidata Query Service,
+  // link to WikiProject, placeholder sort button
+  divElem = document.createElement('div');
+  divElem.id = 'special';
+  divElem.innerHTML =
+    '<div id="total">Loading...</div>' +
+    '<div><a href="' + WIKIDATA_QUERY_URL.replace('sparql?format=json&query=', '#') + '">Explore using the Wikidata Query Service</a></div>' +
+    '<div><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">Participate in this project!</a></div>';
+  document.getElementById('header').appendChild(divElem);
+  buttonElem = document.createElement('button');
+  buttonElem.id = 'sort';
+  buttonElem.className = 'btn';
+  buttonElem.disabled = true;
+  buttonElem.innerHTML = 'Sort list';
+  buttonElem.addEventListener('click', switchSortMode);
+  document.getElementById('header').appendChild(buttonElem);
+
   // Add powered by Wikidata map control
-  var powered = L.control({position: 'bottomleft'});
+  powered = L.control({position: 'bottomleft'});
   powered.onAdd = function(Map) {
     var divElem = L.DomUtil.create('div', 'powered');
     divElem.innerHTML =
@@ -306,6 +341,7 @@ function processWikidataQuery() {
 
     // Add the historical marker to the list pane and add click event handling
     divElem = document.createElement('div');
+    divElem.className = 'marker-li';
     divElem.innerHTML = markerData.title;
     divElem._wikidataId = wikidataId;
     divElem.addEventListener('click', function(ev) {
@@ -319,6 +355,10 @@ function processWikidataQuery() {
     listElem.appendChild(divElem);
   }
 
+  // Display total number of markers
+  document.getElementById('total').innerHTML =
+    'Showing a total of ' + data.results.bindings.length + ' markers';
+
   // Update the map to add a popup event handler and the cluster, and to update the view
   Map.on('popupopen', handlePopup);
   Map.addLayer(mapMarkerCluster);
@@ -326,21 +366,10 @@ function processWikidataQuery() {
     padding: new L.Point(50, 50),
   });
 
-  // Add total number, link to Wikidata Query Service, link to WikiProject
-  divElem = document.createElement('div');
-  divElem.id = 'special';
-  divElem.innerHTML =
-    '<div>Showing a total of ' + data.results.bindings.length + ' markers</div>' +
-    '<div><a href="' + WIKIDATA_QUERY_URL.replace('sparql?format=json&query=', '#') + '">Explore using the Wikidata Query Service</a></div>' +
-    '<div><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">Participate in this project!</a></div>';
-  document.getElementById('header').appendChild(divElem);
-
-  // Add sort button and perform initial sort
-  buttonElem = document.createElement('button');
-  buttonElem.id = 'sort';
-  buttonElem.className = 'btn';
+  // Enable sort button and add click event handler, and perform initial sort
+  buttonElem = document.getElementById('sort');
+  buttonElem.disabled = false;
   buttonElem.addEventListener('click', switchSortMode);
-  document.getElementById('header').appendChild(buttonElem);
   CurrentSortModeIdx = SortModes.length - 1;
   switchSortMode();
 
@@ -365,22 +394,22 @@ function handlePopup(e) {
   var titleContent = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
 
   // Create initial popup content
-  var popupContent = document.createElement('table');
+  var popupContent = document.createElement('div');
   popupContent.className = 'popup';
   popupContent.innerHTML =
-    '<tr><td colspan="2" class="title">' + titleContent + '</td></tr>' +
-    '<tr><td rowspan="2" class="inscription">' +
-      (markerData.inscription || '<img src="spinner2.gif" class="spinner">')+ '</td>' +
+    '<h2>' + titleContent + '</h2>' +
+    '<table><tr><td rowspan="2" class="inscription">' +
+      (markerData.inscription || '<img src="spinner2.gif">')+ '</td>' +
     '<td class="image"></td></tr>' +
     '<tr><td class="others"><dl><dt>Year installed</dt><dd>' +
-      (markerData.date || '<span class="nodata">Unknown</span>') + '</dd></dl></td></tr>';
+      (markerData.date || '<span class="nodata">Unknown</span>') + '</dd></dl></td></tr></table>';
   e.popup._content = popupContent;
 
   // Historical marker has an image in Commons
   if (imageUrl) {
 
     // Set loading indicator while image thumbnail URL is being fetched
-    popupContent.querySelector('.image').innerHTML = '<img src="spinner2.gif" class="spinner">';
+    popupContent.querySelector('.image').innerHTML = '<img src="spinner2.gif">';
     e.popup.setContent(popupContent);
     e.popup.update();
 
