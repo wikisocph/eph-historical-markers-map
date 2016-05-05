@@ -298,9 +298,7 @@ function processWikidataQuery() {
   var data = JSON.parse(this.responseText);
 
   // Initialize cluster and list pane
-  mapMarkerCluster = new L.markerClusterGroup({
-    disableClusteringAtZoom: 19,
-  });
+  mapMarkerCluster = new L.markerClusterGroup();
   listElem = document.getElementById('list');
   listElem.innerHTML = '';
 
@@ -345,11 +343,14 @@ function processWikidataQuery() {
     divElem.innerHTML = markerData.title;
     divElem._wikidataId = wikidataId;
     divElem.addEventListener('click', function(ev) {
-      var wikidataId = ev.target._wikidataId
-      Map.setView([Markers[wikidataId].lat, Markers[wikidataId].lon], TILE_LAYER_MAX_ZOOM, {
+      var markerData = Markers[ev.target._wikidataId];
+      Map.setView([markerData.lat, markerData.lon], TILE_LAYER_MAX_ZOOM, {
         animate: false,
       });
-      Markers[wikidataId].marker.openPopup();
+      var mapMarker = markerData.marker;
+      mapMarkerCluster.zoomToShowLayer(mapMarker, function() {
+        mapMarker.openPopup();
+      });
     });
     markerData.listItemElem = divElem;
     listElem.appendChild(divElem);
