@@ -298,7 +298,14 @@ function processWikidataQuery() {
   var data = JSON.parse(this.responseText);
 
   // Initialize cluster and list pane
-  mapMarkerCluster = new L.markerClusterGroup();
+  mapMarkerCluster = new L.markerClusterGroup({
+    maxClusterRadius: function(z) {
+      if (z <= 16) return 80;
+      if (z == 17) return 40;
+      if (z == 18) return 20;
+      if (z >= 19) return 10;
+    },
+  });
   listElem = document.getElementById('list');
   listElem.innerHTML = '';
 
