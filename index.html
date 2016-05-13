@@ -219,6 +219,8 @@ h1 {
 <div id="map"></div>
 <script>
 
+var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 // App parameters
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
@@ -322,7 +324,22 @@ function processWikidataQuery() {
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
     markerData.inscription = (record.inscription ? record.inscription.value : '');
-    markerData.date = (record.date ? record.date.value.substr(0, 4) : '');
+
+    // Format date or year installed string
+    // NOTE: This assumes that YYYY-01-01 is just for the year.
+    // This code should be improved when WDQS provides the date precision.
+    if (record.date) {
+      if (record.date.value.substr(5, 5) == '01-01') {
+        markerData.date = record.date.value.substr(0, 4);
+      } else {
+        markerData.date =
+          MONTH_NAMES[Number(record.date.value.substr(5, 2)) - 1] + ' ' +
+          Number(record.date.value.substr(8, 2)) + ', ' +
+          record.date.value.substr(0, 4);
+      }
+    } else {
+      markerData.date = '';
+    }
 
     // Update the bounding box containing all markers
     if (
@@ -409,7 +426,7 @@ function handlePopup(e) {
     '<table><tr><td rowspan="2" class="inscription">' +
       (markerData.inscription || '<img src="spinner2.gif">')+ '</td>' +
     '<td class="image"></td></tr>' +
-    '<tr><td class="others"><dl><dt>Year installed</dt><dd>' +
+    '<tr><td class="others"><dl><dt>' + (markerData.date.length == 4 ? 'Year' : 'Date') + ' installed</dt><dd>' +
       (markerData.date || '<span class="nodata">Unknown</span>') + '</dd></dl></td></tr></table>';
   e.popup._content = popupContent;
 
