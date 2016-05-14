@@ -8,59 +8,58 @@
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
 <script src="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.js"></script>
 <script src="leaflet.markercluster.js"></script>
-<style type="text/css">
+<style>
 
 html, body {
  margin: 0;
  padding: 0;
  height: 100%;
-}
-
-#pane {
- float: left;
- height: 100%;
- width: 250px;
  font-family: Calibri, Arial, sans-serif;
- background: #888;
 }
 
-#header {
- padding: 10px;
- background: #666;
-}
-
-.superheader {
- margin: -10px -10px 0 -10px;
- padding: 6px 10px 3px 10px;
- font-size: 10px;
+#branding {
+ position: absolute;
+ width: 250px;
+ background: #555;
  font-weight: bold;
+}
+
+#branding p {
+ margin: 0;
+ padding: 6px 10px 0 10px;
+ font-size: 10px;
+ line-height: 1em;
  text-transform: uppercase;
  letter-spacing: 1px;
  color: #889;
- background: #555;
 }
 
-h1 {
- margin: -10px -10px 0 -10px;
- padding: 6px 10px 4px 10px;
+#branding h1 {
+ margin: 0;
+ padding: 0 10px 4px 10px;
  font-size: 18px;
- font-weight: bold;
+ line-height: 1em;
  color: #ddd;
- background: #555;
 }
 
-#special {
- margin-top: 5px;
+nav {
+ position: absolute;
+ width: 250px;
+}
+
+#nav-header {
+ padding: 5px 10px;
  font-size: 11px;
  line-height: 1em;
  color: #aaa;
+ background: #666;
 }
 
-#special div {
- margin-top: 3px;
+#nav-header p {
+ margin: 3px 0 0 0;
 }
 
-#special a {
+#nav-header a {
  color: #aab;
 }
 
@@ -68,7 +67,7 @@ h1 {
  margin-top: 8px;
 }
 
-.btn {
+button {
  padding: 3px 6px;
  font-size: 11px;
  border: 1px solid #555;
@@ -81,14 +80,19 @@ h1 {
  background-image: linear-gradient(to bottom, #808080, #707070);
  cursor: pointer;
 }
-.btn::-moz-focus-inner { border: none; }
-.btn:hover {
+button::-moz-focus-inner { border: none; }
+button:hover {
  color: #fff;
  background-image: linear-gradient(to bottom, #abc, #789);
 }
 
-#list {
+#nav-list {
+ margin: 0;
+ padding: 0;
  overflow: auto;
+ font-size: 12px;
+ color: #fff;
+ background: #888;
 }
 
 #left-spinner {
@@ -96,17 +100,20 @@ h1 {
  margin: 8px auto;
 }
 
-#list .marker-li {
+#nav-list li {
+ margin: 0;
  padding: 5px 10px;
- color: #fff;
- font-size: 12px;
  border-bottom: 1px solid #666;
  cursor: pointer;
+}
+#nav-list li:hover {
+ color: #bbf;
+ background: #777;
 }
 
 #map {
  height: 100%;
- margin-left: 200px;
+ margin-left: 250px;
 }
 
 .leaflet-popup-content-wrapper {
@@ -117,39 +124,33 @@ h1 {
  font-family: Calibri, Arial, sans-serif;
 }
 
-.popup h2 {
+.popup h1 {
  margin: -14px -20px 14px;
  padding: 10px 20px 8px;
+ width: 401px;
  font-size: 20px;
  font-weight: bold;
  font-variant: small-caps;
  background: #666;
 }
 
-.popup h2 a {
+.popup h1 a {
  color: #ddd;
  text-decoration: none;
  border-bottom: 1px dotted #99a;
 }
-.popup h2 a:hover { color: #bbf; }
-
-.popup table {
- width: 400px;
- border-collapse: collapse;
-}
-
-.popup td {
- padding: 0;
- vertical-align: top;
-}
+.popup h1 a:hover { color: #bbf; }
 
 .popup .inscription {
+ float: left;
+ padding: 0 15px 15px 0;
  width: 235px;
- padding-right: 15px;
  font-size: 12px;
 }
 
-.popup .image {
+.popup .details {
+ float: right;
+ padding: 0 0 15px 0;
  width: 150px;
 }
 
@@ -166,14 +167,9 @@ h1 {
  display: block;
 }
 
-.popup .others {
- padding-top: 8px;
- width: 150px;
-}
-
-.popup dl {
+.popup .extra {
  margin: 0;
- padding: 0;
+ padding: 8px 0 0 0;
 }
 
 .popup dt {
@@ -209,15 +205,22 @@ h1 {
 </style>
 </head>
 <body>
-<div id="pane">
-  <div id="header">
-   <div class="superheader">Encyclopedia of Philippine Heritage</div>
-   <h1>Historical Markers Map</h1>
-  </div>
-  <div id="list"><img src="spinner1.gif" id="left-spinner"></div>
-</div>
-<div id="map"></div>
+ <header id="branding" role="banner">
+  <p>Encyclopedia of Philippine Heritage</p>
+  <h1>Historical Markers Map</h1>
+ </header>
+ <nav>
+  <header id="nav-header">
+   <p id="stats">Loading...</p>
+   <p><a href="#" id="wdqs-link">Explore using the Wikidata Query Service</a></p>
+   <p><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">Participate in this project!</a></p>
+   <button id="sort">Sort list</button>
+  </header>
+  <ol id="nav-list"><li><img src="spinner1.gif" id="left-spinner"></li></ol>
+ </nav>
+ <section id="map"></section>
 <script>
+"use strict";
 
 var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -239,10 +242,13 @@ var SortModes = [
 ];
 var CurrentSortModeIdx;
 
+window.addEventListener('load', init);
+window.addEventListener('resize', resizeLeftPane);
+
 // Function to initialize the app once the page has been loaded
 function init() {
 
-  var powered, divElem, buttonElem;
+  var anchorElem, powered;
   var xhrObject = new XMLHttpRequest();
 
   // Initialize the map and add the tile layer
@@ -252,22 +258,11 @@ function init() {
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
 
-  // Add placeholder for total number, link to Wikidata Query Service,
-  // link to WikiProject, placeholder sort button
-  divElem = document.createElement('div');
-  divElem.id = 'special';
-  divElem.innerHTML =
-    '<div id="total">Loading...</div>' +
-    '<div><a href="' + WIKIDATA_QUERY_URL.replace('sparql?format=json&query=', '#') + '">Explore using the Wikidata Query Service</a></div>' +
-    '<div><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">Participate in this project!</a></div>';
-  document.getElementById('header').appendChild(divElem);
-  buttonElem = document.createElement('button');
-  buttonElem.id = 'sort';
-  buttonElem.className = 'btn';
-  buttonElem.disabled = true;
-  buttonElem.innerHTML = 'Sort list';
-  buttonElem.addEventListener('click', switchSortMode);
-  document.getElementById('header').appendChild(buttonElem);
+  resizeLeftPane();
+
+  // Add Wikidata Query Service URL
+  anchorElem = document.getElementById('wdqs-link');
+  anchorElem.href = WIKIDATA_QUERY_URL.replace('sparql?format=json&query=', '#');
 
   // Add powered by Wikidata map control
   powered = L.control({position: 'bottomleft'});
@@ -285,7 +280,18 @@ function init() {
   xhrObject.overrideMimeType('text/plain');
   xhrObject.send(null);
 }
-window.addEventListener('load', init);
+
+// Function to resize the left pane elements
+function resizeLeftPane() {
+  var navElem = document.getElementsByTagName('nav')[0];
+  var navListElem = document.getElementById('nav-list');
+  var brandingHeight = document.getElementById('branding').clientHeight;
+  var navHeaderHeight = document.getElementById('nav-header').clientHeight;
+  var variableHeight = window.innerHeight - brandingHeight;
+  navElem.style.top = brandingHeight + 'px';
+  navElem.style.height = variableHeight + 'px';
+  navListElem.style.height = (variableHeight - navHeaderHeight) + 'px';
+}
 
 // Function to process the results of the Wikidata query
 function processWikidataQuery() {
@@ -294,7 +300,7 @@ function processWikidataQuery() {
 
   var i;
   var wikidataId, record, markerData;
-  var mapMarker, mapMarkerCluster, listElem, divElem, buttonElem;
+  var mapMarker, mapMarkerCluster, listElem, elem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
 
   var data = JSON.parse(this.responseText);
@@ -308,7 +314,7 @@ function processWikidataQuery() {
       if (z >= 19) return 10;
     },
   });
-  listElem = document.getElementById('list');
+  listElem = document.getElementById('nav-list');
   listElem.innerHTML = '';
 
   // Go through each query result
@@ -362,11 +368,10 @@ function processWikidataQuery() {
     markerData.popup._wikidataId = wikidataId;
 
     // Add the historical marker to the list pane and add click event handling
-    divElem = document.createElement('div');
-    divElem.className = 'marker-li';
-    divElem.innerHTML = markerData.title;
-    divElem._wikidataId = wikidataId;
-    divElem.addEventListener('click', function(ev) {
+    elem = document.createElement('li');
+    elem.innerHTML = markerData.title;
+    elem._wikidataId = wikidataId;
+    elem.addEventListener('click', function(ev) {
       var markerData = Markers[ev.target._wikidataId];
       Map.setView([markerData.lat, markerData.lon], TILE_LAYER_MAX_ZOOM, {
         animate: false,
@@ -376,12 +381,12 @@ function processWikidataQuery() {
         mapMarker.openPopup();
       });
     });
-    markerData.listItemElem = divElem;
-    listElem.appendChild(divElem);
+    markerData.listItemElem = elem;
+    listElem.appendChild(elem);
   }
 
   // Display total number of markers
-  document.getElementById('total').innerHTML =
+  document.getElementById('stats').innerHTML =
     'Showing a total of ' + data.results.bindings.length + ' markers';
 
   // Update the map to add a popup event handler and the cluster, and to update the view
@@ -392,18 +397,11 @@ function processWikidataQuery() {
   });
 
   // Enable sort button and add click event handler, and perform initial sort
-  buttonElem = document.getElementById('sort');
-  buttonElem.disabled = false;
-  buttonElem.addEventListener('click', switchSortMode);
+  elem = document.getElementById('sort');
+  elem.disabled = false;
+  elem.addEventListener('click', switchSortMode);
   CurrentSortModeIdx = SortModes.length - 1;
   switchSortMode();
-
-  // Adjust list pane height to allow scrolling
-  document.getElementById('pane').style.height = window.innerHeight + 'px';
-  listElem.style.height = (
-    document.getElementById('pane'  ).clientHeight -
-    document.getElementById('header').clientHeight
-  ) + 'px';
 }
 
 // Function to handle when a map popup is opened
@@ -422,12 +420,13 @@ function handlePopup(e) {
   var popupContent = document.createElement('div');
   popupContent.className = 'popup';
   popupContent.innerHTML =
-    '<h2>' + titleContent + '</h2>' +
-    '<table><tr><td rowspan="2" class="inscription">' +
-      (markerData.inscription || '<img src="spinner2.gif">')+ '</td>' +
-    '<td class="image"></td></tr>' +
-    '<tr><td class="others"><dl><dt>' + (markerData.date.length == 4 ? 'Year' : 'Date') + ' installed</dt><dd>' +
-      (markerData.date || '<span class="nodata">Unknown</span>') + '</dd></dl></td></tr></table>';
+    '<h1>' + titleContent + '</h1>' +
+    '<div class="inscription">' + (markerData.inscription || '<img src="spinner2.gif">')+ '</div>' +
+    '<div class="details">' +
+    '  <div class="image"></div>' +
+    '  <dl class="extra"><dt>' + (markerData.date.length == 4 ? 'Year' : 'Date') + ' installed</dt>' +
+    '    <dd>' + (markerData.date || '<span class="nodata">Unknown</span>') + '</dd></dl>' +
+    '</div>';
   e.popup._content = popupContent;
 
   // Historical marker has an image in Commons
@@ -488,7 +487,7 @@ function handlePopup(e) {
 // Function to toggle the sort mode and then sort the markers list on the left pane
 function switchSortMode() {
 
-  var i, sortedItems, listElem;
+  var i, sorter, sortedItems, listElem;
 
   CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SortModes.length;
   document.getElementById('sort').innerHTML =
@@ -516,7 +515,7 @@ function switchSortMode() {
     );
   }
 
-  listElem = document.getElementById('list');
+  listElem = document.getElementById('nav-list');
   listElem.innerHTML = '';
   for (i = 0; i < sortedItems.length; i++) {
     listElem.appendChild(sortedItems[i]);
