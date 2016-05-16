@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" />
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
@@ -14,21 +15,22 @@ html, body {
  margin: 0;
  padding: 0;
  height: 100%;
- font-family: Calibri, Arial, sans-serif;
+ font-family: "Open Sans", sans-serif;
 }
 
 #branding {
  position: absolute;
  width: 250px;
  background: #555;
- font-weight: bold;
+ font-weight: 600;
 }
 
 #branding p {
  margin: 0;
- padding: 6px 10px 0 10px;
- font-size: 10px;
- line-height: 1em;
+ padding: 6px 10px 0;
+ font-size: 9px;
+ line-height: 9px;
+ font-weight: 600;
  text-transform: uppercase;
  letter-spacing: 1px;
  color: #889;
@@ -36,7 +38,10 @@ html, body {
 
 #branding h1 {
  margin: 0;
- padding: 0 10px 4px 10px;
+ padding: 4px 10px 8px;
+ font-size: 16px;
+ line-height: 16px;
+ font-weight: 600;
  font-size: 18px;
  line-height: 1em;
  color: #ddd;
@@ -48,15 +53,15 @@ nav {
 }
 
 #nav-header {
- padding: 5px 10px;
- font-size: 11px;
- line-height: 1em;
+ padding: 8px 10px;
  color: #aaa;
  background: #666;
 }
 
 #nav-header p {
- margin: 3px 0 0 0;
+ margin: 0 0 4px 0;
+ font-size: 10px;
+ line-height: 10px;
 }
 
 #nav-header a {
@@ -68,11 +73,12 @@ nav {
 }
 
 button {
+ margin: 4px 0 0 0;
  padding: 3px 6px;
  font-size: 11px;
+ line-height: 11px;
  border: 1px solid #555;
  border-radius: 25px;
- font-family: Calibri, Arial, sans-serif;
  text-decoration: none;
  text-transform: uppercase;
  color: #ccc;
@@ -90,7 +96,8 @@ button:hover {
  margin: 0;
  padding: 0;
  overflow: auto;
- font-size: 12px;
+ font-size: 11px;
+ line-height: 11px;
  color: #fff;
  background: #888;
 }
@@ -103,7 +110,7 @@ button:hover {
 #nav-list li {
  margin: 0;
  padding: 5px 10px;
- border-bottom: 1px solid #666;
+ border-bottom: 1px solid #777;
  cursor: pointer;
 }
 #nav-list li:hover {
@@ -120,8 +127,12 @@ button:hover {
  overflow: hidden;
 }
 
+.leaflet-popup-close-button {
+ display: none;
+}
+
 .popup {
- font-family: Calibri, Arial, sans-serif;
+ font-family: "Open Sans", sans-serif;
 }
 
 .popup h1 {
@@ -129,7 +140,8 @@ button:hover {
  padding: 10px 20px 8px;
  width: 401px;
  font-size: 20px;
- font-weight: bold;
+ line-height: 20px;
+ font-weight: 600;
  font-variant: small-caps;
  background: #666;
 }
@@ -145,13 +157,22 @@ button:hover {
  float: left;
  padding: 0 15px 15px 0;
  width: 235px;
- font-size: 12px;
 }
+
+.popup .inscription        { font-size: 11px; line-height: 16px; }
+.popup .inscription.long   { font-size: 10px; line-height: 14px; }
+.popup .inscription.longer { font-size:  9px; line-height: 11px; }
+.popup .inscription p      { margin: 0; }
+.popup .inscription        p+p { margin-top: 10px; }
+.popup .inscription.long   p+p { margin-top: 8px; }
+.popup .inscription.longer p+p { margin-top: 7px; }
 
 .popup .details {
  float: right;
  padding: 0 0 15px 0;
  width: 150px;
+ font-size: 11px;
+ line-height: 16px;
 }
 
 .popup .image.sized {
@@ -173,9 +194,10 @@ button:hover {
 }
 
 .popup dt {
- font-weight: bold;
+ font-size: 9px;
+ font-weight: 600;
  text-transform: uppercase;
- color: #666;
+ color: #aaa;
 }
 
 .popup dd {
@@ -329,7 +351,7 @@ function processWikidataQuery() {
     markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
-    markerData.inscription = (record.inscription ? record.inscription.value : '');
+    markerData.inscription = (record.inscription ? formatInscription(record.inscription.value) : '');
 
     // Format date or year installed string
     // NOTE: This assumes that YYYY-01-01 is just for the year.
@@ -475,13 +497,19 @@ function handlePopup(e) {
       if (pageId != '-1') {
         talkContent = data.query.pages[pageId].revisions[0]['*'];
         matches = talkContent.match(/{{\s*LongInscription[^]*?\|\s*inscription\s*=\s*([^]*?)(?:\||}})/);
-        if (matches && matches[1]) markerData.inscription = matches[1];
+        if (matches && matches[1]) markerData.inscription = formatInscription(matches[1]);
       }
       inscriptionCell = markerData.popup._content.querySelector('.inscription');
       inscriptionCell.innerHTML = markerData.inscription || '<span class="nodata">No inscription encoded</span>';
+      if (markerData.inscription.length >  800) inscriptionCell.className = 'inscription long';
+      if (markerData.inscription.length > 1200) inscriptionCell.className = 'inscription longer';
       markerData.popup.update();
     });
   }
+}
+
+function formatInscription(text) {
+  return '<p>' + text.replace(/\s*<br\s*\/?>(?:<br\s*\/?>)?\s*/gi, '</p><p>') + '</p>';
 }
 
 // Function to toggle the sort mode and then sort the markers list on the left pane
