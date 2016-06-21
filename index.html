@@ -18,6 +18,26 @@ html, body {
  font-family: "Open Sans", sans-serif;
 }
 
+button {
+ padding: 3px 6px;
+ font-size: 11px;
+ line-height: 11px;
+ border: 1px solid #555;
+ border-radius: 25px;
+ text-decoration: none;
+ text-transform: uppercase;
+ color: #ccc;
+ background: #707070;
+ background-image: linear-gradient(to bottom, #808080, #707070);
+ cursor: pointer;
+}
+button::-moz-focus-inner { border: none; }
+button:hover {
+ color: #fff;
+ background: #789;
+ background-image: linear-gradient(to bottom, #abc, #789);
+}
+
 #branding {
  position: absolute;
  width: 250px;
@@ -26,8 +46,8 @@ html, body {
 }
 
 #branding p {
- margin: 0;
- padding: 6px 10px 0;
+ margin: 6px 10px 0;
+ padding: 0;
  font-size: 9px;
  line-height: 9px;
  font-weight: 600;
@@ -37,14 +57,23 @@ html, body {
 }
 
 #branding h1 {
- margin: 0;
- padding: 4px 10px 8px;
- font-size: 16px;
- line-height: 16px;
- font-weight: 600;
+ margin: 4px 10px 2px;
+ padding: 0;
  font-size: 18px;
  line-height: 1em;
  color: #ddd;
+}
+
+#about-button {
+ margin: 0 10px 8px;
+ border: 1px solid #444;
+ background: #606060;
+ background-image: linear-gradient(to bottom, #707070, #606060);
+}
+#about-button:hover {
+ color: #fff;
+ background: #789;
+ background-image: linear-gradient(to bottom, #abc, #789);
 }
 
 nav {
@@ -69,27 +98,7 @@ nav {
 }
 
 #sort {
- margin-top: 8px;
-}
-
-button {
- margin: 4px 0 0 0;
- padding: 3px 6px;
- font-size: 11px;
- line-height: 11px;
- border: 1px solid #555;
- border-radius: 25px;
- text-decoration: none;
- text-transform: uppercase;
- color: #ccc;
- background: #707070;
- background-image: linear-gradient(to bottom, #808080, #707070);
- cursor: pointer;
-}
-button::-moz-focus-inner { border: none; }
-button:hover {
- color: #fff;
- background-image: linear-gradient(to bottom, #abc, #789);
+ margin-top: 4px;
 }
 
 #nav-list {
@@ -224,24 +233,118 @@ button:hover {
  overflow: hidden;
 }
 
+#about {
+ visibility: hidden;
+ opacity: 0;
+ position: fixed;
+ top: 0; left: 0; right: 0; bottom: 0;
+ background: rgba(0,0,0,0.7);
+ z-index: 1000;
+ transition: all 0.2s ease-in-out;
+}
+
+#about-modal {
+ position: relative;
+ width: 560px;
+ overflow: auto;
+ margin: 20px auto;
+ background: #fff;
+ border-radius: 12px;
+ padding: 20px;
+ box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+}
+
+#about-modal .close {
+ position: absolute;
+ top: 0px;
+ right: 8px;
+ font-size: 20px;
+ font-weight: bold;
+ color: #888;
+ cursor: pointer;
+}
+
+#about-modal header {
+ position: absolute;
+ width: 125px;
+}
+
+#about-modal header img {
+}
+
+#about-modal header h1 {
+ margin: 5px 0 0 0;
+ font-size: 20px;
+ line-height: 25px;
+ color: #888;
+ text-align: right;
+}
+
+#about-modal p {
+ margin: 0 0 1em 145px;
+ font-size: 13px;
+ line-height: 20px;
+}
+
+#about-modal a {
+ text-decoration: none;
+ color: #888;
+}
+#about-modal p a:hover {
+ color: #bbf;
+ text-decoration: underline;
+}
+
+#about-modal footer {
+ text-align: right;
+}
+
 </style>
 </head>
 <body>
  <header id="branding" role="banner">
   <p>Encyclopedia of Philippine Heritage</p>
   <h1>Historical Markers Map</h1>
+  <button id="about-button">About this app</button>
  </header>
  <nav>
   <header id="nav-header">
    <p id="stats">Loading...</p>
-   <p><a href="#" id="wdqs-link">Explore using the Wikidata Query Service</a></p>
-   <p><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">Participate in this project!</a></p>
    <button id="sort">Sort list</button>
   </header>
   <ol id="nav-list"><li><img src="spinner1.gif" id="left-spinner"></li></ol>
  </nav>
  <section id="map"></section>
-<script>
+ <aside id="about">
+  <div id="about-modal">
+   <div class="close">×</div>
+   <header>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg/125px-Encyclopedia_of_Philippine_Heritage_logo.svg.png" alt="Encyclopedia of Philippine Heritage">
+    <h1>About the Historical Markers Map</h1>
+   </header>
+   <p>This <b>Historical Markers Map</b> shows the location of historical
+    markers that have been installed by the <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National
+    Historical Commission of the Philippines</a> and its predecessor agencies.
+    Each historical marker is represented by a map marker that when clicked
+    provides more information about the historical marker, including a photo of
+    the marker and its encoded inscription.</p>
+   <p>The data on these historical markers comes from <a href="https://www.wikidata.org/">Wikidata</a>,
+    a sister project of Wikipedia, and is compiled as part of the <i>Encyclopedia
+    of Philippine Heritage</i> program of <a href="http://www.wikimedia.org.ph/">Wikimedia
+    Philippines</a>. If you want to help add and improve the data, please refer
+    to this <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject page</a>.</p>
+   <p>If you want to obtain or explore the raw data using the Wikidata Query
+    Service, please refer to this <a href="#" id="wdqs-link">query</a>.</p>
+   <p>To report bugs, suggest improvements, or see the source code of this map
+    app, please refer to this app’s <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub
+    repository</a>.</p>
+   <footer>
+    <a href="https://www.wikidata.org/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Wikidata-logo-en.svg/85px-Wikidata-logo-en.svg.png" alt="[Wikidata]"></a>
+    <a href="http://www.wikimedia.org.ph/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Wikimedia_Philippines.svg/60px-Wikimedia_Philippines.svg.png" alt="[Wikimedia Philippines]"></a>
+   </footer>
+  </div>
+ </aside>
+ <script>
 "use strict";
 
 var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -263,9 +366,10 @@ var SortModes = [
   { id: 'qid',   label: 'by Wikidata ID' },
 ];
 var CurrentSortModeIdx;
+var NaturalAboutModalHeight;
 
 window.addEventListener('load', init);
-window.addEventListener('resize', resizeLeftPane);
+window.addEventListener('resize', resizePage);
 
 // Function to initialize the app once the page has been loaded
 function init() {
@@ -280,7 +384,18 @@ function init() {
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
 
-  resizeLeftPane();
+  NaturalAboutModalHeight = document.getElementById('about-modal').clientHeight - 40;
+  resizePage();
+
+  // Enable show about button
+  document.getElementById('about-button').addEventListener('click', showAbout);
+
+  // Enable hide about button
+  document.querySelector('#about .close').addEventListener('click', hideAbout);
+  document.getElementById('about').addEventListener('click', hideAbout);
+  document.getElementById('about-modal').addEventListener('click', function(ev){
+      ev.stopPropagation();
+  });
 
   // Add Wikidata Query Service URL
   anchorElem = document.getElementById('wdqs-link');
@@ -303,8 +418,10 @@ function init() {
   xhrObject.send(null);
 }
 
-// Function to resize the left pane elements
-function resizeLeftPane() {
+// Function to resize the page elements
+function resizePage() {
+
+  // Resize the left pane
   var navElem = document.getElementsByTagName('nav')[0];
   var navListElem = document.getElementById('nav-list');
   var brandingHeight = document.getElementById('branding').clientHeight;
@@ -313,6 +430,21 @@ function resizeLeftPane() {
   navElem.style.top = brandingHeight + 'px';
   navElem.style.height = variableHeight + 'px';
   navListElem.style.height = (variableHeight - navHeaderHeight) + 'px';
+
+  // Resize the about modal
+  var aboutModal = document.getElementById('about-modal')
+  if (window.innerHeight < NaturalAboutModalHeight + 80) {
+    aboutModal.style.height = (window.innerHeight - 80) + 'px';
+    aboutModal.style.marginTop = '20px'
+  } else {
+    aboutModal.style.height = NaturalAboutModalHeight + 'px';
+    aboutModal.style.marginTop = ((window.innerHeight - NaturalAboutModalHeight - 40)/2) + 'px';
+  }
+  if (window.innerWidth < 640) {
+    aboutModal.style.width = (window.innerWidth - 80) + 'px';
+  } else {
+    aboutModal.style.width = '560px';
+  }
 }
 
 // Function to process the results of the Wikidata query
@@ -550,6 +682,20 @@ function switchSortMode() {
   }
 }
 
+// Function to show the about modal
+function showAbout() {
+  var about_pane = document.getElementById('about');
+  about_pane.style.visibility = 'visible';
+  about_pane.style.opacity = 1;
+}
+
+// Function to hide the about modal
+function hideAbout() {
+  var about_pane = document.getElementById('about');
+  about_pane.style.visibility = 'hidden';
+  about_pane.style.opacity = 0;
+}
+
 // Library function to load JSONP data
 // Sourced from https://gist.github.com/gf3/132080/110d1b68d7328d7bfe7e36617f7df85679a08968
 var loadJSONP = (function(){
@@ -578,6 +724,6 @@ var loadJSONP = (function(){
   };
 })();
 
-</script>
+ </script>
 </body>
 </html>
