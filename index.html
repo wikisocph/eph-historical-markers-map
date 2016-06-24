@@ -245,19 +245,19 @@ nav {
 
 #about-modal {
  position: relative;
- width: 560px;
+ width: 600px;
  overflow: auto;
  margin: 20px auto;
  background: #fff;
  border-radius: 12px;
  padding: 20px;
- box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+ box-shadow: 0 3px 14px rgba(0,0,0,0.7);
 }
 
 #about-modal .close {
  position: absolute;
- top: 0px;
- right: 8px;
+ top: 10px;
+ right: 18px;
  font-size: 20px;
  font-weight: bold;
  color: #888;
@@ -266,22 +266,37 @@ nav {
 
 #about-modal header {
  position: absolute;
+ top: 0; left: 0;
  width: 125px;
-}
-
-#about-modal header img {
+ padding: 20px;
+ background: #666;
 }
 
 #about-modal header h1 {
  margin: 5px 0 0 0;
  font-size: 20px;
  line-height: 25px;
- color: #888;
+ color: #aaa;
  text-align: right;
+ text-shadow: 1px 1px #555;
+}
+
+#about-modal section {
+ margin: 0 0 0 165px;
+}
+
+#about-modal section h2 {
+ margin: 0;
+ padding: 0;
+ font-size: 20px;
+ line-height: 20px;
+ font-weight: 600;
+ font-variant: small-caps;
+ color: #666;
 }
 
 #about-modal p {
- margin: 0 0 1em 145px;
+ margin-bottom: 10px;
  font-size: 13px;
  line-height: 20px;
 }
@@ -296,6 +311,7 @@ nav {
 }
 
 #about-modal footer {
+ margin: 0 0 0 165px;
  text-align: right;
 }
 
@@ -320,24 +336,28 @@ nav {
    <div class="close">×</div>
    <header>
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg/125px-Encyclopedia_of_Philippine_Heritage_logo.svg.png" alt="Encyclopedia of Philippine Heritage">
-    <h1>About the Historical Markers Map</h1>
+    <h1>Historical Markers Map</h1>
    </header>
-   <p>This <b>Historical Markers Map</b> shows the location of historical
-    markers that have been installed by the <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National
-    Historical Commission of the Philippines</a> and its predecessor agencies.
-    Each historical marker is represented by a map marker that when clicked
-    provides more information about the historical marker, including a photo of
-    the marker and its encoded inscription.</p>
-   <p>The data on these historical markers comes from <a href="https://www.wikidata.org/">Wikidata</a>,
-    a sister project of Wikipedia, and is compiled as part of the <i>Encyclopedia
-    of Philippine Heritage</i> program of <a href="http://www.wikimedia.org.ph/">Wikimedia
-    Philippines</a>. If you want to help add and improve the data, please refer
-    to this <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject page</a>.</p>
-   <p>If you want to obtain or explore the raw data using the Wikidata Query
-    Service, please refer to this <a href="#" id="wdqs-link">query</a>.</p>
-   <p>To report bugs, suggest improvements, or see the source code of this map
-    app, please refer to this app’s <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub
-    repository</a>.</p>
+   <section>
+    <h2>About</h2>
+    <p>This <b>Historical Markers Map</b> is a simple web app that shows the
+     location of historical markers that have been installed by the
+     <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National
+     Historical Commission of the Philippines</a> and its predecessor agencies.
+     Each historical marker is represented by a map marker that when clicked
+     provides more information about the historical marker, including a photo of
+     the marker and its encoded inscription.</p>
+    <p>The data on these historical markers comes from <a href="https://www.wikidata.org/">Wikidata</a>,
+     a sister project of Wikipedia, and is compiled as part of the <i><b>Encyclopedia
+     of Philippine Heritage</b></i>, a program of <a href="http://www.wikimedia.org.ph/">Wikimedia
+     Philippines</a>. If you want to help add and improve the data, please refer
+     to this <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject page</a>.</p>
+    <p>If you are familiar with the Wikidata Query Service and want to
+     obtain or explore the raw data, please refer to this <a href="#" id="wdqs-link">query</a>.</p>
+    <p>To report bugs, suggest improvements, or see the source code of this map
+     app, please refer to this app’s <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub
+     repository</a>.</p>
+   </section>
    <footer>
     <a href="https://www.wikidata.org/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Wikidata-logo-en.svg/85px-Wikidata-logo-en.svg.png" alt="[Wikidata]"></a>
     <a href="http://www.wikimedia.org.ph/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Wikimedia_Philippines.svg/60px-Wikimedia_Philippines.svg.png" alt="[Wikimedia Philippines]"></a>
@@ -366,7 +386,6 @@ var SortModes = [
   { id: 'qid',   label: 'by Wikidata ID' },
 ];
 var CurrentSortModeIdx;
-var NaturalAboutModalHeight;
 
 window.addEventListener('load', init);
 window.addEventListener('resize', resizePage);
@@ -384,7 +403,6 @@ function init() {
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
 
-  NaturalAboutModalHeight = document.getElementById('about-modal').clientHeight - 40;
   resizePage();
 
   // Enable show about button
@@ -432,19 +450,24 @@ function resizePage() {
   navListElem.style.height = (variableHeight - navHeaderHeight) + 'px';
 
   // Resize the about modal
-  var aboutModal = document.getElementById('about-modal')
-  if (window.innerHeight < NaturalAboutModalHeight + 80) {
-    aboutModal.style.height = (window.innerHeight - 80) + 'px';
-    aboutModal.style.marginTop = '20px'
+  var aboutModal = document.getElementById('about-modal');
+  // Set width first as this affects the content height
+  if (window.innerWidth < 680) {  // Default CSS width + padding + margin
+    aboutModal.style.width = (window.innerWidth - 80) + 'px';  // Default CSS padding + margin
   } else {
-    aboutModal.style.height = NaturalAboutModalHeight + 'px';
-    aboutModal.style.marginTop = ((window.innerHeight - NaturalAboutModalHeight - 40)/2) + 'px';
+    aboutModal.style.width = '600px';  // Default CSS width
   }
-  if (window.innerWidth < 640) {
-    aboutModal.style.width = (window.innerWidth - 80) + 'px';
+  var contentHeight =
+    document.querySelector('#about-modal section').clientHeight +
+    document.querySelector('#about-modal footer').clientHeight + 10;  // Default CSS p bottom-margin
+  if (window.innerHeight < contentHeight + 80) {  // Default CSS padding + margin
+    aboutModal.style.height = (window.innerHeight - 80) + 'px';  // Default CSS padding + margin
+    aboutModal.style.marginTop = '20px';  // Default CSS margin
   } else {
-    aboutModal.style.width = '560px';
+    aboutModal.style.height = contentHeight + 'px';
+    aboutModal.style.marginTop = ((window.innerHeight - contentHeight - 40)/2) + 'px';  // Default CSS margin
   }
+  document.querySelector('#about-modal header').style.height = contentHeight + 'px';
 }
 
 // Function to process the results of the Wikidata query
