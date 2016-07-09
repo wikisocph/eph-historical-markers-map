@@ -369,11 +369,25 @@ nav {
 
 var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-// App parameters
+// Wikidata query parameters
+var SPARQL_QUERY =
+'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?inscription ?country ?countryLabel WHERE {' +
+'  ?marker wdt:P31 wd:Q21562164 ; wdt:P625 ?coord .' +
+'  OPTIONAL { ?marker wdt:P1476 ?title . }' +
+'  OPTIONAL { ?marker wdt:P18 ?image . }' +
+'  OPTIONAL { ?marker wdt:P571 ?date . }' +
+'  OPTIONAL { ?marker wdt:P1684 ?inscription . }' +
+'  OPTIONAL { ?marker wdt:P17 ?country . }' +
+'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' +
+'}';
+var SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
+var WDQS_API_URL = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
+var WDQS_GUI_URL = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
+
+// Other app parameters
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
-var WIKIDATA_QUERY_URL     = 'https://query.wikidata.org/sparql?format=json&query=PREFIX%20wd%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%0APREFIX%20wdt%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%0APREFIX%20wikibase%3A%20%3Chttp%3A%2F%2Fwikiba.se%2Fontology%23%3E%0A%0ASELECT%20%3Fmarker%20%3FmarkerLabel%20%3Fcoord%20%3Ftitle%20%3Fimage%20%3Fdate%20%3Finscription%20WHERE%20{%0A%20%20%3Fmarker%20wdt%3AP31%20wd%3AQ21562164%20%3B%20wdt%3AP625%20%3Fcoord%20.%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1476%20%3Ftitle%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP18%20%3Fimage%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP571%20%3Fdate%20.%20}%0A%20%20OPTIONAL%20{%20%3Fmarker%20wdt%3AP1684%20%3Finscription%20.%20}%0A%20%20SERVICE%20wikibase%3Alabel%20{%0A%20%20%20%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%20.%0A%20%20}%0A}';
 var MIN_PH_LAT             =   4.5;
 var MAX_PH_LAT             =  21.0;
 var MIN_PH_LON             = 116.5;
@@ -415,9 +429,9 @@ function init() {
       ev.stopPropagation();
   });
 
-  // Add Wikidata Query Service URL
+  // Add Wikidata Query Service GUI URL
   anchorElem = document.getElementById('wdqs-link');
-  anchorElem.href = WIKIDATA_QUERY_URL.replace('sparql?format=json&query=', '#');
+  anchorElem.href = WDQS_GUI_URL;
 
   // Add powered by Wikidata map control
   powered = L.control({position: 'bottomleft'});
@@ -431,7 +445,7 @@ function init() {
 
   // Query Wikidata
   xhrObject.onreadystatechange = processWikidataQuery;
-  xhrObject.open('GET', WIKIDATA_QUERY_URL, true);
+  xhrObject.open('GET', WDQS_API_URL, true);
   xhrObject.overrideMimeType('text/plain');
   xhrObject.send(null);
 }
