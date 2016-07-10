@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" />
-<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.css" />
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
-<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-beta.2/leaflet.js"></script>
+<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.js"></script>
 <script src="leaflet.markercluster.js"></script>
 <style>
 
@@ -164,17 +164,21 @@ nav {
 
 .popup .inscription {
  float: left;
- padding: 0 15px 15px 0;
+ margin: 0 15px 15px 0;
  width: 235px;
+ font-size: 11px;
+ line-height: 16px;
+ max-height: 400px;
+ overflow-y: auto;
 }
 
-.popup .inscription        { font-size: 11px; line-height: 16px; }
-.popup .inscription.long   { font-size: 10px; line-height: 14px; }
-.popup .inscription.longer { font-size:  9px; line-height: 11px; }
-.popup .inscription p      { margin: 0; }
-.popup .inscription        p+p { margin-top: 10px; }
-.popup .inscription.long   p+p { margin-top: 8px; }
-.popup .inscription.longer p+p { margin-top: 7px; }
+.popup .inscription p {
+ margin: 0;
+}
+
+.popup .inscription p+p {
+ margin-top: 10px;
+}
 
 .popup .details {
  float: right;
@@ -384,42 +388,85 @@ var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July
 var NL = "\n";
 var SPARQL_QUERY =
 'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?inscription ?country ?countryLabel' + NL +
-'       ?admin0Label ?admin0Type ?admin1Label ?admin1Type ?admin2Label ?admin2Type ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
-'  ?marker wdt:P31 wd:Q21562164 ; wdt:P625 ?coord .' + NL +
+'       ?admin0Label ?admin0Type ?admin1Label ?admin1Type' + NL +
+'       ?admin2Label ?admin2Type ?admin3Label ?admin3Type' + NL +
+'       ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
+'  ?marker wdt:P31 wd:Q21562164 ;' + NL +
+'          wdt:P625 ?coord .' + NL +
 '  OPTIONAL { ?marker wdt:P1476 ?title . }' + NL +
 '  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
 '  OPTIONAL { ?marker wdt:P571 ?date . }' + NL +
 '  OPTIONAL { ?marker wdt:P1684 ?inscription . }' + NL +
 '  OPTIONAL { ?marker wdt:P17 ?country . }' + NL +
-'  OPTIONAL { ?marker wdt:P131 ?admin0 . }' + NL +
-'  OPTIONAL { ?admin0 wdt:P31  ?admin0Type . }' + NL +
-'  OPTIONAL { ?admin0 wdt:P131 ?admin1 . }' + NL +
-'  OPTIONAL { ?admin1 wdt:P31  ?admin1Type . }' + NL +
-'  OPTIONAL { ?admin1 wdt:P131 ?admin2 . }' + NL +
-'  OPTIONAL { ?admin2 wdt:P31  ?admin2Type . }' + NL +
-'  OPTIONAL { ?marker wdt:P547 ?commemorated .' + NL +
-'             ?article schema:about ?commemorated ;' + NL +
-'             schema:isPartOf <https://en.wikipedia.org/> . }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker wdt:P131 ?admin0 .' + NL +
+'    OPTIONAL {' + NL +
+'      ?admin0 wdt:P31 ?admin0Type .' + NL +
+'      FILTER (' + NL +
+'        ?admin0Type = wd:Q6256   ||' + NL +
+'        ?admin0Type = wd:Q24698  ||' + NL +
+'        ?admin0Type = wd:Q24746  ||' + NL +
+'        ?admin0Type = wd:Q104157' + NL +
+'      )' + NL +
+'    }' + NL +
+'    OPTIONAL {' + NL +
+'      ?admin0 wdt:P131 ?admin1 .' + NL +
+'      OPTIONAL {' + NL +
+'        ?admin1 wdt:P31 ?admin1Type .' + NL +
+'        FILTER (' + NL +
+'          ?admin1Type = wd:Q6256   ||' + NL +
+'          ?admin1Type = wd:Q24698  ||' + NL +
+'          ?admin1Type = wd:Q24746  ||' + NL +
+'          ?admin1Type = wd:Q104157' + NL +
+'        )' + NL +
+'      }' + NL +
+'      OPTIONAL {' + NL +
+'        ?admin1 wdt:P131 ?admin2 .' + NL +
+'        OPTIONAL {' + NL +
+'          ?admin2 wdt:P31 ?admin2Type .' + NL +
+'          FILTER (' + NL +
+'            ?admin2Type = wd:Q6256   ||' + NL +
+'            ?admin2Type = wd:Q24698  ||' + NL +
+'            ?admin2Type = wd:Q24746  ||' + NL +
+'            ?admin2Type = wd:Q104157' + NL +
+'          )' + NL +
+'        }' + NL +
+'        OPTIONAL {' + NL +
+'          ?admin2 wdt:P131 ?admin3 .' + NL +
+'          OPTIONAL {' + NL +
+'            ?admin3 wdt:P31 ?admin3Type .' + NL +
+'            FILTER (' + NL +
+'              ?admin3Type = wd:Q6256   ||' + NL +
+'              ?admin3Type = wd:Q24698  ||' + NL +
+'              ?admin3Type = wd:Q24746  ||' + NL +
+'              ?admin3Type = wd:Q104157' + NL +
+'            )' + NL +
+'          }' + NL +
+'        }' + NL +
+'      }' + NL +
+'    }' + NL +
+'  }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker wdt:P547 ?commemorated .' + NL +
+'    ?article schema:about ?commemorated ;' + NL +
+'             schema:isPartOf <https://en.wikipedia.org/> .' + NL +
+'  }' + NL +
 '  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' + NL +
 '}';
 var SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
 var WDQS_API_URL         = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
 var WDQS_GUI_URL         = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
 var PH_QID               = 'Q928';
-var REGION_QID           = 'Q24698';
-var PROV_QID             = 'Q24746';
-var CITY_QID             = 'Q104157';
-var MUNI_QID             = 'Q24764';
-var ADMIN_QIDS           = {
-  'Q6256': true,
-  'Q24698': true,
-  'Q24746': true,
-  'Q104157': true,
-  'Q24764': true,
-};
+var ADMIN_QIDS           = {};
+var COUNTRY_QID          = 'Q6256';    ADMIN_QIDS[COUNTRY_QID     ] = true;
+var REGION_QID           = 'Q24698';   ADMIN_QIDS[REGION_QID      ] = true;
+var PROVINCE_QID         = 'Q24746';   ADMIN_QIDS[PROVINCE_QID    ] = true;
+var CITY_QID             = 'Q104157';  ADMIN_QIDS[CITY_QID        ] = true;
+var MUNICIPALITY_QID     = 'Q24764';   ADMIN_QIDS[MUNICIPALITY_QID] = true;
+// NOTE: MUNICIPALITY_QID is currently unused and is not included in the SPARQL FILTER
 
 // Other app parameters
-var ADMIN_LEVELS           = 3;
+var ADMIN_LEVELS           = 4;
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
@@ -535,8 +582,9 @@ function processWikidataQuery() {
   // Initialize cluster and list pane
   mapMarkerCluster = new L.markerClusterGroup({
     maxClusterRadius: function(z) {
-      if (z <= 16) return 80;
-      if (z == 17) return 40;
+      if (z <= 15) return 50;
+      if (z <= 16) return 40;
+      if (z == 17) return 30;
       if (z == 18) return 20;
       if (z >= 19) return 10;
     },
@@ -583,8 +631,8 @@ function processWikidataQuery() {
     location = '';
     for (j = 0; j < ADMIN_LEVELS; j++) {
       if (
-        markerData.adminLabels[j] && (j == 0 || (
-          markerData.adminTypes[j-1] != PROV_QID &&
+        markerData.adminLabels[j] && markerData.adminTypes[j] != COUNTRY_QID && (j == 0 || (
+          markerData.adminTypes[j-1] != PROVINCE_QID &&
           markerData.adminTypes[j-1] != REGION_QID && (
             // Don't display the region for HUCs unless it's Metro Manila
             markerData.adminTypes[j-1] != CITY_QID ||
@@ -670,7 +718,7 @@ function processWikidataQuery() {
   Map.on('popupopen', handlePopup);
   Map.addLayer(mapMarkerCluster);
   Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
-    padding: new L.Point(50, 50),
+    padding: new L.Point(0, 0),  // TODO: Leaflet v1.0.0-rc.1 has a bug for padding
   });
 
   // Enable sort button and add click event handler, and perform initial sort
@@ -777,8 +825,6 @@ function handlePopup(e) {
       }
       inscriptionCell = markerData.popup._content.querySelector('.inscription');
       inscriptionCell.innerHTML = markerData.inscription || '<span class="nodata">No inscription encoded</span>';
-      if (markerData.inscription.length >  800) inscriptionCell.className = 'inscription long';
-      if (markerData.inscription.length > 1200) inscriptionCell.className = 'inscription longer';
       markerData.popup.update();
     });
   }
