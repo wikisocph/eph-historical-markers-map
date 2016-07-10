@@ -215,8 +215,19 @@ nav {
  text-indent: 0;
 }
 
+.popup dd a {
+ text-decoration: none;
+ border-bottom: 1px dotted #ccc;
+}
+
+.popup dd+dd {
+ margin: 5px 0;
+}
+
 .popup dd+dt {
- margin-top: 5px;
+ margin-top: 8px;
+ padding-top: 8px;
+ border-top: 1px solid #ccc;
 }
 
 .popup .nodata {
@@ -373,7 +384,7 @@ var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July
 var NL = "\n";
 var SPARQL_QUERY =
 'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?inscription ?country ?countryLabel' + NL +
-'       ?admin0Label ?admin0Type ?admin1Label ?admin1Type ?admin2Label ?admin2Type WHERE {' + NL +
+'       ?admin0Label ?admin0Type ?admin1Label ?admin1Type ?admin2Label ?admin2Type ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ; wdt:P625 ?coord .' + NL +
 '  OPTIONAL { ?marker wdt:P1476 ?title . }' + NL +
 '  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
@@ -386,6 +397,9 @@ var SPARQL_QUERY =
 '  OPTIONAL { ?admin1 wdt:P31  ?admin1Type . }' + NL +
 '  OPTIONAL { ?admin1 wdt:P131 ?admin2 . }' + NL +
 '  OPTIONAL { ?admin2 wdt:P31  ?admin2Type . }' + NL +
+'  OPTIONAL { ?marker wdt:P547 ?commemorated .' + NL +
+'             ?article schema:about ?commemorated ;' + NL +
+'             schema:isPartOf <https://en.wikipedia.org/> . }' + NL +
 '  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' + NL +
 '}';
 var SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
@@ -535,7 +549,7 @@ function processWikidataQuery() {
 
     // Parse and store basic historical marker data
     record = data.results.bindings[i];
-    wikidataId = record.marker.value.split('/')[4];
+    wikidataId = getWikidataID(record.marker);
     markerData = Markers[wikidataId] || {};
     Markers[wikidataId] = markerData;
     markerData.title = (record.title ? record.title.value : '') || record.markerLabel.value.replace(/ ?historical marker/i, '');
@@ -543,6 +557,13 @@ function processWikidataQuery() {
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
     markerData.inscription = (record.inscription ? formatInscription(record.inscription.value) : '');
+    markerData.commemorated = markerData.commemorated || {};
+    if (record.commemorated && !markerData.commemorated[getWikidataID(record.commemorated)]) {
+      markerData.commemorated[getWikidataID(record.commemorated)] = {
+        title  : record.commemoratedLabel.value,
+        wp_url : record.article.value,
+      };
+    }
 
     // Parse and store deduplicated and preferred admin division data
     if (!markerData.adminLabels) markerData.adminLabels = [];
@@ -554,7 +575,7 @@ function processWikidataQuery() {
       }
       typeProp = 'admin' + j + 'Type';
       if ((!markerData.adminTypes[j] || !ADMIN_QIDS[markerData.adminTypes[j]]) && record[typeProp]) {
-        markerData.adminTypes[j] = record[typeProp].value.split('/')[4];
+        markerData.adminTypes[j] = getWikidataID(record[typeProp]);
       }
     }
 
@@ -577,7 +598,7 @@ function processWikidataQuery() {
         break;
       }
     }
-    if (record.country && record.country.value.split('/')[4] != PH_QID) {
+    if (record.country && getWikidataID(record.country) != PH_QID) {
       location += (location ? ', ' : '') + record.countryLabel.value;
     }
     markerData.location = location;
@@ -663,6 +684,7 @@ function processWikidataQuery() {
 // Function to handle when a map popup is opened
 function handlePopup(e) {
 
+  var i, popupContentHtml, html;
   var wikidataId = e.popup._wikidataId;
   var markerData = Markers[e.popup._wikidataId];
   if (markerData.isPopupSet) return;
@@ -675,7 +697,7 @@ function handlePopup(e) {
   // Create initial popup content
   var popupContent = document.createElement('div');
   popupContent.className = 'popup';
-  popupContent.innerHTML =
+  popupContentHtml =
     '<h1>' + titleContent + '</h1>' +
     '<div class="inscription">' + (markerData.inscription || '<img src="spinner2.gif">')+ '</div>' +
     '<div class="details">' +
@@ -685,8 +707,24 @@ function handlePopup(e) {
     '    <dd>' + (markerData.date || '<span class="nodata">Unknown</span>') + '</dd>' +
     '    <dt>Location</dt>' +
     '    <dd>' + (markerData.location || '<span class="nodata">Unspecified</span>') + '</dd>' +
+    'CMMPLACEHOLDER' +
     '  </dl>' +
     '</div>';
+
+  // Generate commemorated links
+  html = '';
+  var commemoratedIDs = Object.keys(markerData.commemorated);
+  var numCommemorated = commemoratedIDs.length;
+  if (numCommemorated > 0) {
+    html = '<dt>Commemorates</dt>';
+    for (i = 0; i < numCommemorated; i++) {
+      var commemoratedData = markerData.commemorated[commemoratedIDs[i]];
+      html += '<dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
+    }
+  }
+  popupContentHtml = popupContentHtml.replace('CMMPLACEHOLDER', html);
+
+  popupContent.innerHTML = popupContentHtml;
   e.popup._content = popupContent;
 
   // Historical marker has an image in Commons
@@ -744,6 +782,11 @@ function handlePopup(e) {
       markerData.popup.update();
     });
   }
+}
+
+function getWikidataID(queryItem) {
+  if (!queryItem) return '';
+  return queryItem.value.split('/')[4];
 }
 
 function formatInscription(text) {
