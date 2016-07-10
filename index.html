@@ -370,31 +370,34 @@ nav {
 var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // Wikidata parameters
+var NL = "\n";
 var SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?inscription ?country ?countryLabel' +
-'       ?admin0Label ?admin0type ?admin1Label ?admin1type ?admin2Label ?admin2type WHERE {' +
-'  ?marker wdt:P31 wd:Q21562164 ; wdt:P625 ?coord .' +
-'  OPTIONAL { ?marker wdt:P1476 ?title . }' +
-'  OPTIONAL { ?marker wdt:P18 ?image . }' +
-'  OPTIONAL { ?marker wdt:P571 ?date . }' +
-'  OPTIONAL { ?marker wdt:P1684 ?inscription . }' +
-'  OPTIONAL { ?marker wdt:P17 ?country . }' +
-'  OPTIONAL { ?marker wdt:P131 ?admin0 . }' +
-'  OPTIONAL { ?admin0 wdt:P31  ?admin0type . }' +
-'  OPTIONAL { ?admin0 wdt:P131 ?admin1 . }' +
-'  OPTIONAL { ?admin1 wdt:P31  ?admin1type . }' +
-'  OPTIONAL { ?admin1 wdt:P131 ?admin2 . }' +
-'  OPTIONAL { ?admin2 wdt:P31  ?admin2type . }' +
-'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' +
+'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?inscription ?country ?countryLabel' + NL +
+'       ?admin0Label ?admin0Type ?admin1Label ?admin1Type ?admin2Label ?admin2Type WHERE {' + NL +
+'  ?marker wdt:P31 wd:Q21562164 ; wdt:P625 ?coord .' + NL +
+'  OPTIONAL { ?marker wdt:P1476 ?title . }' + NL +
+'  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
+'  OPTIONAL { ?marker wdt:P571 ?date . }' + NL +
+'  OPTIONAL { ?marker wdt:P1684 ?inscription . }' + NL +
+'  OPTIONAL { ?marker wdt:P17 ?country . }' + NL +
+'  OPTIONAL { ?marker wdt:P131 ?admin0 . }' + NL +
+'  OPTIONAL { ?admin0 wdt:P31  ?admin0Type . }' + NL +
+'  OPTIONAL { ?admin0 wdt:P131 ?admin1 . }' + NL +
+'  OPTIONAL { ?admin1 wdt:P31  ?admin1Type . }' + NL +
+'  OPTIONAL { ?admin1 wdt:P131 ?admin2 . }' + NL +
+'  OPTIONAL { ?admin2 wdt:P31  ?admin2Type . }' + NL +
+'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' + NL +
 '}';
 var SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
-var WDQS_API_URL = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
-var WDQS_GUI_URL = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
-var REGION_ITEM = 'Q24698';
-var PROV_ITEM = 'Q24746';
-var CITY_ITEM = 'Q104157';
-var MUNI_ITEM = 'Q24764';
-var ADMIN_ITEMS = {
+var WDQS_API_URL         = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
+var WDQS_GUI_URL         = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
+var PH_QID               = 'Q928';
+var REGION_QID           = 'Q24698';
+var PROV_QID             = 'Q24746';
+var CITY_QID             = 'Q104157';
+var MUNI_QID             = 'Q24764';
+var ADMIN_QIDS           = {
+  'Q6256': true,
   'Q24698': true,
   'Q24746': true,
   'Q104157': true,
@@ -402,6 +405,7 @@ var ADMIN_ITEMS = {
 };
 
 // Other app parameters
+var ADMIN_LEVELS           = 3;
 var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 var TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 var TILE_LAYER_MAX_ZOOM    = 19;
@@ -506,11 +510,11 @@ function processWikidataQuery() {
 
   if (this.readyState != this.DONE || this.status != 200) return;
 
-  var i, numMarkers = 0;
+  var i, j, numMarkers = 0;
   var wikidataId, record, markerData;
+  var labelProp, typeProp, location;
   var mapMarker, mapMarkerCluster, listElem, elem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
-  var location;
 
   var data = JSON.parse(this.responseText);
 
@@ -539,39 +543,47 @@ function processWikidataQuery() {
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
     markerData.inscription = (record.inscription ? formatInscription(record.inscription.value) : '');
-    markerData.country = (record.country ? record.country.value : '');
-    markerData.countryLabel = (record.countryLabel ? record.country.countryLabel : '');
-    if (!(markerData.admin0 && ADMIN_ITEMS[markerData.admin0type]) && record.admin0Label) {
-      markerData.admin0 = record.admin0Label.value;
-      markerData.admin0type = record.admin0type.value.split('/')[4];
-    }
-    if (!(markerData.admin1 && ADMIN_ITEMS[markerData.admin1type]) && record.admin1Label) {
-      markerData.admin1 = record.admin1Label.value;
-      markerData.admin1type = record.admin1type.value.split('/')[4];
-    }
-    if (!(markerData.admin2 && ADMIN_ITEMS[markerData.admin2type]) && record.admin2Label) {
-      markerData.admin2 = record.admin2Label.value;
-      markerData.admin2type = record.admin2type.value.split('/')[4];
-    }
-    if (markerData.admin0) {
-      location = markerData.admin0;
-      if (
-        markerData.admin0type != PROV_ITEM && markerData.admin0type != REGION_ITEM && markerData.admin1 &&
-        (markerData.admin0type != CITY_ITEM || markerData.admin1type == PROV_ITEM || markerData.admin1 == 'Metro Manila')
-      ) {
-        location += ', ' + markerData.admin1;
-        if (
-          markerData.admin1type != PROV_ITEM && markerData.admin1type != REGION_ITEM && markerData.admin2 &&
-          (markerData.admin1type != CITY_ITEM || markerData.admin2type == PROV_ITEM || markerData.admin2 == 'Metro Manila')
-        ) {
-          location += ', ' + markerData.admin2;
-        }
+
+    // Parse and store deduplicated and preferred admin division data
+    if (!markerData.adminLabels) markerData.adminLabels = [];
+    if (!markerData.adminTypes ) markerData.adminTypes  = [];
+    for (j = 0; j < ADMIN_LEVELS; j++) {
+      labelProp = 'admin' + j + 'Label';
+      if (!markerData.adminLabels[j] && record[labelProp]) {
+        markerData.adminLabels[j] = record[labelProp].value;
       }
+      typeProp = 'admin' + j + 'Type';
+      if ((!markerData.adminTypes[j] || !ADMIN_QIDS[markerData.adminTypes[j]]) && record[typeProp]) {
+        markerData.adminTypes[j] = record[typeProp].value.split('/')[4];
+      }
+    }
+
+    // Update location
+    location = '';
+    for (j = 0; j < ADMIN_LEVELS; j++) {
+      if (
+        markerData.adminLabels[j] && (j == 0 || (
+          markerData.adminTypes[j-1] != PROV_QID &&
+          markerData.adminTypes[j-1] != REGION_QID && (
+            // Don't display the region for HUCs unless it's Metro Manila
+            markerData.adminTypes[j-1] != CITY_QID ||
+            markerData.adminTypes[j] != REGION_QID ||
+            markerData.adminLabels[j] == 'Metro Manila'
+          )
+        ))
+      ) {
+        location += (location ? ', ' : '') + markerData.adminLabels[j];
+      } else {
+        break;
+      }
+    }
+    if (record.country && record.country.value.split('/')[4] != PH_QID) {
+      location += (location ? ', ' : '') + record.countryLabel.value;
     }
     markerData.location = location;
 
     // Format date or year installed string
-    // NOTE: This assumes that YYYY-01-01 is just for the year.
+    // TODO: This assumes that YYYY-01-01 is just for the year.
     // This code should be improved when WDQS provides the date precision.
     if (record.date) {
       if (record.date.value.substr(5, 5) == '01-01') {
