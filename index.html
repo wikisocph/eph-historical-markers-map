@@ -532,40 +532,6 @@ function init() {
   xhrObject.send(null);
 }
 
-// Function to resize the page elements
-function resizePage() {
-
-  // Resize the left pane
-  var navElem = document.getElementsByTagName('nav')[0];
-  var navListElem = document.getElementById('nav-list');
-  var brandingHeight = document.getElementById('branding').clientHeight;
-  var navHeaderHeight = document.getElementById('nav-header').clientHeight;
-  var variableHeight = window.innerHeight - brandingHeight;
-  navElem.style.top = brandingHeight + 'px';
-  navElem.style.height = variableHeight + 'px';
-  navListElem.style.height = (variableHeight - navHeaderHeight) + 'px';
-
-  // Resize the about modal
-  var aboutModal = document.getElementById('about-modal');
-  // Set width first as this affects the content height
-  if (window.innerWidth < 680) {  // Default CSS width + padding + margin
-    aboutModal.style.width = (window.innerWidth - 80) + 'px';  // Default CSS padding + margin
-  } else {
-    aboutModal.style.width = '600px';  // Default CSS width
-  }
-  var contentHeight =
-    document.querySelector('#about-modal section').clientHeight +
-    document.querySelector('#about-modal footer').clientHeight + 10;  // Default CSS p bottom-margin
-  if (window.innerHeight < contentHeight + 80) {  // Default CSS padding + margin
-    aboutModal.style.height = (window.innerHeight - 80) + 'px';  // Default CSS padding + margin
-    aboutModal.style.marginTop = '20px';  // Default CSS margin
-  } else {
-    aboutModal.style.height = contentHeight + 'px';
-    aboutModal.style.marginTop = ((window.innerHeight - contentHeight - 40)/2) + 'px';  // Default CSS margin
-  }
-  document.querySelector('#about-modal header').style.height = contentHeight + 'px';
-}
-
 // Function to process the results of the Wikidata query
 function processWikidataQuery() {
 
@@ -607,6 +573,7 @@ function processWikidataQuery() {
     markerData.inscription = (record.inscription ? formatInscription(record.inscription.value) : '');
     markerData.commemorated = markerData.commemorated || {};
     if (record.commemorated && !markerData.commemorated[getWikidataID(record.commemorated)]) {
+      markerData.hasCommemorated = true;
       markerData.commemorated[getWikidataID(record.commemorated)] = {
         title  : record.commemoratedLabel.value,
         wp_url : record.article.value,
@@ -732,21 +699,33 @@ function processWikidataQuery() {
 // Function to handle when a map popup is opened
 function handlePopup(e) {
 
-  var i, popupContentHtml, html;
+  var i;
   var wikidataId = e.popup._wikidataId;
   var markerData = Markers[e.popup._wikidataId];
+  var commemoratedIDs, commemoratedData;
+  var popupContent, popupContentHtmlString, titleHtmlString, commemoratedHtmlString;
+  var mediawikiApiUrl;
+
   if (markerData.isPopupSet) return;
-  markerData.isPopupSet = true; 
+  markerData.isPopupSet = true;
 
-  var apiUrl;
-  var imageUrl = markerData.imageUrl;
-  var titleContent = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
+  // Create initial popup content of known marker data
 
-  // Create initial popup content
-  var popupContent = document.createElement('div');
-  popupContent.className = 'popup';
-  popupContentHtml =
-    '<h1>' + titleContent + '</h1>' +
+  titleHtmlString = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
+
+  if (markerData.hasCommemorated) {
+    commemoratedIDs = Object.keys(markerData.commemorated);
+    commemoratedHtmlString = '';
+    for (i = 0; i < commemoratedIDs.length; i++) {
+      commemoratedData = markerData.commemorated[commemoratedIDs[i]];
+      commemoratedHtmlString += '    <dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
+    }
+  } else {
+    commemoratedHtmlString = '    <dd><span class="nodata">Unspecified</span></dd>';
+  }
+
+  popupContentHtmlString =
+    '<h1>' + titleHtmlString + '</h1>' +
     '<div class="inscription">' + (markerData.inscription || '<img src="spinner2.gif">')+ '</div>' +
     '<div class="details">' +
     '  <div class="image"></div>' +
@@ -755,40 +734,28 @@ function handlePopup(e) {
     '    <dd>' + (markerData.date || '<span class="nodata">Unknown</span>') + '</dd>' +
     '    <dt>Location</dt>' +
     '    <dd>' + (markerData.location || '<span class="nodata">Unspecified</span>') + '</dd>' +
-    'CMMPLACEHOLDER' +
+    '    <dt>Commemorates</dt>' +
+    commemoratedHtmlString +
     '  </dl>' +
     '</div>';
 
-  // Generate commemorated links
-  html = '';
-  var commemoratedIDs = Object.keys(markerData.commemorated);
-  var numCommemorated = commemoratedIDs.length;
-  if (numCommemorated > 0) {
-    html = '<dt>Commemorates</dt>';
-    for (i = 0; i < numCommemorated; i++) {
-      var commemoratedData = markerData.commemorated[commemoratedIDs[i]];
-      html += '<dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
-    }
-  }
-  popupContentHtml = popupContentHtml.replace('CMMPLACEHOLDER', html);
-
-  popupContent.innerHTML = popupContentHtml;
+  popupContent = document.createElement('div');
+  popupContent.className = 'popup';
+  popupContent.innerHTML = popupContentHtmlString;
   e.popup._content = popupContent;
 
   // Historical marker has an image in Commons
-  if (imageUrl) {
+  if (markerData.imageUrl) {
 
     // Set loading indicator while image thumbnail URL is being fetched
     popupContent.querySelector('.image').innerHTML = '<img src="spinner2.gif">';
-    e.popup.setContent(popupContent);
-    e.popup.update();
 
     // Fetch thumbnail URL and then update popup content
-    apiUrl =
+    mediawikiApiUrl =
       'http://commons.wikimedia.org/w/api.php?action=query' +
       '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
-      '&titles=' + imageUrl;
-    loadJSONP(apiUrl, function(data) {
+      '&titles=' + markerData.imageUrl;
+    loadJSONP(mediawikiApiUrl, function(data) {
       var pageId = Object.keys(data.query.pages)[0];
       var thumbUrl    = data.query.pages[pageId].imageinfo[0].thumburl;
       var thumbHeight = data.query.pages[pageId].imageinfo[0].thumbheight;
@@ -804,18 +771,19 @@ function handlePopup(e) {
   // Historical marker has no image in Commons
   else {
     popupContent.querySelector('.image').innerHTML = '<span class="nodata">No photo available</span>';
-    e.popup.setContent(popupContent);
-    e.popup.update();
   }
+
+  e.popup.setContent(popupContent);
+  e.popup.update();
 
   // Historical marker has no direct inscription:
   // try looking for the {{LongInscription}} template
   if (!markerData.inscription) {
-    apiUrl =
+    mediawikiApiUrl =
       'https://www.wikidata.org/w/api.php?action=query' +
       '&prop=revisions&rvprop=content&format=json' +
       '&titles=Talk:' + wikidataId;
-    loadJSONP(apiUrl, function(data) {
+    loadJSONP(mediawikiApiUrl, function(data) {
       var pageId, talkContent, matches, inscriptionCell;
       pageId = Object.keys(data.query.pages)[0];
       if (pageId != '-1') {
@@ -828,15 +796,6 @@ function handlePopup(e) {
       markerData.popup.update();
     });
   }
-}
-
-function getWikidataID(queryItem) {
-  if (!queryItem) return '';
-  return queryItem.value.split('/')[4];
-}
-
-function formatInscription(text) {
-  return '<p>' + text.replace(/\s*<br\s*\/?>(?:<br\s*\/?>)?\s*/gi, '</p><p>') + '</p>';
 }
 
 // Function to toggle the sort mode and then sort the markers list on the left pane
@@ -877,18 +836,59 @@ function switchSortMode() {
   }
 }
 
-// Function to show the about modal
+// Function to resize the page elements
+function resizePage() {
+
+  // Resize the left pane
+  var navElem = document.getElementsByTagName('nav')[0];
+  var navListElem = document.getElementById('nav-list');
+  var brandingHeight = document.getElementById('branding').clientHeight;
+  var navHeaderHeight = document.getElementById('nav-header').clientHeight;
+  var variableHeight = window.innerHeight - brandingHeight;
+  navElem.style.top = brandingHeight + 'px';
+  navElem.style.height = variableHeight + 'px';
+  navListElem.style.height = (variableHeight - navHeaderHeight) + 'px';
+
+  // Resize the about modal
+  var aboutModal = document.getElementById('about-modal');
+  // Set width first as this affects the content height
+  if (window.innerWidth < 680) {  // Default CSS width + padding + margin
+    aboutModal.style.width = (window.innerWidth - 80) + 'px';  // Default CSS padding + margin
+  } else {
+    aboutModal.style.width = '600px';  // Default CSS width
+  }
+  var contentHeight =
+    document.querySelector('#about-modal section').clientHeight +
+    document.querySelector('#about-modal footer').clientHeight + 10;  // Default CSS p bottom-margin
+  if (window.innerHeight < contentHeight + 80) {  // Default CSS padding + margin
+    aboutModal.style.height = (window.innerHeight - 80) + 'px';  // Default CSS padding + margin
+    aboutModal.style.marginTop = '20px';  // Default CSS margin
+  } else {
+    aboutModal.style.height = contentHeight + 'px';
+    aboutModal.style.marginTop = ((window.innerHeight - contentHeight - 40)/2) + 'px';  // Default CSS margin
+  }
+  document.querySelector('#about-modal header').style.height = contentHeight + 'px';
+}
+
 function showAbout() {
   var about_pane = document.getElementById('about');
   about_pane.style.visibility = 'visible';
   about_pane.style.opacity = 1;
 }
 
-// Function to hide the about modal
 function hideAbout() {
   var about_pane = document.getElementById('about');
   about_pane.style.visibility = 'hidden';
   about_pane.style.opacity = 0;
+}
+
+function getWikidataID(queryItem) {
+  if (!queryItem) return '';
+  return queryItem.value.split('/')[4];
+}
+
+function formatInscription(text) {
+  return '<p>' + text.replace(/\s*<br\s*\/?>(?:<br\s*\/?>)?\s*/gi, '</p><p>') + '</p>';
 }
 
 // Library function to load JSONP data
