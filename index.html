@@ -387,7 +387,8 @@ var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July
 // Wikidata parameters
 var NL = "\n";
 var SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?inscription ?country ?countryLabel' + NL +
+'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?datePrecision' + NL +
+'       ?inscription ?country ?countryLabel' + NL +
 '       ?admin0Label ?admin0Type ?admin1Label ?admin1Type' + NL +
 '       ?admin2Label ?admin2Type ?admin3Label ?admin3Type' + NL +
 '       ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
@@ -395,7 +396,12 @@ var SPARQL_QUERY =
 '          wdt:P625 ?coord .' + NL +
 '  OPTIONAL { ?marker wdt:P1476 ?title . }' + NL +
 '  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
-'  OPTIONAL { ?marker wdt:P571 ?date . }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P571 ?dateStatement .' + NL +
+'    ?dateStatement psv:P571 ?dateValue .' + NL +
+'    ?dateValue wikibase:timeValue ?date .' + NL +
+'    ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
+'  }' + NL +
 '  OPTIONAL { ?marker wdt:P1684 ?inscription . }' + NL +
 '  OPTIONAL { ?marker wdt:P17 ?country . }' + NL +
 '  OPTIONAL {' + NL +
@@ -456,6 +462,8 @@ var SPARQL_QUERY =
 var SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
 var WDQS_API_URL         = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
 var WDQS_GUI_URL         = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
+var YEAR_PRECISION       = '9';
+var DATE_PRECISION       = '11';
 var PH_QID               = 'Q928';
 var ADMIN_QIDS           = {};
 var COUNTRY_QID          = 'Q6256';    ADMIN_QIDS[COUNTRY_QID     ] = true;
@@ -619,10 +627,9 @@ function processWikidataQuery() {
     markerData.location = location;
 
     // Format date or year installed string
-    // TODO: This assumes that YYYY-01-01 is just for the year.
-    // This code should be improved when WDQS provides the date precision.
     if (record.date) {
-      if (record.date.value.substr(5, 5) == '01-01') {
+      markerData.datePrecision = record.datePrecision.value;
+      if (record.datePrecision.value == YEAR_PRECISION) {
         markerData.date = record.date.value.substr(0, 4);
       } else {
         markerData.date =
@@ -730,7 +737,7 @@ function handlePopup(e) {
     '<div class="details">' +
     '  <div class="image"></div>' +
     '  <dl class="extra">' +
-    '    <dt>' + (markerData.date.length == 4 ? 'Year' : 'Date') + ' installed</dt>' +
+    '    <dt>' + (markerData.datePrecision == YEAR_PRECISION ? 'Year' : 'Date') + ' installed</dt>' +
     '    <dd>' + (markerData.date || '<span class="nodata">Unknown</span>') + '</dd>' +
     '    <dt>Location</dt>' +
     '    <dd>' + (markerData.location || '<span class="nodata">Unspecified</span>') + '</dd>' +
