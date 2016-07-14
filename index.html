@@ -483,8 +483,9 @@ var MAX_PH_LAT             =  21.0;
 var MIN_PH_LON             = 116.5;
 var MAX_PH_LON             = 126.5;
 
-var Map;          // Leaflet map object
 var Markers = {}; // Hash to contain data about historical markers
+var Map;          // Leaflet map object
+var Cluster;      // Leaflet map cluster
 var SortModes = [
   { id: 'alpha', label: 'alphabetically' },
   { id: 'qid',   label: 'by Wikidata ID' },
@@ -548,13 +549,14 @@ function processWikidataQuery() {
   var i, j, numMarkers = 0;
   var wikidataId, record, markerData;
   var labelProp, typeProp, location;
-  var mapMarker, mapMarkerCluster, listElem, elem;
+  var mapMarker, listElem, elem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
+  var selectedMarkerId;
 
   var data = JSON.parse(this.responseText);
 
   // Initialize cluster and list pane
-  mapMarkerCluster = new L.markerClusterGroup({
+  Cluster = new L.markerClusterGroup({
     maxClusterRadius: function(z) {
       if (z <= 15) return 50;
       if (z <= 16) return 40;
@@ -659,7 +661,7 @@ function processWikidataQuery() {
       // Create a map marker and add to the cluster
       mapMarker = L.marker([markerData.lat, markerData.lon]);
       mapMarker.bindPopup('', {maxWidth: 400});
-      mapMarkerCluster.addLayer(mapMarker);
+      Cluster.addLayer(mapMarker);
       markerData.marker = mapMarker;
       markerData.popup = mapMarker.getPopup();
       markerData.marker._wikidataId = wikidataId;
@@ -670,30 +672,32 @@ function processWikidataQuery() {
       elem.innerHTML = markerData.title;
       elem._wikidataId = wikidataId;
       elem.addEventListener('click', function(ev) {
-        var markerData = Markers[ev.target._wikidataId];
-        Map.setView([markerData.lat, markerData.lon], TILE_LAYER_MAX_ZOOM, {
-          animate: false,
-        });
-        var mapMarker = markerData.marker;
-        mapMarkerCluster.zoomToShowLayer(mapMarker, function() {
-          mapMarker.openPopup();
-        });
+        zoomToAndOpenMarkerPopup(ev.target._wikidataId);
       });
       markerData.listItemElem = elem;
       listElem.appendChild(elem);
     }
   }
 
-  // Display total number of markers
-  document.getElementById('stats').innerHTML =
-    'Showing a total of ' + numMarkers + ' markers';
+  // Update the map to add the clustered markers and display total number of markers
+  Map.addLayer(Cluster);
+  document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
 
-  // Update the map to add a popup event handler and the cluster, and to update the view
+  // Update the map to add popup event handlers
   Map.on('popupopen', handlePopup);
-  Map.addLayer(mapMarkerCluster);
-  Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
-    padding: new L.Point(0, 0),  // TODO: Leaflet v1.0.0-rc.1 has a bug for padding
+  Map.on('popupclose', function() {
+    window.location.hash = '';
   });
+
+  // Update the map view to fit the markers or display the selected marker if any
+  selectedMarkerId = window.location.hash.replace('#', '');
+  if (Markers[selectedMarkerId]) {
+    zoomToAndOpenMarkerPopup(selectedMarkerId);
+  } else {
+    Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
+      padding: new L.Point(0, 0),  // TODO: Leaflet v1.0.0-rc.1 has a bug for padding
+    });
+  }
 
   // Enable sort button and add click event handler, and perform initial sort
   elem = document.getElementById('sort');
@@ -701,6 +705,18 @@ function processWikidataQuery() {
   elem.addEventListener('click', switchSortMode);
   CurrentSortModeIdx = SortModes.length - 1;
   switchSortMode();
+}
+
+// Function to zoom to a specified historical marker and open its popup
+function zoomToAndOpenMarkerPopup(markerWikidataId) {
+  var markerData = Markers[markerWikidataId];
+  var mapMarker = markerData.marker;
+  Map.setView([markerData.lat, markerData.lon], TILE_LAYER_MAX_ZOOM, {
+    animate: false,
+  });
+  Cluster.zoomToShowLayer(mapMarker, function() {
+    mapMarker.openPopup();
+  });
 }
 
 // Function to handle when a map popup is opened
@@ -712,6 +728,8 @@ function handlePopup(e) {
   var commemoratedIDs, commemoratedData;
   var popupContent, popupContentHtmlString, titleHtmlString, commemoratedHtmlString;
   var mediawikiApiUrl;
+
+  window.location.hash = '#' + wikidataId;
 
   if (markerData.isPopupSet) return;
   markerData.isPopupSet = true;
