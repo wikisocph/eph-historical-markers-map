@@ -162,6 +162,10 @@ nav {
 }
 .popup h1 a:hover { color: #bbf; }
 
+.popup h1.untitled {
+ font-style: italic;
+}
+
 .popup .inscription {
  float: left;
  margin: 0 15px 15px 0;
@@ -199,6 +203,13 @@ nav {
 
 .popup .image img {
  display: block;
+}
+
+.popup .image.nodata {
+ height: 100px;
+ line-height: 100px;
+ text-align: center;
+ background: #eee;
 }
 
 .popup .extra {
@@ -387,14 +398,19 @@ var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July
 // Wikidata parameters
 var NL = "\n";
 var SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?image ?date ?datePrecision' + NL +
-'       ?inscription ?country ?countryLabel' + NL +
+'SELECT ?marker ?markerLabel ?coord ?title ?titleNoValue ?image' + NL +
+'       ?date ?datePrecision ?inscription ?inscriptionNoValue ?country ?countryLabel' + NL +
 '       ?admin0Label ?admin0Type ?admin1Label ?admin1Type' + NL +
 '       ?admin2Label ?admin2Type ?admin3Label ?admin3Type' + NL +
 '       ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ;' + NL +
 '          wdt:P625 ?coord .' + NL +
 '  OPTIONAL { ?marker wdt:P1476 ?title . }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P1476 ?titleStatement .' + NL +
+'    ?titleStatement a ?titleNoValue .' + NL +
+'    FILTER (?titleNoValue = wdno:P1476)' + NL +
+'  }' + NL +
 '  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker p:P571 ?dateStatement .' + NL +
@@ -403,6 +419,11 @@ var SPARQL_QUERY =
 '    ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
 '  }' + NL +
 '  OPTIONAL { ?marker wdt:P1684 ?inscription . }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P1684 ?inscriptionStatement .' + NL +
+'    ?inscriptionStatement a ?inscriptionNoValue .' + NL +
+'    FILTER (?inscriptionNoValue = wdno:P1684)' + NL +
+'  }' + NL +
 '  OPTIONAL { ?marker wdt:P17 ?country . }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P131 ?admin0 .' + NL +
@@ -577,10 +598,12 @@ function processWikidataQuery() {
     markerData = Markers[wikidataId] || {};
     Markers[wikidataId] = markerData;
     markerData.title = (record.title ? record.title.value : '') || record.markerLabel.value.replace(/ ?historical marker/i, '');
+    markerData.titleIsNoValue = Boolean(record.titleNoValue);
     markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
     markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
     markerData.inscription = (record.inscription ? formatInscription(record.inscription.value) : '');
+    markerData.inscriptionIsNoValue = Boolean(record.inscriptionNoValue);
     markerData.commemorated = markerData.commemorated || {};
     if (record.commemorated && !markerData.commemorated[getWikidataID(record.commemorated)]) {
       markerData.hasCommemorated = true;
@@ -726,7 +749,8 @@ function handlePopup(e) {
   var wikidataId = e.popup._wikidataId;
   var markerData = Markers[e.popup._wikidataId];
   var commemoratedIDs, commemoratedData;
-  var popupContent, popupContentHtmlString, titleHtmlString, commemoratedHtmlString;
+  var popupContent, popupContentHtmlString;
+  var titleHtmlString, inscriptionHtmlString, imageHtmlString, commemoratedHtmlString;
   var mediawikiApiUrl;
 
   window.location.hash = '#' + wikidataId;
@@ -736,46 +760,58 @@ function handlePopup(e) {
 
   // Create initial popup content of known marker data
 
-  titleHtmlString = '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' + markerData.title + '</a>';
+  titleHtmlString =
+    '<h1' + (markerData.titleIsNoValue ? ' class="untitled"' : '') + '>' +
+    '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' +
+    (markerData.titleIsNoValue ? 'Untitled' : markerData.title) + '</a></h1>';
+
+  inscriptionHtmlString =
+    '<div class="inscription' + (markerData.inscriptionIsNoValue ? ' nodata' : '') + '">' +
+    (
+      markerData.inscriptionIsNoValue
+      ? 'This historical marker has no inscription.'
+      : (markerData.inscription || '<img src="spinner2.gif">')
+    ) + '</div>';
+
+  imageHtmlString =
+    '<div class="image' + (markerData.imageUrl ? '' : ' nodata') + '">' +
+    (markerData.imageUrl ? '<img src="spinner2.gif">' : 'No photo available' ) + '</div>';
 
   if (markerData.hasCommemorated) {
     commemoratedIDs = Object.keys(markerData.commemorated);
     commemoratedHtmlString = '';
     for (i = 0; i < commemoratedIDs.length; i++) {
       commemoratedData = markerData.commemorated[commemoratedIDs[i]];
-      commemoratedHtmlString += '    <dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
+      commemoratedHtmlString += '<dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
     }
   } else {
-    commemoratedHtmlString = '    <dd><span class="nodata">Unspecified</span></dd>';
+    commemoratedHtmlString = '<dd class="nodata">Unspecified</dd>';
   }
 
   popupContentHtmlString =
-    '<h1>' + titleHtmlString + '</h1>' +
-    '<div class="inscription">' + (markerData.inscription || '<img src="spinner2.gif">')+ '</div>' +
+    titleHtmlString +
+    inscriptionHtmlString +
     '<div class="details">' +
-    '  <div class="image"></div>' +
-    '  <dl class="extra">' +
-    '    <dt>' + (markerData.datePrecision == YEAR_PRECISION ? 'Year' : 'Date') + ' installed</dt>' +
-    '    <dd>' + (markerData.date || '<span class="nodata">Unknown</span>') + '</dd>' +
-    '    <dt>Location</dt>' +
-    '    <dd>' + (markerData.location || '<span class="nodata">Unspecified</span>') + '</dd>' +
-    '    <dt>Commemorates</dt>' +
+    imageHtmlString +
+    '<dl class="extra">' +
+    '<dt>' + (markerData.datePrecision == YEAR_PRECISION ? 'Year' : 'Date') + ' installed</dt>' +
+    '<dd' + (markerData.date ? ('>' + markerData.date) : ' class="nodata">Unknown') + '</dd>' +
+    '<dt>Location</dt>' +
+    '<dd' + (markerData.location ? ('>' + markerData.location) : ' class="nodata">Unspecified') + '</dd>' +
+    '<dt>Commemorates</dt>' +
     commemoratedHtmlString +
-    '  </dl>' +
+    '</dl>' +
     '</div>';
 
   popupContent = document.createElement('div');
   popupContent.className = 'popup';
   popupContent.innerHTML = popupContentHtmlString;
   e.popup._content = popupContent;
+  e.popup.setContent(popupContent);
+  e.popup.update();
 
-  // Historical marker has an image in Commons
+  // If there's an image fetch the thumbnail URL and then update popup content
   if (markerData.imageUrl) {
-
-    // Set loading indicator while image thumbnail URL is being fetched
-    popupContent.querySelector('.image').innerHTML = '<img src="spinner2.gif">';
-
-    // Fetch thumbnail URL and then update popup content
     mediawikiApiUrl =
       'http://commons.wikimedia.org/w/api.php?action=query' +
       '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
@@ -793,31 +829,24 @@ function handlePopup(e) {
     });
   }
 
-  // Historical marker has no image in Commons
-  else {
-    popupContent.querySelector('.image').innerHTML = '<span class="nodata">No photo available</span>';
-  }
-
-  e.popup.setContent(popupContent);
-  e.popup.update();
-
   // Historical marker has no direct inscription:
   // try looking for the {{LongInscription}} template
-  if (!markerData.inscription) {
+  if (!markerData.inscriptionIsNoValue && !markerData.inscription) {
     mediawikiApiUrl =
       'https://www.wikidata.org/w/api.php?action=query' +
       '&prop=revisions&rvprop=content&format=json' +
       '&titles=Talk:' + wikidataId;
     loadJSONP(mediawikiApiUrl, function(data) {
-      var pageId, talkContent, matches, inscriptionCell;
+      var pageId, talkContent, matches, inscriptionElem;
       pageId = Object.keys(data.query.pages)[0];
       if (pageId != '-1') {
         talkContent = data.query.pages[pageId].revisions[0]['*'];
         matches = talkContent.match(/{{\s*LongInscription[^]*?\|\s*inscription\s*=\s*([^]*?)(?:\||}})/);
         if (matches && matches[1]) markerData.inscription = formatInscription(matches[1]);
       }
-      inscriptionCell = markerData.popup._content.querySelector('.inscription');
-      inscriptionCell.innerHTML = markerData.inscription || '<span class="nodata">No inscription encoded</span>';
+      inscriptionElem = markerData.popup._content.querySelector('.inscription');
+      if (!markerData.inscription) inscriptionElem.className = 'inscription nodata';
+      inscriptionElem.innerHTML = markerData.inscription || 'No inscription encoded';
       markerData.popup.update();
     });
   }
