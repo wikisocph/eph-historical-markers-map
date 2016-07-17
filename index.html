@@ -572,7 +572,7 @@ function processWikidataQuery() {
   var labelProp, typeProp, location;
   var mapMarker, listElem, elem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
-  var selectedMarkerId;
+  var fragmentId;
 
   var data = JSON.parse(this.responseText);
 
@@ -713,10 +713,11 @@ function processWikidataQuery() {
   });
 
   // Update the map view to fit the markers or display the selected marker if any
-  selectedMarkerId = window.location.hash.replace('#', '');
-  if (Markers[selectedMarkerId]) {
-    zoomToAndOpenMarkerPopup(selectedMarkerId);
+  fragmentId = window.location.hash.replace('#', '');
+  if (Markers[fragmentId]) {
+    zoomToAndOpenMarkerPopup(fragmentId);
   } else {
+    if (fragmentId == 'about') showAbout();
     Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
       padding: new L.Point(0, 0),  // TODO: Leaflet v1.0.0-rc.1 has a bug for padding
     });
@@ -928,12 +929,14 @@ function showAbout() {
   var about_pane = document.getElementById('about');
   about_pane.style.visibility = 'visible';
   about_pane.style.opacity = 1;
+  window.location.hash = '#about';
 }
 
 function hideAbout() {
   var about_pane = document.getElementById('about');
   about_pane.style.visibility = 'hidden';
   about_pane.style.opacity = 0;
+  window.location.hash = '';
 }
 
 function getWikidataID(queryItem) {
