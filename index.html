@@ -475,8 +475,10 @@ var SPARQL_QUERY =
 '  }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P547 ?commemorated .' + NL +
-'    ?article schema:about ?commemorated ;' + NL +
-'             schema:isPartOf <https://en.wikipedia.org/> .' + NL +
+'    OPTIONAL {' + NL +
+'      ?article schema:about ?commemorated ;' + NL +
+'               schema:isPartOf <https://en.wikipedia.org/> .' + NL +
+'    }' + NL +
 '  }' + NL +
 '  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' + NL +
 '}';
@@ -609,7 +611,7 @@ function processWikidataQuery() {
       markerData.hasCommemorated = true;
       markerData.commemorated[getWikidataID(record.commemorated)] = {
         title  : record.commemoratedLabel.value,
-        wp_url : record.article.value,
+        wp_url : (record.article ? record.article.value : ''),
       };
     }
 
@@ -752,7 +754,7 @@ function handlePopup(e) {
   var commemoratedIDs, commemoratedData;
   var popupContent, popupContentHtmlString;
   var titleHtmlString, inscriptionHtmlString, imageHtmlString, commemoratedHtmlString;
-  var mediawikiApiUrl;
+  var hasWpArticle, mediawikiApiUrl;
 
   window.location.hash = '#' + wikidataId;
 
@@ -781,9 +783,18 @@ function handlePopup(e) {
   if (markerData.hasCommemorated) {
     commemoratedIDs = Object.keys(markerData.commemorated);
     commemoratedHtmlString = '';
+    hasWpArticle = false;
     for (i = 0; i < commemoratedIDs.length; i++) {
       commemoratedData = markerData.commemorated[commemoratedIDs[i]];
-      commemoratedHtmlString += '<dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
+      if (commemoratedData.wp_url) {
+        hasWpArticle = true;
+        commemoratedHtmlString += '<dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
+      } else {
+        commemoratedHtmlString += '<dd>' + commemoratedData.title + '</dd>';
+      }
+    }
+    if (!hasWpArticle) {
+      commemoratedHtmlString = '<dd class="nodata">No Wikipedia articles yet</dd>';
     }
   } else {
     commemoratedHtmlString = '<dd class="nodata">Unspecified</dd>';
