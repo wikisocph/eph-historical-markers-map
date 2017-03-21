@@ -192,17 +192,35 @@ nav {
  line-height: 16px;
 }
 
-.popup .image.sized {
- background: #ccc;
-}
-
-.popup .image a {
+.popup .image > a {
  display: block;
+ background: #ccc;
  text-decoration: none;
 }
 
 .popup .image img {
  display: block;
+}
+
+.popup .image small {
+ display: block;
+ padding-top: 5px;
+ font-size: 9px;
+ line-height: 12px;
+ text-align: right;
+ color: #888;
+ background: #fff;
+}
+
+.popup .image small a {
+ display: inline;
+ color: #888;
+ text-decoration: none;
+ border-bottom: 1px dotted #ccc;
+}
+.popup .image small a:hover {
+ background: #eee;
+ border-bottom: 1px solid #eee;
 }
 
 .popup .image.nodata {
@@ -233,6 +251,10 @@ nav {
 .popup dd a {
  text-decoration: none;
  border-bottom: 1px dotted #ccc;
+}
+.popup dd a:hover {
+ background: #eee;
+ border-bottom: 1px solid #eee;
 }
 
 .popup dd+dd {
@@ -697,7 +719,7 @@ function processWikidataQuery() {
       elem.innerHTML = markerData.title;
       elem._wikidataId = wikidataId;
       elem.addEventListener('click', function(ev) {
-        zoomToAndOpenMarkerPopup(ev.target._wikidataId);
+        zoomToAndOpenMarkerPopup(ev.currentTarget._wikidataId);
       });
       markerData.listItemElem = elem;
       listElem.appendChild(elem);
@@ -755,6 +777,7 @@ function handlePopup(e) {
   var popupContent, popupContentHtmlString;
   var titleHtmlString, inscriptionHtmlString, imageHtmlString, commemoratedHtmlString;
   var hasWpArticle, mediawikiApiUrl;
+  var imageArea;
 
   window.location.hash = '#' + wikidataId;
 
@@ -822,22 +845,46 @@ function handlePopup(e) {
   e.popup.setContent(popupContent);
   e.popup.update();
 
-  // If there's an image fetch the thumbnail URL and then update popup content
+  // Marker has an image: fetch content for the popup
   if (markerData.imageUrl) {
+
+    imageArea = markerData.popup._content.querySelector('.image');
+
+    // Fetch the image thumbnail
     mediawikiApiUrl =
       'http://commons.wikimedia.org/w/api.php?action=query' +
       '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
       '&titles=' + markerData.imageUrl;
     loadJSONP(mediawikiApiUrl, function(data) {
       var pageId = Object.keys(data.query.pages)[0];
-      var thumbUrl    = data.query.pages[pageId].imageinfo[0].thumburl;
-      var thumbHeight = data.query.pages[pageId].imageinfo[0].thumbheight;
-      var descUrl = data.query.pages[pageId].imageinfo[0].descriptionurl;
-      var imageCell = markerData.popup._content.querySelector('.image');
-      imageCell.innerHTML = '<a href="' + descUrl + '"><img id="img' + wikidataId + '" src="' + thumbUrl + '"></a>';
-      imageCell.className = 'image sized';
-      imageCell.style.height = thumbHeight + 'px';
+      var imageInfo = data.query.pages[pageId].imageinfo[0];
+      var image  = document.createElement('img');
+      image.src = imageInfo.thumburl;
+      var anchor = document.createElement('a');
+      anchor.href = imageInfo.descriptionurl;
+      anchor.style.height = imageInfo.thumbheight + 'px';
+      anchor.appendChild(image);
+      imageArea.replaceChild(anchor, imageArea.childNodes[0]);  // replace spinner
       markerData.popup.update();
+    });
+
+    // Fetch the image attribution if needed
+    mediawikiApiUrl =
+      'http://commons.wikimedia.org/w/api.php?action=query' +
+      '&prop=imageinfo&iiprop=extmetadata&format=json' +
+      '&titles=' + markerData.imageUrl;
+    loadJSONP(mediawikiApiUrl, function(data) {
+      var pageId = Object.keys(data.query.pages)[0];
+      var metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
+      var artistHtmlString, licenseShortName;
+      if (metadata.AttributionRequired.value == 'true') {
+        if (metadata.Artist.value.search('href="//') >= 0) {
+          artistHtmlString = metadata.Artist.value.replace(/href="\/\//, window.location.protocol == 'https' ? 'href="https://' : 'href="http://');
+        }
+        licenseShortName = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
+        imageArea.insertAdjacentHTML('beforeend', '<small>© ' + artistHtmlString + ' / <a href="' + metadata.LicenseUrl.value + '">' + licenseShortName + '</a></small>');
+        markerData.popup.update();
+      }
     });
   }
 
