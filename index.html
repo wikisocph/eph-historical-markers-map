@@ -162,6 +162,14 @@ nav {
 }
 .popup h1 a:hover { color: #bbf; }
 
+.popup h1 .subtitle {
+ font-size: 0.85em;
+}
+.popup h1 .subtitle:before {
+ content: '\a';
+ white-space: pre;
+}
+
 .popup h1.untitled {
  font-style: italic;
 }
@@ -420,18 +428,23 @@ var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July
 // Wikidata parameters
 var NL = "\n";
 var SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?titleNoValue ?image' + NL +
+'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?image' + NL +
 '       ?date ?datePrecision ?inscription ?inscriptionNoValue ?country ?countryLabel' + NL +
 '       ?admin0Label ?admin0Type ?admin1Label ?admin1Type' + NL +
 '       ?admin2Label ?admin2Type ?admin3Label ?admin3Type' + NL +
 '       ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ;' + NL +
 '          wdt:P625 ?coord .' + NL +
-'  OPTIONAL { ?marker wdt:P1476 ?title . }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker p:P1476 ?titleStatement .' + NL +
-'    ?titleStatement a ?titleNoValue .' + NL +
-'    FILTER (?titleNoValue = wdno:P1476)' + NL +
+'    OPTIONAL {' + NL +
+'      ?titleStatement ps:P1476 ?title .' + NL +
+'      OPTIONAL { ?titleStatement pq:P1680 ?subtitle . }' + NL +
+'    }' + NL +
+'    OPTIONAL {' + NL +
+'      ?titleStatement a ?titleNoValue .' + NL +
+'      FILTER (?titleNoValue = wdno:P1476)' + NL +
+'    }' + NL +
 '  }' + NL +
 '  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
 '  OPTIONAL {' + NL +
@@ -622,6 +635,7 @@ function processWikidataQuery() {
     markerData = Markers[wikidataId] || {};
     Markers[wikidataId] = markerData;
     markerData.title = (record.title ? record.title.value : '') || record.markerLabel.value.replace(/ ?historical marker/i, '');
+    markerData.subtitle = record.subtitle ? record.subtitle.value : '';
     markerData.titleIsNoValue = Boolean(record.titleNoValue);
     markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
     markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
@@ -716,7 +730,9 @@ function processWikidataQuery() {
 
       // Add the historical marker to the list pane and add click event handling
       elem = document.createElement('li');
-      elem.innerHTML = markerData.title;
+      elem.innerHTML = markerData.title + (
+        markerData.subtitle ? ((markerData.subtitle.substr(0, 1) === '(' ? '' : ':') + ' ' + markerData.subtitle) : ''
+      );
       elem._wikidataId = wikidataId;
       elem.addEventListener('click', function(ev) {
         zoomToAndOpenMarkerPopup(ev.currentTarget._wikidataId);
@@ -789,7 +805,9 @@ function handlePopup(e) {
   titleHtmlString =
     '<h1' + (markerData.titleIsNoValue ? ' class="untitled"' : '') + '>' +
     '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' +
-    (markerData.titleIsNoValue ? 'Untitled' : markerData.title) + '</a></h1>';
+    (markerData.titleIsNoValue ? 'Untitled' : markerData.title +
+      (markerData.subtitle ? (' <span class="subtitle">' + markerData.subtitle + '</span>') : '')
+    ) + '</a></h1>';
 
   inscriptionHtmlString =
     '<div class="inscription' + (markerData.inscriptionIsNoValue ? ' nodata' : '') + '">' +
