@@ -4,280 +4,380 @@
 <meta charset="UTF-8">
 <title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" />
-<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
-<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"></script>
 <script src="leaflet.markercluster.js"></script>
 <style>
 
 html, body {
- margin: 0;
- padding: 0;
- height: 100%;
- font-family: "Open Sans", sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Open Sans", sans-serif;
+}
+
+body {
+  display: flex;
+  align-items: stretch;
+}
+
+p {
+  margin: 0 0 10px 0;
+  padding: 0;
+  font-size: 13px;
+  line-height: 20px;
 }
 
 button {
- padding: 3px 6px;
- font-size: 11px;
- line-height: 11px;
- border: 1px solid #555;
- border-radius: 25px;
- text-decoration: none;
- text-transform: uppercase;
- color: #ccc;
- background: #707070;
- background-image: linear-gradient(to bottom, #808080, #707070);
- cursor: pointer;
+  padding: 3px 6px;
+  font-size: 11px;
+  line-height: 11px;
+  border: 1px solid #555;
+  border-radius: 25px;
+  text-decoration: none;
+  text-transform: uppercase;
+  color: #ccc;
+  background: #707070;
+  background-image: linear-gradient(to bottom, #808080, #707070);
+  cursor: pointer;
 }
 button::-moz-focus-inner { border: none; }
 button:hover {
- color: #fff;
- background: #789;
- background-image: linear-gradient(to bottom, #abc, #789);
+  color: #fff;
+  background: #789;
+  background-image: linear-gradient(to bottom, #abc, #789);
+}
+
+.loader {
+  border-radius: 50%;
+  margin: 20px auto;
+  width: 40px;
+  height: 40px;
+  font-size: 10px;
+  text-indent: -9999em;
+  border-top: 5px solid rgba(34, 102, 136, 0.2);
+  border-right: 5px solid rgba(34, 102, 136, 0.2);
+  border-bottom: 5px solid rgba(34, 102, 136, 0.2);
+  border-left: 5px solid #268;
+  transform: translateZ(0);
+  animation: load8 1.1s infinite linear;
+}
+
+@keyframes load8 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 500px;
+  height: 100%;
+  background: #268;
 }
 
 #branding {
- position: absolute;
- width: 250px;
- background: #555;
- font-weight: 600;
+  font-weight: 600;
 }
 
 #branding p {
- margin: 6px 10px 0;
- padding: 0;
- font-size: 9px;
- line-height: 9px;
- font-weight: 600;
- text-transform: uppercase;
- letter-spacing: 1px;
- color: #889;
+  margin: 20px 20px 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #598ca6;
 }
 
 #branding h1 {
- margin: 4px 10px 2px;
- padding: 0;
- font-size: 18px;
- line-height: 1em;
- color: #ddd;
+  margin: 5px 20px 15px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 24px;
+  color: #fff;
 }
 
-#about-button {
- margin: 0 10px 8px;
- border: 1px solid #444;
- background: #606060;
- background-image: linear-gradient(to bottom, #707070, #606060);
-}
-#about-button:hover {
- color: #fff;
- background: #789;
- background-image: linear-gradient(to bottom, #abc, #789);
+nav ul {
+  list-style: none;
+  margin: 0 20px;
+  padding: 0;
 }
 
-nav {
- position: absolute;
- width: 250px;
+nav li {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
 }
 
-#nav-header {
- padding: 8px 10px;
- color: #aaa;
- background: #666;
+nav li a {
+  display: block;
+  position: relative;
+  margin: 0 12px 0 0;
+  padding: 6px 12px 6px 16px;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 600;
+  border-radius: 6px 6px 0 0;
+  background: #598ca6;
+  color: #046;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
-#nav-header p {
- margin: 0 0 4px 0;
- font-size: 10px;
- line-height: 10px;
+nav li a:hover {
+  background: #90b2c4;
 }
 
-#nav-header a {
- color: #aab;
+nav li a::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0; right: -8px;
+  width: 15px;
+  height: 24px;
+  border-radius: 0 6px 0 0;
+  background: inherit;
+  transform: skew(30deg);
+}
+
+nav li.selected a {
+  background: #fff;
+}
+
+.panel-content {
+  flex: 1;
+  margin: 0 0 20px 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+#index {
+  display: flex;
+  flex-direction: column;
+}
+
+#index header {
+  padding: 20px 20px 10px;
+}
+
+#index p {
+  margin: 0;
+  color: #444;
+  font-size: 10px;
+  line-height: 10px;
+}
+
+#index a {
+  color: #aab;
 }
 
 #sort {
- margin-top: 4px;
+  margin-top: 10px;
 }
 
-#nav-list {
- margin: 0;
- padding: 0;
- overflow: auto;
- font-size: 11px;
- line-height: 11px;
- color: #fff;
- background: #888;
+#marker-list {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 10px 20px;
+  background: #e9f0f3;
 }
 
 #left-spinner {
- display: block;
- margin: 8px auto;
+  display: block;
+  margin: 8px auto;
 }
 
-#nav-list li {
- margin: 0;
- padding: 5px 10px;
- border-bottom: 1px solid #777;
- cursor: pointer;
+#marker-list li {
+  margin: 0;
+  padding: 5px 0;
+  font-size: 13px;
+  line-height: 20px;
+  border-bottom: 1px solid #ade;
+  cursor: pointer;
 }
-#nav-list li:hover {
- color: #bbf;
- background: #777;
+
+#marker-list li:last-child {
+  border-bottom: none;
+  margin-bottom: 10px;
+}
+
+#details {
+  display: none;
+  padding: 20px;
+}
+
+#details a {
+  color: #268;
+  text-decoration: none;
+  border-bottom: 1px dotted #ccc;
+}
+#details a:hover {
+  background: #eee;
+  border-bottom: 1px solid #eee;
+}
+
+#details h1 {
+  margin: 0 0 20px;
+  padding: 0 0 10px;
+  font-size: 24px;
+  line-height: 24px;
+  font-weight: 600;
+  border-bottom: 1px solid #ade;
+  color: #134;
+}
+
+#details h1 .subtitle {
+  font-size: 0.85em;
+}
+#details h1 .subtitle::before {
+  content: '\a';
+  white-space: pre;
+}
+
+#details h1.untitled {
+  font-style: italic;
+}
+
+#details .details {
+  float: right;
+  padding: 0 0 15px 0;
+  width: 150px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+#details .image > a {
+  display: block;
+  background: #ccc;
+  text-decoration: none;
+}
+
+#details .image img {
+  display: block;
+}
+
+#details .image small {
+  display: block;
+  padding: 5px 0;
+  font-size: 11px;
+  line-height: 13px;
+  text-align: right;
+  color: #888;
+  background: #fff;
+}
+
+#details .image small a {
+  display: inline;
+  color: #888;
+  text-decoration: none;
+  border-bottom: 1px solid #ccc;
+}
+#details .image small a:hover {
+  background: #eee;
+  border-bottom: 1px solid #eee;
+}
+
+#details .image.nodata {
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+  background: #eee;
+}
+
+#details .extra {
+  margin: 0;
+  padding: 8px 0 0 0;
+}
+
+#details dt {
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #8bd;
+}
+
+#details dd {
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+}
+
+#details dd+dd {
+  margin: 5px 0;
+}
+
+#details dd+dt {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ade;
+}
+
+#details .nodata {
+  font-style: italic;
+  color: #888;
+}
+
+#details .inscription {
+  margin: -5px 0 0 0;
+  padding: 0 165px 15px 0;
+}
+
+#details .inscription p {
+  margin: 0;
+}
+
+#details .inscription p+p {
+  margin-top: 10px;
+}
+
+#details hr {
+  clear: both;
+  height: 1px;
+  border-top: 1px solid #ade;
+  border-bottom: none;
+}
+
+#details .wikidata-link {
+  display: block;
+}
+
+#about {
+  display: none;
+  padding: 20px;
+}
+
+#about #eph {
+  float: right;
+  margin: 0 0 10px 10px;
+}
+
+#about a {
+  text-decoration: none;
+  color: #888;
+}
+#about p a:hover {
+  color: #bbf;
+  text-decoration: underline;
 }
 
 #map {
- height: 100%;
- margin-left: 250px;
-}
-
-.leaflet-popup-content-wrapper {
- overflow: hidden;
+  flex: 1;
 }
 
 .leaflet-popup-close-button {
- display: none;
-}
-
-.popup {
- font-family: "Open Sans", sans-serif;
-}
-
-.popup h1 {
- margin: -14px -20px 14px;
- padding: 10px 20px 8px;
- width: 401px;
- font-size: 20px;
- line-height: 20px;
- font-weight: 600;
- font-variant: small-caps;
- background: #666;
-}
-
-.popup h1 a {
- color: #ddd;
- text-decoration: none;
- border-bottom: 1px dotted #99a;
-}
-.popup h1 a:hover { color: #bbf; }
-
-.popup h1 .subtitle {
- font-size: 0.85em;
-}
-.popup h1 .subtitle:before {
- content: '\a';
- white-space: pre;
-}
-
-.popup h1.untitled {
- font-style: italic;
-}
-
-.popup .inscription {
- float: left;
- margin: 0 15px 15px 0;
- width: 235px;
- font-size: 11px;
- line-height: 16px;
- max-height: 400px;
- overflow-y: auto;
-}
-
-.popup .inscription p {
- margin: 0;
-}
-
-.popup .inscription p+p {
- margin-top: 10px;
-}
-
-.popup .details {
- float: right;
- padding: 0 0 15px 0;
- width: 150px;
- font-size: 11px;
- line-height: 16px;
-}
-
-.popup .image > a {
- display: block;
- background: #ccc;
- text-decoration: none;
-}
-
-.popup .image img {
- display: block;
-}
-
-.popup .image small {
- display: block;
- padding-top: 5px;
- font-size: 9px;
- line-height: 12px;
- text-align: right;
- color: #888;
- background: #fff;
-}
-
-.popup .image small a {
- display: inline;
- color: #888;
- text-decoration: none;
- border-bottom: 1px dotted #ccc;
-}
-.popup .image small a:hover {
- background: #eee;
- border-bottom: 1px solid #eee;
-}
-
-.popup .image.nodata {
- height: 100px;
- line-height: 100px;
- text-align: center;
- background: #eee;
-}
-
-.popup .extra {
- margin: 0;
- padding: 8px 0 0 0;
-}
-
-.popup dt {
- font-size: 9px;
- font-weight: 600;
- text-transform: uppercase;
- color: #aaa;
-}
-
-.popup dd {
- margin: 0;
- padding: 0;
- text-indent: 0;
-}
-
-.popup dd a {
- text-decoration: none;
- border-bottom: 1px dotted #ccc;
-}
-.popup dd a:hover {
- background: #eee;
- border-bottom: 1px solid #eee;
-}
-
-.popup dd+dd {
- margin: 5px 0;
-}
-
-.popup dd+dt {
- margin-top: 8px;
- padding-top: 8px;
- border-top: 1px solid #ccc;
-}
-
-.popup .nodata {
- font-style: italic;
- color: #888;
+  display: none;
 }
 
 /* Match Leaflet's control style */
@@ -289,138 +389,58 @@ nav {
  overflow: hidden;
 }
 
-#about {
- visibility: hidden;
- opacity: 0;
- position: fixed;
- top: 0; left: 0; right: 0; bottom: 0;
- background: rgba(0,0,0,0.7);
- z-index: 1000;
- transition: all 0.2s ease-in-out;
-}
-
-#about-modal {
- position: relative;
- width: 600px;
- overflow: auto;
- margin: 20px auto;
- background: #fff;
- border-radius: 12px;
- padding: 20px;
- box-shadow: 0 3px 14px rgba(0,0,0,0.7);
-}
-
-#about-modal .close {
- position: absolute;
- top: 10px;
- right: 18px;
- font-size: 20px;
- font-weight: bold;
- color: #888;
- cursor: pointer;
-}
-
-#about-modal header {
- position: absolute;
- top: 0; left: 0;
- width: 125px;
- padding: 20px;
- background: #666;
-}
-
-#about-modal header h1 {
- margin: 5px 0 0 0;
- font-size: 20px;
- line-height: 25px;
- color: #aaa;
- text-align: right;
- text-shadow: 1px 1px #555;
-}
-
-#about-modal section {
- margin: 0 0 0 165px;
-}
-
-#about-modal section h2 {
- margin: 0;
- padding: 0;
- font-size: 20px;
- line-height: 20px;
- font-weight: 600;
- font-variant: small-caps;
- color: #666;
-}
-
-#about-modal p {
- margin-bottom: 10px;
- font-size: 13px;
- line-height: 20px;
-}
-
-#about-modal a {
- text-decoration: none;
- color: #888;
-}
-#about-modal p a:hover {
- color: #bbf;
- text-decoration: underline;
-}
-
-#about-modal footer {
- margin: 0 0 0 165px;
- text-align: right;
-}
-
 </style>
 </head>
 <body>
- <header id="branding" role="banner">
-  <p>Encyclopedia of Philippine Heritage</p>
-  <h1>Historical Markers Map</h1>
-  <button id="about-button">About this app</button>
- </header>
- <nav>
-  <header id="nav-header">
-   <p id="stats">Loading...</p>
-   <button id="sort">Sort list</button>
-  </header>
-  <ol id="nav-list"><li><img src="spinner1.gif" id="left-spinner"></li></ol>
- </nav>
- <section id="map"></section>
- <aside id="about">
-  <div id="about-modal">
-   <div class="close">×</div>
-   <header>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg/125px-Encyclopedia_of_Philippine_Heritage_logo.svg.png" alt="Encyclopedia of Philippine Heritage">
-    <h1>Historical Markers Map</h1>
-   </header>
-   <section>
-    <h2>About</h2>
-    <p>This <b>Historical Markers Map</b> is a simple web app that shows the
-     location of historical markers that have been installed by the
-     <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National
-     Historical Commission of the Philippines</a> and its predecessor agencies.
-     Each historical marker is represented by a map marker that when clicked
-     provides more information about the historical marker, including a photo of
-     the marker and its encoded inscription.</p>
-    <p>The data on these historical markers comes from <a href="https://www.wikidata.org/">Wikidata</a>,
-     a sister project of Wikipedia, and is compiled as part of the <i><b>Encyclopedia
-     of Philippine Heritage</b></i>, a program of <a href="http://www.wikimedia.org.ph/">Wikimedia
-     Philippines</a>. If you want to help add and improve the data, please refer
-     to this <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject page</a>.</p>
-    <p>If you are familiar with the Wikidata Query Service and want to
-     obtain or explore the raw data, please refer to this <a href="#" id="wdqs-link">query</a>.</p>
-    <p>To report bugs, suggest improvements, or see the source code of this map
-     app, please refer to this app’s <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub
-     repository</a>.</p>
-   </section>
-   <footer>
-    <a href="https://www.wikidata.org/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Wikidata-logo-en.svg/85px-Wikidata-logo-en.svg.png" alt="[Wikidata]"></a>
-    <a href="http://www.wikimedia.org.ph/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Wikimedia_Philippines.svg/60px-Wikimedia_Philippines.svg.png" alt="[Wikimedia Philippines]"></a>
-   </footer>
-  </div>
- </aside>
- <script>
+  <section id="panel">
+    <header id="branding" role="banner">
+      <p>Encyclopedia of Philippine Heritage</p>
+      <h1>Historical Markers Map</h1>
+    </header>
+    <nav>
+      <ul>
+        <li class="selected"><a href="#index">Index</a></li>
+        <li><a href="#about">About</a></li>
+      </ul>
+    </nav>
+    <section id="index" class="panel-content" data-display="flex">
+      <header>
+        <p id="stats">Loading...</p>
+        <button id="sort">Sort list</button>
+      </header>
+      <ol id="marker-list">
+        <li><div class="loader"></div></li>
+      </ol>
+    </section>
+    <section id="details" class="panel-content" data-display="block">
+    </section>
+    <aside id="about" class="panel-content" data-display="block">
+      <section>
+        <p>This <b>Historical Markers Map</b> shows the location of historical markers that have been installed by the
+          <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National Historical
+          Commission of the Philippines</a> and its predecessor agencies. Each historical marker is represented by a map
+          marker that when clicked provides more information about the historical marker, including a photo of the marker
+          and its encoded inscription.</p>
+        <img id="eph" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg/125px-Encyclopedia_of_Philippine_Heritage_logo.svg.png" alt="Encyclopedia of Philippine Heritage">
+        <p>The data on these historical markers comes from <a href="https://www.wikidata.org/">Wikidata</a>, a sister
+          project of Wikipedia, and is compiled as part of the <i><b>Encyclopedia of Philippine Heritage</b></i>, a
+          program of <a href="http://www.wikimedia.org.ph/">Wikimedia Philippines</a>. If you want to help add and
+          improve the data, please refer to this <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject
+          page</a>.</p>
+        <p>If you are familiar with the Wikidata Query Service and want to obtain or explore the raw data, please refer
+          to this <a href="#" id="wdqs-link">query</a>.</p>
+        <p>To report bugs, suggest improvements, or see the source code of this map app, please refer to this app’s
+          <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub repository</a>.</p>
+      </section>
+      <footer>
+        <a href="https://www.wikidata.org/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Wikidata-logo-en.svg/85px-Wikidata-logo-en.svg.png" alt="[Wikidata]"></a>
+        <a href="http://www.wikimedia.org.ph/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Wikimedia_Philippines.svg/60px-Wikimedia_Philippines.svg.png" alt="[Wikimedia Philippines]"></a>
+      </footer>
+    </aside>
+  </section>
+  <section id="map">
+  </section>
+  <script>
 "use strict";
 
 var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -551,7 +571,6 @@ var SortModes = [
 var CurrentSortModeIdx;
 
 window.addEventListener('load', init);
-window.addEventListener('resize', resizePage);
 
 // Function to initialize the app once the page has been loaded
 function init() {
@@ -566,17 +585,9 @@ function init() {
     maxZoom: TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
 
-  resizePage();
-
-  // Enable show about button
-  document.getElementById('about-button').addEventListener('click', showAbout);
-
-  // Enable hide about button
-  document.querySelector('#about .close').addEventListener('click', hideAbout);
-  document.getElementById('about').addEventListener('click', hideAbout);
-  document.getElementById('about-modal').addEventListener('click', function(ev){
-      ev.stopPropagation();
-  });
+  // Enable tab menu
+  document.querySelector('nav a[href="#index"]').addEventListener('click', showIndex);
+  document.querySelector('nav a[href="#about"]').addEventListener('click', showAbout);
 
   // Add Wikidata Query Service GUI URL
   anchorElem = document.getElementById('wdqs-link');
@@ -623,7 +634,7 @@ function processWikidataQuery() {
       if (z >= 19) return 10;
     },
   });
-  listElem = document.getElementById('nav-list');
+  listElem = document.getElementById('marker-list');
   listElem.innerHTML = '';
 
   // Go through each query result
@@ -721,7 +732,9 @@ function processWikidataQuery() {
 
       // Create a map marker and add to the cluster
       mapMarker = L.marker([markerData.lat, markerData.lon]);
-      mapMarker.bindPopup('', {maxWidth: 400});
+      mapMarker.bindPopup(markerData.title + (
+        markerData.subtitle ? ((markerData.subtitle.substr(0, 1) === '(' ? '' : ':') + ' ' + markerData.subtitle) : ''
+      ));
       Cluster.addLayer(mapMarker);
       markerData.marker = mapMarker;
       markerData.popup = mapMarker.getPopup();
@@ -771,6 +784,37 @@ function processWikidataQuery() {
   switchSortMode();
 }
 
+function showPanelContent(contentId) {
+  var contents = document.querySelectorAll('.panel-content');
+  for (var i = 0; i < contents.length; i++) {
+    if (contents[i].id === contentId) {
+      contents[i].style.display = contents[i].dataset.display;
+    }
+    else {
+      contents[i].style.display = 'none';
+    }
+  }
+  var menuItems = document.querySelectorAll('nav li');
+  for (var i = 0; i < menuItems.length; i++) {
+    var link = menuItems[i].querySelector('a');
+    if (link.getAttribute('href') === '#' + contentId) {
+      menuItems[i].classList.add('selected');
+    }
+    else {
+      menuItems[i].classList.remove('selected');
+    }
+  }
+  window.location.hash = '#' + contentId;
+}
+
+function showIndex() {
+  showPanelContent('index');
+}
+
+function showAbout() {
+  showPanelContent('about');
+}
+
 // Function to zoom to a specified historical marker and open its popup
 function zoomToAndOpenMarkerPopup(markerWikidataId) {
   var markerData = Markers[markerWikidataId];
@@ -788,38 +832,42 @@ function handlePopup(e) {
 
   var i;
   var wikidataId = e.popup._wikidataId;
-  var markerData = Markers[e.popup._wikidataId];
+  var markerData = Markers[wikidataId];
   var commemoratedIDs, commemoratedData;
-  var popupContent, popupContentHtmlString;
+  var panelContent, panelContentHtmlString;
   var titleHtmlString, inscriptionHtmlString, imageHtmlString, commemoratedHtmlString;
   var hasWpArticle, mediawikiApiUrl;
-  var imageArea;
+  var imageArea, inscriptionElem;
 
-  window.location.hash = '#' + wikidataId;
-
-  if (markerData.isPopupSet) return;
+  if (markerData.isPopupSet) {
+    showPanelContent('details');
+    var details = document.querySelector('#details');
+    details.innerHTML = '';
+    details.appendChild(markerData.panelContent);
+    window.location.hash = '#' + wikidataId;
+    return;
+  }
   markerData.isPopupSet = true;
 
-  // Create initial popup content of known marker data
+  // Create initial panel content of known marker data
 
   titleHtmlString =
     '<h1' + (markerData.titleIsNoValue ? ' class="untitled"' : '') + '>' +
-    '<a href="https://www.wikidata.org/wiki/' + wikidataId + '">' +
     (markerData.titleIsNoValue ? 'Untitled' : markerData.title +
       (markerData.subtitle ? (' <span class="subtitle">' + markerData.subtitle + '</span>') : '')
-    ) + '</a></h1>';
+    ) + '</h1>';
 
   inscriptionHtmlString =
     '<div class="inscription' + (markerData.inscriptionIsNoValue ? ' nodata' : '') + '">' +
     (
       markerData.inscriptionIsNoValue
-      ? 'This historical marker has no inscription.'
-      : (markerData.inscription || '<img src="spinner2.gif">')
+      ? '<p>This historical marker has no inscription.</p>'
+      : (markerData.inscription || '<div class="loader"></div>')
     ) + '</div>';
 
   imageHtmlString =
     '<div class="image' + (markerData.imageUrl ? '' : ' nodata') + '">' +
-    (markerData.imageUrl ? '<img src="spinner2.gif">' : 'No photo available' ) + '</div>';
+    (markerData.imageUrl ? '<div class="loader"></div>' : 'No photo available' ) + '</div>';
 
   if (markerData.hasCommemorated) {
     commemoratedIDs = Object.keys(markerData.commemorated);
@@ -841,9 +889,8 @@ function handlePopup(e) {
     commemoratedHtmlString = '<dd class="nodata">Unspecified</dd>';
   }
 
-  popupContentHtmlString =
+  panelContentHtmlString =
     titleHtmlString +
-    inscriptionHtmlString +
     '<div class="details">' +
     imageHtmlString +
     '<dl class="extra">' +
@@ -854,19 +901,25 @@ function handlePopup(e) {
     '<dt>Commemorates</dt>' +
     commemoratedHtmlString +
     '</dl>' +
-    '</div>';
+    '</div>' +
+    inscriptionHtmlString +
+    '<hr>' +
+    '<p class="wikidata-link"><a href="https://www.wikidata.org/wiki/' + wikidataId + '">View in Wikidata</a></p>';
 
-  popupContent = document.createElement('div');
-  popupContent.className = 'popup';
-  popupContent.innerHTML = popupContentHtmlString;
-  e.popup._content = popupContent;
-  e.popup.setContent(popupContent);
-  e.popup.update();
+  panelContent = document.createElement('div');
+  panelContent.innerHTML = panelContentHtmlString;
+  inscriptionElem = panelContent.childNodes[2];
+  imageArea = panelContent.childNodes[1].childNodes[0];
+  markerData.panelContent = panelContent;
+
+  showPanelContent('details');
+  var details = document.querySelector('#details');
+  details.innerHTML = '';
+  details.appendChild(markerData.panelContent);
+  window.location.hash = '#' + wikidataId;
 
   // Marker has an image: fetch content for the popup
   if (markerData.imageUrl) {
-
-    imageArea = markerData.popup._content.querySelector('.image');
 
     // Fetch the image thumbnail
     mediawikiApiUrl =
@@ -883,7 +936,6 @@ function handlePopup(e) {
       anchor.style.height = imageInfo.thumbheight + 'px';
       anchor.appendChild(image);
       imageArea.replaceChild(anchor, imageArea.childNodes[0]);  // replace spinner
-      markerData.popup.update();
     });
 
     // Fetch the image attribution if needed
@@ -901,7 +953,6 @@ function handlePopup(e) {
         }
         licenseShortName = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
         imageArea.insertAdjacentHTML('beforeend', '<small>© ' + artistHtmlString + ' / <a href="' + metadata.LicenseUrl.value + '">' + licenseShortName + '</a></small>');
-        markerData.popup.update();
       }
     });
   }
@@ -914,17 +965,15 @@ function handlePopup(e) {
       '&prop=revisions&rvprop=content&format=json' +
       '&titles=Talk:' + wikidataId;
     loadJSONP(mediawikiApiUrl, function(data) {
-      var pageId, talkContent, matches, inscriptionElem;
+      var pageId, talkContent, matches;
       pageId = Object.keys(data.query.pages)[0];
       if (pageId != '-1') {
         talkContent = data.query.pages[pageId].revisions[0]['*'];
         matches = talkContent.match(/{{\s*LongInscription[^]*?\|\s*inscription\s*=\s*([^]*?)(?:\||}})/);
         if (matches && matches[1]) markerData.inscription = formatInscription(matches[1]);
       }
-      inscriptionElem = markerData.popup._content.querySelector('.inscription');
       if (!markerData.inscription) inscriptionElem.className = 'inscription nodata';
-      inscriptionElem.innerHTML = markerData.inscription || 'No inscription encoded';
-      markerData.popup.update();
+      inscriptionElem.innerHTML = markerData.inscription || '<p>No inscription encoded</p>';
     });
   }
 }
@@ -960,59 +1009,11 @@ function switchSortMode() {
     );
   }
 
-  listElem = document.getElementById('nav-list');
+  listElem = document.getElementById('marker-list');
   listElem.innerHTML = '';
   for (i = 0; i < sortedItems.length; i++) {
     listElem.appendChild(sortedItems[i]);
   }
-}
-
-// Function to resize the page elements
-function resizePage() {
-
-  // Resize the left pane
-  var navElem = document.getElementsByTagName('nav')[0];
-  var navListElem = document.getElementById('nav-list');
-  var brandingHeight = document.getElementById('branding').clientHeight;
-  var navHeaderHeight = document.getElementById('nav-header').clientHeight;
-  var variableHeight = window.innerHeight - brandingHeight;
-  navElem.style.top = brandingHeight + 'px';
-  navElem.style.height = variableHeight + 'px';
-  navListElem.style.height = (variableHeight - navHeaderHeight) + 'px';
-
-  // Resize the about modal
-  var aboutModal = document.getElementById('about-modal');
-  // Set width first as this affects the content height
-  if (window.innerWidth < 680) {  // Default CSS width + padding + margin
-    aboutModal.style.width = (window.innerWidth - 80) + 'px';  // Default CSS padding + margin
-  } else {
-    aboutModal.style.width = '600px';  // Default CSS width
-  }
-  var contentHeight =
-    document.querySelector('#about-modal section').clientHeight +
-    document.querySelector('#about-modal footer').clientHeight + 10;  // Default CSS p bottom-margin
-  if (window.innerHeight < contentHeight + 80) {  // Default CSS padding + margin
-    aboutModal.style.height = (window.innerHeight - 80) + 'px';  // Default CSS padding + margin
-    aboutModal.style.marginTop = '20px';  // Default CSS margin
-  } else {
-    aboutModal.style.height = contentHeight + 'px';
-    aboutModal.style.marginTop = ((window.innerHeight - contentHeight - 40)/2) + 'px';  // Default CSS margin
-  }
-  document.querySelector('#about-modal header').style.height = contentHeight + 'px';
-}
-
-function showAbout() {
-  var about_pane = document.getElementById('about');
-  about_pane.style.visibility = 'visible';
-  about_pane.style.opacity = 1;
-  window.location.hash = '#about';
-}
-
-function hideAbout() {
-  var about_pane = document.getElementById('about');
-  about_pane.style.visibility = 'hidden';
-  about_pane.style.opacity = 0;
-  window.location.hash = '';
 }
 
 function getWikidataID(queryItem) {
@@ -1052,6 +1053,6 @@ var loadJSONP = (function(){
   };
 })();
 
- </script>
+  </script>
 </body>
 </html>
