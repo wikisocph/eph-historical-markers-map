@@ -376,6 +376,32 @@ nav li.selected a {
   flex: 1;
 }
 
+.marker-cluster {
+  background-clip: padding-box;
+  border-radius: 20px;
+}
+
+.marker-cluster div {
+  margin: 5px 0 0 5px;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  border-radius: 15px;
+  font: 12px "Open Sans", sans-serif;
+  font-weight: bold;
+}
+
+.marker-cluster span {
+  line-height: 30px;
+}
+
+.marker-cluster-small      { background-color: rgba(144, 178, 196, 0.4); }
+.marker-cluster-small  div { background-color: rgba(144, 178, 196, 0.6); }
+.marker-cluster-medium     { background-color: rgba( 89, 140, 166, 0.4); }
+.marker-cluster-medium div { background-color: rgba( 89, 140, 166, 0.6); }
+.marker-cluster-large      { background-color: rgba( 32,  96, 128, 0.4); }
+.marker-cluster-large  div { background-color: rgba( 32,  96, 128, 0.6); }
+
 .leaflet-popup-close-button {
   display: none;
 }
