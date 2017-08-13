@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:600,600i,700|Merriweather:300,300i" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
 <script src="leaflet.markercluster.js"></script>
 <style>
 
@@ -15,19 +15,11 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: "Open Sans", sans-serif;
 }
 
 body {
   display: flex;
   align-items: stretch;
-}
-
-p {
-  margin: 0 0 10px 0;
-  padding: 0;
-  font-size: 13px;
-  line-height: 20px;
 }
 
 button {
@@ -52,7 +44,6 @@ button:hover {
 
 .loader {
   border-radius: 50%;
-  margin: 20px auto;
   width: 40px;
   height: 40px;
   font-size: 10px;
@@ -83,7 +74,7 @@ button:hover {
 }
 
 #branding {
-  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
 }
 
 #branding p {
@@ -91,7 +82,7 @@ button:hover {
   padding: 0;
   font-size: 12px;
   line-height: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: #598ca6;
@@ -101,6 +92,7 @@ button:hover {
   margin: 5px 20px 15px;
   padding: 0;
   font-size: 24px;
+  font-weight: 600;
   line-height: 24px;
   color: #fff;
 }
@@ -124,7 +116,8 @@ nav li a {
   padding: 6px 12px 6px 16px;
   font-size: 12px;
   line-height: 12px;
-  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   border-radius: 6px 6px 0 0;
   background: #598ca6;
   color: #046;
@@ -200,9 +193,10 @@ nav li.selected a {
 #marker-list li {
   margin: 0;
   padding: 5px 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: 12.5px;
+  line-height: 22px;
   border-bottom: 1px solid #ade;
+  font-family: Merriweather, serif;
   cursor: pointer;
 }
 
@@ -216,12 +210,12 @@ nav li.selected a {
   padding: 20px;
 }
 
-#details a {
+#details figcaption a, #details p a {
   color: #268;
   text-decoration: none;
   border-bottom: 1px dotted #ccc;
 }
-#details a:hover {
+#details figcaption a:hover, #details p a:hover {
   background: #eee;
   border-bottom: 1px solid #eee;
 }
@@ -231,13 +225,14 @@ nav li.selected a {
   padding: 0 0 10px;
   font-size: 24px;
   line-height: 24px;
+  font-family: "Open Sans", sans-serif;
   font-weight: 600;
   border-bottom: 1px solid #ade;
   color: #134;
 }
 
 #details h1 .subtitle {
-  font-size: 0.85em;
+  font-size: 0.75em;
 }
 #details h1 .subtitle::before {
   content: '\a';
@@ -248,98 +243,117 @@ nav li.selected a {
   font-style: italic;
 }
 
-#details .details {
-  float: right;
-  padding: 0 0 15px 0;
-  width: 150px;
-  font-size: 13px;
-  line-height: 20px;
+#details p {
+  margin: 0 0 10px 0;
+  padding: 0 170px 0 0;
+  font-size: 12.5px;
+  line-height: 22px;
+  font-family: Merriweather, serif;
 }
 
-#details .image > a {
+#details p+p {
+  margin-top: 10px;
+}
+
+#details figure {
+  float: right;
+  margin: 0 0 20px 0;
+  padding: 0;
+  width: 156px;
+  font-size: 13px;
+  line-height: 20px;
+  font-family: Merriweather, serif;
+  background: #eee;
+}
+
+#details figure .loader {
+  margin: 20px auto;
+}
+
+#details figure > a {
   display: block;
-  background: #ccc;
+  padding: 2px;
+  border: 1px solid #ade;
   text-decoration: none;
 }
 
-#details .image img {
+#details figure img {
   display: block;
 }
 
-#details .image small {
+#details figure figcaption {
   display: block;
-  padding: 5px 0;
+  padding: 5px 0 0 0;
   font-size: 11px;
-  line-height: 13px;
-  text-align: right;
+  line-height: 20px;
   color: #888;
   background: #fff;
 }
 
-#details .image small a {
-  display: inline;
+#details figure figcaption a {
   color: #888;
   text-decoration: none;
   border-bottom: 1px solid #ccc;
 }
-#details .image small a:hover {
+#details figure figcaption a:hover {
   background: #eee;
   border-bottom: 1px solid #eee;
 }
 
-#details .image.nodata {
+#details figure.nodata {
   height: 100px;
   line-height: 100px;
   text-align: center;
-  background: #eee;
+  font-style: italic;
+  color: #888;
 }
 
-#details .extra {
-  margin: 0;
-  padding: 8px 0 0 0;
+#details .inscription.loading {
+  margin: 40px 0;
 }
 
-#details dt {
-  font-size: 10px;
-  line-height: 14px;
-  font-weight: 600;
+#details .inscription .loader {
+  margin: 0 auto;
+}
+
+#details .inscription.nodata {
+  font-style: italic;
+  color: #888;
+}
+
+#details h2 {
+  margin: 0 0 5px 0;
+  font-size: 12px;
+  line-height: 12px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: #8bd;
 }
 
-#details dd {
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
-}
-
-#details dd+dd {
-  margin: 5px 0;
-}
-
-#details dd+dt {
-  margin-top: 8px;
-  padding-top: 12px;
+#details h2 {
+  clear: right;
+  margin-top: 20px;
+  padding-top: 20px;
   border-top: 1px solid #ade;
 }
 
-#details .nodata {
+#details p+h2 {
+  margin-top: 15px;
+}
+
+#details p.nodata {
   font-style: italic;
   color: #888;
 }
 
-#details .inscription {
-  margin: -5px 0 0 0;
-  padding: 0 165px 15px 0;
+#details div.vicinity {
+  clear: right;
 }
 
-#details .inscription p {
-  margin: 0;
-}
-
-#details .inscription p+p {
-  margin-top: 10px;
+#details div.vicinity p {
+  font-style: italic;
 }
 
 #details hr {
@@ -361,6 +375,14 @@ nav li.selected a {
 #about #eph {
   float: right;
   margin: 0 0 10px 10px;
+}
+
+#about p {
+  margin: 0 0 10px 0;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 22px;
+  font-family: Merriweather, serif;
 }
 
 #about a {
@@ -467,45 +489,71 @@ nav li.selected a {
   <section id="map">
   </section>
   <script>
-"use strict";
+'use strict';
 
-var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const LANGUAGES = {
+  'en': {name: 'English', wikidataId: 'Q1860' },
+  'tl': {name: 'Tagalog', wikidataId: 'Q34057'},
+  'es': {name: 'Spanish', wikidataId: 'Q1321' },
+  'de': {name: 'German' , wikidataId: 'Q188'  },
+  'fr': {name: 'French' , wikidataId: 'Q150'  },
+};
+const ORDERED_LANGUAGES = ['en', 'tl', 'es', 'de', 'fr'];
 
 // Wikidata parameters
-var NL = "\n";
-var SPARQL_QUERY =
+const NL = "\n";
+const SPARQL_QUERY =
 'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?image' + NL +
-'       ?date ?datePrecision ?inscription ?inscriptionNoValue ?country ?countryLabel' + NL +
+'       ?date ?datePrecision ?inscription ?inscriptionNoValue' + NL +
+'       ?country ?countryLabel ?locationLabel ?locationImage ?streetAddress' + NL +
 '       ?admin0Label ?admin0Type ?admin1Label ?admin1Type' + NL +
 '       ?admin2Label ?admin2Type ?admin3Label ?admin3Type' + NL +
-'       ?commemorated ?commemoratedLabel ?article WHERE {' + NL +
+'       ?vicinityImage ?vicinityDescription' + NL +
+'       ?commemorates ?commemoratesLabel ?article WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ;' + NL +
 '          wdt:P625 ?coord .' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker p:P1476 ?titleStatement .' + NL +
 '    OPTIONAL {' + NL +
 '      ?titleStatement ps:P1476 ?title .' + NL +
-'      OPTIONAL { ?titleStatement pq:P1680 ?subtitle . }' + NL +
+'      OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
 '    }' + NL +
 '    OPTIONAL {' + NL +
 '      ?titleStatement a ?titleNoValue .' + NL +
 '      FILTER (?titleNoValue = wdno:P1476)' + NL +
 '    }' + NL +
 '  }' + NL +
-'  OPTIONAL { ?marker wdt:P18 ?image . }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P18 ?imageStatement .' + NL +
+'    OPTIONAL {' + NL +
+'      ?imageStatement ps:P18 ?image .' + NL +
+'      FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
+'    }' + NL +
+'    OPTIONAL {' + NL +
+'      ?imageStatement ps:P18 ?vicinityImage .' + NL +
+'      OPTIONAL { ?imageStatement pq:P2096 ?vicinityDescription }' + NL +
+'      FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
+'    }' + NL +
+'  }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker p:P571 ?dateStatement .' + NL +
 '    ?dateStatement psv:P571 ?dateValue .' + NL +
 '    ?dateValue wikibase:timeValue ?date .' + NL +
 '    ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
 '  }' + NL +
-'  OPTIONAL { ?marker wdt:P1684 ?inscription . }' + NL +
+'  OPTIONAL { ?marker wdt:P1684 ?inscription }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker p:P1684 ?inscriptionStatement .' + NL +
 '    ?inscriptionStatement a ?inscriptionNoValue .' + NL +
 '    FILTER (?inscriptionNoValue = wdno:P1684)' + NL +
 '  }' + NL +
-'  OPTIONAL { ?marker wdt:P17 ?country . }' + NL +
+'  OPTIONAL { ?marker wdt:P17 ?country }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker wdt:P276 ?location .' + NL +
+'    OPTIONAL { ?location wdt:P18 ?locationImage }' + NL +
+'  }' + NL +
+'  OPTIONAL { ?marker wdt:P969 ?streetAddress }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P131 ?admin0 .' + NL +
 '    OPTIONAL {' + NL +
@@ -555,37 +603,38 @@ var SPARQL_QUERY =
 '    }' + NL +
 '  }' + NL +
 '  OPTIONAL {' + NL +
-'    ?marker wdt:P547 ?commemorated .' + NL +
+'    ?marker wdt:P547 ?commemorates .' + NL +
 '    OPTIONAL {' + NL +
-'      ?article schema:about ?commemorated ;' + NL +
+'      ?article schema:about ?commemorates ;' + NL +
 '               schema:isPartOf <https://en.wikipedia.org/> .' + NL +
 '    }' + NL +
 '  }' + NL +
-'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }' + NL +
+'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }' + NL +
 '}';
-var SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
-var WDQS_API_URL         = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
-var WDQS_GUI_URL         = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
-var YEAR_PRECISION       = '9';
-var DATE_PRECISION       = '11';
-var PH_QID               = 'Q928';
-var ADMIN_QIDS           = {};
-var COUNTRY_QID          = 'Q6256';    ADMIN_QIDS[COUNTRY_QID     ] = true;
-var REGION_QID           = 'Q24698';   ADMIN_QIDS[REGION_QID      ] = true;
-var PROVINCE_QID         = 'Q24746';   ADMIN_QIDS[PROVINCE_QID    ] = true;
-var CITY_QID             = 'Q104157';  ADMIN_QIDS[CITY_QID        ] = true;
-var MUNICIPALITY_QID     = 'Q24764';   ADMIN_QIDS[MUNICIPALITY_QID] = true;
+
+const SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
+const WDQS_API_URL         = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
+const WDQS_GUI_URL         = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
+const YEAR_PRECISION       = '9';
+const DATE_PRECISION       = '11';
+const PH_QID               = 'Q928';
+var   ADMIN_QIDS           = {};
+const COUNTRY_QID          = 'Q6256';    ADMIN_QIDS[COUNTRY_QID     ] = true;
+const REGION_QID           = 'Q24698';   ADMIN_QIDS[REGION_QID      ] = true;
+const PROVINCE_QID         = 'Q24746';   ADMIN_QIDS[PROVINCE_QID    ] = true;
+const CITY_QID             = 'Q104157';  ADMIN_QIDS[CITY_QID        ] = true;
+const MUNICIPALITY_QID     = 'Q24764';   ADMIN_QIDS[MUNICIPALITY_QID] = true;
 // NOTE: MUNICIPALITY_QID is currently unused and is not included in the SPARQL FILTER
 
 // Other app parameters
-var ADMIN_LEVELS           = 4;
-var TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-var TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
-var TILE_LAYER_MAX_ZOOM    = 19;
-var MIN_PH_LAT             =   4.5;
-var MAX_PH_LAT             =  21.0;
-var MIN_PH_LON             = 116.5;
-var MAX_PH_LON             = 126.5;
+const ADMIN_LEVELS           = 4;
+const TILE_LAYER_URL         = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
+const TILE_LAYER_MAX_ZOOM    = 19;
+const MIN_PH_LAT             =   4.5;
+const MAX_PH_LAT             =  21.0;
+const MIN_PH_LON             = 116.5;
+const MAX_PH_LON             = 126.5;
 
 var Markers = {}; // Hash to contain data about historical markers
 var Map;          // Leaflet map object
@@ -641,10 +690,8 @@ function processWikidataQuery() {
 
   if (this.readyState != this.DONE || this.status != 200) return;
 
-  var i, j, numMarkers = 0;
-  var wikidataId, record, markerData;
-  var labelProp, typeProp, location;
-  var mapMarker, listElem, elem;
+  var numMarkers = 0;
+  var listElem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
   var fragmentId;
 
@@ -664,138 +711,185 @@ function processWikidataQuery() {
   listElem.innerHTML = '';
 
   // Go through each query result
-  for (i = 0; i < data.results.bindings.length; i++) {
+  for (let i = 0; i < data.results.bindings.length; i++) {
+
+    let queryResult = data.results.bindings[i];
+    let wikidataId  = getWikidataID(queryResult.marker);
+
+    if (!(wikidataId in Markers)) Markers[wikidataId] = new MarkerRecord;
+    let record = Markers[wikidataId];
 
     // Parse and store basic historical marker data
-    record = data.results.bindings[i];
-    wikidataId = getWikidataID(record.marker);
-    markerData = Markers[wikidataId] || {};
-    Markers[wikidataId] = markerData;
-    markerData.title = (record.title ? record.title.value : '') || record.markerLabel.value.replace(/ ?historical marker/i, '');
-    markerData.subtitle = record.subtitle ? record.subtitle.value : '';
-    markerData.titleIsNoValue = Boolean(record.titleNoValue);
-    markerData.lat = parseFloat(record.coord.value.split(/\(|\)| /)[2]);
-    markerData.lon = parseFloat(record.coord.value.split(/\(|\)| /)[1]);
-    markerData.imageUrl = (record.image ? record.image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', 'File:') : '');
-    markerData.inscription = (record.inscription ? formatInscription(record.inscription.value) : '');
-    markerData.inscriptionIsNoValue = Boolean(record.inscriptionNoValue);
-    markerData.commemorated = markerData.commemorated || {};
-    if (record.commemorated && !markerData.commemorated[getWikidataID(record.commemorated)]) {
-      markerData.hasCommemorated = true;
-      markerData.commemorated[getWikidataID(record.commemorated)] = {
-        title  : record.commemoratedLabel.value,
-        wp_url : (record.article ? record.article.value : ''),
+    
+    if ('title' in queryResult) {
+      let langCode = queryResult.title['xml:lang'];
+      let main     = queryResult.title.value;
+      let sub      = queryResult.subtitle ? queryResult.subtitle.value : null;
+      record.title[langCode] = {
+        main : main,
+        sub  : sub,
+      };
+      record.indexTitle = main + (sub ? ((sub.substr(0, 1) === '(' ? '' : ':') + ' ' + sub) : '');
+    }
+    else {
+      if ('titleNoValue' in queryResult) {
+        record.title = null;
+      }
+      record.indexTitle = queryResult.markerLabel.value.replace(/ ?historical marker/i, '');
+    }
+    
+    if ('inscription' in queryResult) {
+      record.inscription[queryResult.inscription['xml:lang']] = formatInscription(queryResult.inscription.value);
+    }
+    else if ('inscriptionNoValue' in queryResult) {
+      record.inscription = null;
+    }
+
+    let coords = queryResult.coord.value.split(/\(|\)| /);
+    record.lat = parseFloat(coords[2]);
+    record.lon = parseFloat(coords[1]);
+
+    if ('image' in queryResult) {
+      record.imageFilename = extractImageFilename(queryResult.image);
+    }
+
+    // Format date or year installed string
+    if ('date' in queryResult) {
+      let dateVal = queryResult.date.value;
+      record.datePrecision = queryResult.datePrecision.value;
+      if (queryResult.datePrecision.value === YEAR_PRECISION) {
+        record.date = dateVal.substr(0, 4);
+      }
+      else {
+        record.date =
+          MONTH_NAMES[Number(dateVal.substr(5, 2)) - 1] + ' ' +
+          Number(dateVal.substr(8, 2)) + ', ' +
+          dateVal.substr(0, 4);
+      }
+    }
+
+    if ('commemorates' in queryResult) {
+      record.commemorates[getWikidataID(queryResult.commemorates)] = {
+        title  : queryResult.commemoratesLabel.value,
+        wp_url : ('article' in queryResult ? queryResult.article.value : null),
       };
     }
 
     // Parse and store deduplicated and preferred admin division data
-    if (!markerData.adminLabels) markerData.adminLabels = [];
-    if (!markerData.adminTypes ) markerData.adminTypes  = [];
-    for (j = 0; j < ADMIN_LEVELS; j++) {
-      labelProp = 'admin' + j + 'Label';
-      if (!markerData.adminLabels[j] && record[labelProp]) {
-        markerData.adminLabels[j] = record[labelProp].value;
+    for (let j = 0; j < ADMIN_LEVELS; j++) {
+      let labelProp = 'admin' + j + 'Label';
+      if (!record.adminLabels[j] && queryResult[labelProp]) {
+        record.adminLabels[j] = queryResult[labelProp].value;
       }
-      typeProp = 'admin' + j + 'Type';
-      if ((!markerData.adminTypes[j] || !ADMIN_QIDS[markerData.adminTypes[j]]) && record[typeProp]) {
-        markerData.adminTypes[j] = getWikidataID(record[typeProp]);
+      let typeProp = 'admin' + j + 'Type';
+      if ((!record.adminTypes[j] || !ADMIN_QIDS[record.adminTypes[j]]) && queryResult[typeProp]) {
+        record.adminTypes[j] = getWikidataID(queryResult[typeProp]);
       }
     }
 
     // Update location
-    location = '';
-    for (j = 0; j < ADMIN_LEVELS; j++) {
+    let location = '';
+    if ('locationLabel' in queryResult) {
+      location = queryResult.locationLabel.value;
+    }
+    if ('streetAddress' in queryResult) {
+      location += (location ? ', ' : '') + queryResult.streetAddress.value;
+    }
+    for (let j = 0; j < ADMIN_LEVELS; j++) {
       if (
-        markerData.adminLabels[j] && markerData.adminTypes[j] != COUNTRY_QID && (j == 0 || (
-          markerData.adminTypes[j-1] != PROVINCE_QID &&
-          markerData.adminTypes[j-1] != REGION_QID && (
+        record.adminLabels[j] && record.adminTypes[j] !== COUNTRY_QID && (j === 0 || (
+          record.adminTypes[j-1] !== PROVINCE_QID &&
+          record.adminTypes[j-1] !== REGION_QID && (
             // Don't display the region for HUCs unless it's Metro Manila
-            markerData.adminTypes[j-1] != CITY_QID ||
-            markerData.adminTypes[j] != REGION_QID ||
-            markerData.adminLabels[j] == 'Metro Manila'
+            record.adminTypes[j-1] !== CITY_QID ||
+            record.adminTypes[j] !== REGION_QID ||
+            record.adminLabels[j] === 'Metro Manila'
           )
         ))
       ) {
-        location += (location ? ', ' : '') + markerData.adminLabels[j];
-      } else {
+        location += (location ? ', ' : '') + record.adminLabels[j];
+      }
+      else {
         break;
       }
     }
-    if (record.country && getWikidataID(record.country) != PH_QID) {
-      location += (location ? ', ' : '') + record.countryLabel.value;
+    if ('country' in queryResult && getWikidataID(queryResult.country) != PH_QID) {
+      location += (location ? ', ' : '') + queryResult.countryLabel.value;
     }
-    markerData.location = location;
+    record.location.address = location;
 
-    // Format date or year installed string
-    if (record.date) {
-      markerData.datePrecision = record.datePrecision.value;
-      if (record.datePrecision.value == YEAR_PRECISION) {
-        markerData.date = record.date.value.substr(0, 4);
-      } else {
-        markerData.date =
-          MONTH_NAMES[Number(record.date.value.substr(5, 2)) - 1] + ' ' +
-          Number(record.date.value.substr(8, 2)) + ', ' +
-          record.date.value.substr(0, 4);
+    if ('locationImage' in queryResult) {
+      record.location.imageFilename = extractImageFilename(queryResult.locationImage);
+    }
+
+    if ('vicinityImage' in queryResult) {
+      record.vicinity.imageFilename = extractImageFilename(queryResult.vicinityImage);
+      if ('vicinityDescription' in queryResult) {
+        record.vicinity.description = queryResult.vicinityDescription.value;
       }
-    } else {
-      markerData.date = '';
     }
-
+    
     // Update the bounding box containing all markers
     if (
-      MIN_PH_LAT <= markerData.lat && markerData.lat <= MAX_PH_LAT &&
-      MIN_PH_LON <= markerData.lon && markerData.lon <= MAX_PH_LON
+      MIN_PH_LAT <= record.lat && record.lat <= MAX_PH_LAT &&
+      MIN_PH_LON <= record.lon && record.lon <= MAX_PH_LON
     ) {
-      minLat = Math.min(markerData.lat, minLat);
-      maxLat = Math.max(markerData.lat, maxLat);
-      minLon = Math.min(markerData.lon, minLon);
-      maxLon = Math.max(markerData.lon, maxLon);
+      minLat = Math.min(record.lat, minLat);
+      maxLat = Math.max(record.lat, maxLat);
+      minLon = Math.min(record.lon, minLon);
+      maxLon = Math.max(record.lon, maxLon);
     }
 
-    if (!markerData.marker) {
+    if (!record.mapMarker) {
 
       numMarkers++;
 
       // Create a map marker and add to the cluster
-      mapMarker = L.marker([markerData.lat, markerData.lon]);
-      mapMarker.bindPopup(markerData.title + (
-        markerData.subtitle ? ((markerData.subtitle.substr(0, 1) === '(' ? '' : ':') + ' ' + markerData.subtitle) : ''
-      ));
+      let mapMarker = L.marker([record.lat, record.lon]);
+      mapMarker.bindPopup(record.indexTitle);
+      mapMarker._wikidataId = wikidataId;
+      let popup = mapMarker.getPopup();
+      popup._wikidataId = wikidataId;
+      
       Cluster.addLayer(mapMarker);
-      markerData.marker = mapMarker;
-      markerData.popup = mapMarker.getPopup();
-      markerData.marker._wikidataId = wikidataId;
-      markerData.popup._wikidataId = wikidataId;
+      record.mapMarker = mapMarker;
 
       // Add the historical marker to the list pane and add click event handling
-      elem = document.createElement('li');
-      elem.innerHTML = markerData.title + (
-        markerData.subtitle ? ((markerData.subtitle.substr(0, 1) === '(' ? '' : ':') + ' ' + markerData.subtitle) : ''
-      );
-      elem._wikidataId = wikidataId;
-      elem.addEventListener('click', function(ev) {
-        zoomToAndOpenMarkerPopup(ev.currentTarget._wikidataId);
+      let liNode = document.createElement('li');
+      liNode.innerHTML = record.indexTitle;
+      liNode._wikidataId = wikidataId;
+      liNode.addEventListener('click', function(ev) {
+        activateMarker(ev.currentTarget._wikidataId);
       });
-      markerData.listItemElem = elem;
-      listElem.appendChild(elem);
+      record.indexListNode = liNode;
+      listElem.appendChild(liNode);
     }
+  }
+  
+  // Clean up
+  let markerIds = Object.keys(Markers);
+  for (let i = 0; i < markerIds.length; i++) {
+    let record = Markers[markerIds[i]];
+    if (Object.keys(record.commemorates).length === 0) record.commemorates = null;
+    if (!record.vicinity.imageFilename) record.vicinity = null;
   }
 
   // Update the map to add the clustered markers and display total number of markers
   Map.addLayer(Cluster);
   document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
 
-  // Update the map to add popup event handlers
+  // TODO: Update the map to add popup event handlers
   Map.on('popupopen', handlePopup);
-  Map.on('popupclose', function() {
-    window.location.hash = '';
-  });
+  //Map.on('popupclose', function() {
+  //  window.location.hash = '';
+  //});
 
   // Update the map view to fit the markers or display the selected marker if any
   fragmentId = window.location.hash.replace('#', '');
   if (Markers[fragmentId]) {
-    zoomToAndOpenMarkerPopup(fragmentId);
-  } else {
+    activateMarker(fragmentId);
+  }
+  else {
     if (fragmentId == 'about') showAbout();
     Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
       padding: new L.Point(0, 0),  // TODO: Leaflet v1.0.0-rc.1 has a bug for padding
@@ -803,7 +897,7 @@ function processWikidataQuery() {
   }
 
   // Enable sort button and add click event handler, and perform initial sort
-  elem = document.getElementById('sort');
+  let elem = document.getElementById('sort');
   elem.disabled = false;
   elem.addEventListener('click', switchSortMode);
   CurrentSortModeIdx = SortModes.length - 1;
@@ -841,165 +935,186 @@ function showAbout() {
   showPanelContent('about');
 }
 
+function handlePopup(e) {
+  activateMarker(e.popup._wikidataId);
+}
+
 // Function to zoom to a specified historical marker and open its popup
-function zoomToAndOpenMarkerPopup(markerWikidataId) {
-  var markerData = Markers[markerWikidataId];
-  var mapMarker = markerData.marker;
-  Map.setView([markerData.lat, markerData.lon], TILE_LAYER_MAX_ZOOM, {
-    animate: false,
+function activateMarker(wikidataId) {
+
+  var record = Markers[wikidataId];
+
+  // Update the map state to show the historical marker
+  var mapMarker = record.mapMarker;
+  Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM, {
+    animate: false,  // TODO: Try to enable animation
   });
   Cluster.zoomToShowLayer(mapMarker, function() {
     mapMarker.openPopup();
   });
-}
 
-// Function to handle when a map popup is opened
-function handlePopup(e) {
+  var panelNode;
+  var mediawikiApiUrl;
 
-  var i;
-  var wikidataId = e.popup._wikidataId;
-  var markerData = Markers[wikidataId];
-  var commemoratedIDs, commemoratedData;
-  var panelContent, panelContentHtmlString;
-  var titleHtmlString, inscriptionHtmlString, imageHtmlString, commemoratedHtmlString;
-  var hasWpArticle, mediawikiApiUrl;
-  var imageArea, inscriptionElem;
-
-  if (markerData.isPopupSet) {
+  if (record.panelNode) {
+    let detailsNode = document.querySelector('#details');
+    detailsNode.replaceChild(record.panelNode, detailsNode.childNodes[0]);
     showPanelContent('details');
-    var details = document.querySelector('#details');
-    details.innerHTML = '';
-    details.appendChild(markerData.panelContent);
     window.location.hash = '#' + wikidataId;
     return;
   }
-  markerData.isPopupSet = true;
 
   // Create initial panel content of known marker data
 
-  titleHtmlString =
-    '<h1' + (markerData.titleIsNoValue ? ' class="untitled"' : '') + '>' +
-    (markerData.titleIsNoValue ? 'Untitled' : markerData.title +
-      (markerData.subtitle ? (' <span class="subtitle">' + markerData.subtitle + '</span>') : '')
-    ) + '</h1>';
-
-  inscriptionHtmlString =
-    '<div class="inscription' + (markerData.inscriptionIsNoValue ? ' nodata' : '') + '">' +
-    (
-      markerData.inscriptionIsNoValue
-      ? '<p>This historical marker has no inscription.</p>'
-      : (markerData.inscription || '<div class="loader"></div>')
-    ) + '</div>';
-
-  imageHtmlString =
-    '<div class="image' + (markerData.imageUrl ? '' : ' nodata') + '">' +
-    (markerData.imageUrl ? '<div class="loader"></div>' : 'No photo available' ) + '</div>';
-
-  if (markerData.hasCommemorated) {
-    commemoratedIDs = Object.keys(markerData.commemorated);
-    commemoratedHtmlString = '';
-    hasWpArticle = false;
-    for (i = 0; i < commemoratedIDs.length; i++) {
-      commemoratedData = markerData.commemorated[commemoratedIDs[i]];
-      if (commemoratedData.wp_url) {
-        hasWpArticle = true;
-        commemoratedHtmlString += '<dd><a href="' + commemoratedData.wp_url + '">' + commemoratedData.title + '</a></dd>';
-      } else {
-        commemoratedHtmlString += '<dd>' + commemoratedData.title + '</dd>';
+  let titleHtml;
+  if (record.title) {
+    titleHtml = '<h1>';
+    for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
+      let langCode = ORDERED_LANGUAGES[i];
+      if (langCode in record.title) {
+        let title = record.title[langCode];
+        titleHtml += title.main;
+        if (title.sub) titleHtml += ' <span class="subtitle">' + title.sub + '</span>';
+        break;
       }
     }
-    if (!hasWpArticle) {
-      commemoratedHtmlString = '<dd class="nodata">No Wikipedia articles yet</dd>';
-    }
-  } else {
-    commemoratedHtmlString = '<dd class="nodata">Unspecified</dd>';
+    titleHtml += '</h1>';
+  }
+  else {
+    titleHtml = '<h1 class="untitled">Untitled</h1>';
   }
 
-  panelContentHtmlString =
-    titleHtmlString +
-    '<div class="details">' +
-    imageHtmlString +
-    '<dl class="extra">' +
-    '<dt>' + (markerData.datePrecision == YEAR_PRECISION ? 'Year' : 'Date') + ' installed</dt>' +
-    '<dd' + (markerData.date ? ('>' + markerData.date) : ' class="nodata">Unknown') + '</dd>' +
-    '<dt>Location</dt>' +
-    '<dd' + (markerData.location ? ('>' + markerData.location) : ' class="nodata">Unspecified') + '</dd>' +
-    '<dt>Commemorates</dt>' +
-    commemoratedHtmlString +
-    '</dl>' +
-    '</div>' +
-    inscriptionHtmlString +
+  let markerImageHtml =
+    '<figure' + (record.imageFilename ? '' : '  class="nodata"') + '>' +
+    (record.imageFilename ? '<div class="loader"></div>' : 'No photo available' ) + '</figure>';
+
+  let inscriptionHtml;
+  if (record.inscription) {
+    let inscription;
+    for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
+      let langCode = ORDERED_LANGUAGES[i];
+      if (langCode in record.inscription) {
+        inscription = record.inscription[langCode];
+        break;
+      }
+    }
+    if (inscription) {
+      inscriptionHtml = '<div class="inscription">' + inscription + '</div>';
+    }
+    else {
+      inscriptionHtml = '<div class="inscription loading"><div class="loader"></div></div>';
+    }
+  }
+  else {
+    inscriptionHtml = '<div class="inscription nodata"><p>This historical marker has no inscription.</p></div>';
+  }
+
+  let commemoratesHtml = '';
+  if (record.commemorates) {
+    let commemoratesIds = Object.keys(record.commemorates);
+    for (let i = 0; i < commemoratesIds.length; i++) {
+      let commemoratesData = record.commemorates[commemoratesIds[i]];
+      if (commemoratesData.wp_url) {
+        commemoratesHtml += '<p><a href="' + commemoratesData.wp_url + '">' + commemoratesData.title + '</a></p>';
+      }
+      else {
+        commemoratesHtml += '<p>' + commemoratesData.title + '</p>';
+      }
+    }
+  }
+  else {
+    commemoratesHtml = '<p class="nodata">Unspecified</p>';
+  }
+
+  let locationFigureHtml = '';
+  if (record.location.imageFilename) {
+    locationFigureHtml = '<figure class="location"><div class="loader"></div></figure>';
+  }
+
+  let vicinityFigureHtml = '';
+  if (record.vicinity) {
+    vicinityFigureHtml = '<figure class="vicinity"><div class="loader"></div></figure>';
+  }
+
+  let panelHtml =
+    titleHtml +
+    markerImageHtml +
+    inscriptionHtml +
+    '<h2>' + (record.datePrecision === YEAR_PRECISION ? 'Year' : 'Date') + ' installed</h2>' +
+    '<p' + (record.date ? ('>' + record.date) : ' class="nodata">Unknown') + '</p>' +
+    '<h2>Commemorates</h2>' +
+    commemoratesHtml +
+    '<h2>Location</h2>' +
+    locationFigureHtml +
+    '<p' + (record.location.address ? ('>' + record.location.address) : ' class="nodata">Unspecified') + '</p>' +
+    (
+      record.vicinity ? (
+        '<div class="vicinity">' + 
+        vicinityFigureHtml +
+        (record.vicinity.description ? ('<p class="vicinity">' + record.vicinity.description + '</p>') : '') +
+        '</div>'
+      ) : ''
+    ) +
     '<hr>' +
     '<p class="wikidata-link"><a href="https://www.wikidata.org/wiki/' + wikidataId + '">View in Wikidata</a></p>';
 
-  panelContent = document.createElement('div');
-  panelContent.innerHTML = panelContentHtmlString;
-  inscriptionElem = panelContent.childNodes[2];
-  imageArea = panelContent.childNodes[1].childNodes[0];
-  markerData.panelContent = panelContent;
+  panelNode = document.createElement('div');
+  panelNode.innerHTML = panelHtml;
+  let markerFigure = panelNode.childNodes[1];
+  let inscriptionNode = panelNode.childNodes[2];
+  let locationFigure = panelNode.querySelector('figure.location');
+  let vicinityFigure = panelNode.querySelector('figure.vicinity');
+  record.panelNode = panelNode;
 
   showPanelContent('details');
   var details = document.querySelector('#details');
-  details.innerHTML = '';
-  details.appendChild(markerData.panelContent);
+  details.replaceChild(panelNode, details.childNodes[0]);
   window.location.hash = '#' + wikidataId;
 
-  // Marker has an image: fetch content for the popup
-  if (markerData.imageUrl) {
-
-    // Fetch the image thumbnail
-    mediawikiApiUrl =
-      'http://commons.wikimedia.org/w/api.php?action=query' +
-      '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
-      '&titles=' + markerData.imageUrl;
-    loadJSONP(mediawikiApiUrl, function(data) {
-      var pageId = Object.keys(data.query.pages)[0];
-      var imageInfo = data.query.pages[pageId].imageinfo[0];
-      var image  = document.createElement('img');
-      image.src = imageInfo.thumburl;
-      var anchor = document.createElement('a');
-      anchor.href = imageInfo.descriptionurl;
-      anchor.style.height = imageInfo.thumbheight + 'px';
-      anchor.appendChild(image);
-      imageArea.replaceChild(anchor, imageArea.childNodes[0]);  // replace spinner
-    });
-
-    // Fetch the image attribution if needed
-    mediawikiApiUrl =
-      'http://commons.wikimedia.org/w/api.php?action=query' +
-      '&prop=imageinfo&iiprop=extmetadata&format=json' +
-      '&titles=' + markerData.imageUrl;
-    loadJSONP(mediawikiApiUrl, function(data) {
-      var pageId = Object.keys(data.query.pages)[0];
-      var metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
-      var artistHtmlString, licenseShortName;
-      if (metadata.AttributionRequired.value == 'true') {
-        if (metadata.Artist.value.search('href="//') >= 0) {
-          artistHtmlString = metadata.Artist.value.replace(/href="\/\//, window.location.protocol == 'https' ? 'href="https://' : 'href="http://');
-        }
-        licenseShortName = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
-        imageArea.insertAdjacentHTML('beforeend', '<small>© ' + artistHtmlString + ' / <a href="' + metadata.LicenseUrl.value + '">' + licenseShortName + '</a></small>');
-      }
-    });
-  }
+  // Load images
+  if (record         .imageFilename) displayFigure(record         .imageFilename, markerFigure  );
+  if (record.location.imageFilename) displayFigure(record.location.imageFilename, locationFigure);
+  if (record.vicinity              ) displayFigure(record.vicinity.imageFilename, vicinityFigure);
 
   // Historical marker has no direct inscription:
   // try looking for the {{LongInscription}} template
-  if (!markerData.inscriptionIsNoValue && !markerData.inscription) {
+  if (record.inscription && Object.keys(record.inscription).length === 0) {
     mediawikiApiUrl =
       'https://www.wikidata.org/w/api.php?action=query' +
       '&prop=revisions&rvprop=content&format=json' +
       '&titles=Talk:' + wikidataId;
     loadJSONP(mediawikiApiUrl, function(data) {
-      var pageId, talkContent, matches;
-      pageId = Object.keys(data.query.pages)[0];
-      if (pageId != '-1') {
-        talkContent = data.query.pages[pageId].revisions[0]['*'];
-        matches = talkContent.match(/{{\s*LongInscription[^]*?\|\s*inscription\s*=\s*([^]*?)(?:\||}})/);
-        if (matches && matches[1]) markerData.inscription = formatInscription(matches[1]);
+      let pageId = Object.keys(data.query.pages)[0];
+      if (pageId !== '-1') {
+        let talkContent = data.query.pages[pageId].revisions[0]['*'];
+        let templateStrings = talkContent.match(/{{\s*LongInscription[^]+?}}/g);
+        if (templateStrings) {
+          for (let i = 0; i < templateStrings.length; i++) {
+            let langWikidataId = templateStrings[i].match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
+            let inscription = templateStrings[i].match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
+            for (let j = 0; j < ORDERED_LANGUAGES.length; j++) {
+              if (langWikidataId === LANGUAGES[ORDERED_LANGUAGES[j]].wikidataId) {
+                record.inscription[ORDERED_LANGUAGES[j]] = formatInscription(inscription);
+                break;
+              }
+            }
+          }
+        }
       }
-      if (!markerData.inscription) inscriptionElem.className = 'inscription nodata';
-      inscriptionElem.innerHTML = markerData.inscription || '<p>No inscription encoded</p>';
+      if (Object.keys(record.inscription).length === 0) {
+        inscriptionNode.classList.add('nodata');
+        inscriptionNode.innerHTML = '<p>No inscription encoded</p>';
+      }
+      else {
+        for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
+          let langCode = ORDERED_LANGUAGES[i];
+          if (langCode in record.inscription) {
+            inscriptionNode.innerHTML = record.inscription[langCode];
+            break;
+          }
+        }
+      }
+      inscriptionNode.classList.remove('loading');
     });
   }
 }
@@ -1007,7 +1122,7 @@ function handlePopup(e) {
 // Function to toggle the sort mode and then sort the markers list on the left pane
 function switchSortMode() {
 
-  var i, sorter, sortedItems, listElem;
+  var sorter, sortedItems, listNode;
 
   CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SortModes.length;
   document.getElementById('sort').innerHTML =
@@ -1016,7 +1131,7 @@ function switchSortMode() {
   sorter = function(getKey, compareKey) {
     return Object.keys(Markers)
       .map(function(el) {
-        return { key: getKey(el), item: Markers[el].listItemElem };
+        return { key: getKey(el), item: Markers[el].indexListNode };
       })
       .sort(compareKey)
       .map(function(el) { return el.item });
@@ -1024,7 +1139,7 @@ function switchSortMode() {
 
   if (SortModes[CurrentSortModeIdx].id == 'alpha') {
     sortedItems = sorter(
-      function(el) { return Markers[el].title; },
+      function(el) { return Markers[el].indexTitle; },
       function(a, b) { return a.key > b.key ? 1 : -1; }
     );
   }
@@ -1035,10 +1150,10 @@ function switchSortMode() {
     );
   }
 
-  listElem = document.getElementById('marker-list');
-  listElem.innerHTML = '';
-  for (i = 0; i < sortedItems.length; i++) {
-    listElem.appendChild(sortedItems[i]);
+  listNode = document.getElementById('marker-list');
+  listNode.innerHTML = '';
+  for (let i = 0; i < sortedItems.length; i++) {
+    listNode.appendChild(sortedItems[i]);
   }
 }
 
@@ -1049,6 +1164,50 @@ function getWikidataID(queryItem) {
 
 function formatInscription(text) {
   return '<p>' + text.replace(/\s*<br\s*\/?>(?:<br\s*\/?>)?\s*/gi, '</p><p>') + '</p>';
+}
+
+function extractImageFilename(image) {
+  return image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', '')
+}
+
+function displayFigure(filename, figureNode) {
+
+  var mediawikiApiUrl;
+
+  // Fetch the image thumbnail
+  mediawikiApiUrl =
+    'http://commons.wikimedia.org/w/api.php?action=query' +
+    '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
+    '&titles=File:' + filename;
+  loadJSONP(mediawikiApiUrl, function(data) {
+    let pageId = Object.keys(data.query.pages)[0];
+    let imageInfo = data.query.pages[pageId].imageinfo[0];
+    let imageNode = document.createElement('img');
+    imageNode.src = imageInfo.thumburl;
+    let anchor = document.createElement('a');
+    anchor.href = imageInfo.descriptionurl;
+    anchor.style.height = imageInfo.thumbheight + 'px';
+    anchor.appendChild(imageNode);
+    figureNode.replaceChild(anchor, figureNode.childNodes[0]);  // replace spinner
+  });
+
+  // Fetch the image attribution if needed
+  mediawikiApiUrl =
+    'http://commons.wikimedia.org/w/api.php?action=query' +
+    '&prop=imageinfo&iiprop=extmetadata&format=json' +
+    '&titles=File:' + filename;
+  loadJSONP(mediawikiApiUrl, function(data) {
+    let pageId = Object.keys(data.query.pages)[0];
+    let metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
+    if (metadata.AttributionRequired.value === 'true') {
+      let artistHtml = metadata.Artist.value;
+      if (artistHtml.search('href="//') >= 0) {
+        artistHtml = artistHtml.replace(/href="\/\//, window.location.protocol == 'https' ? 'href="https://' : 'href="http://');
+      }
+      let licenseShortName = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
+      figureNode.insertAdjacentHTML('beforeend', '<figcaption>' + artistHtml + '<br><a href="' + metadata.LicenseUrl.value + '">' + licenseShortName + '</a></figcaption>');
+    }
+  });
 }
 
 // Library function to load JSONP data
@@ -1078,6 +1237,25 @@ var loadJSONP = (function(){
     document.getElementsByTagName('head')[0].appendChild(script);
   };
 })();
+
+function MarkerRecord() {
+  this.indexTitle    = '';
+  this.title         = {};
+  this.inscription   = {};
+  this.lat           = 0;
+  this.lon           = 0;
+  this.imageFilename = '';
+  this.date          = '';
+  this.datePrecision = YEAR_PRECISION;
+  this.commemorates  = {};
+  this.location      = { address: '', imageFilename: '' };
+  this.vicinity      = { description: '', imageFilename: '' };
+  this.adminLabels   = [];
+  this.adminTypes    = [];
+  this.mapMarker     = undefined;
+  this.panelNode     = undefined;
+  this.indexListNode = undefined;
+}
 
   </script>
 </body>
