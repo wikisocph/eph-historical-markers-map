@@ -287,6 +287,14 @@ nav li.selected a {
   margin: 20px auto;
 }
 
+#details figure.nodata {
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+  font-style: italic;
+  color: #888;
+}
+
 #details figure > a {
   display: block;
   padding: 2px;
@@ -319,14 +327,6 @@ nav li.selected a {
   border-bottom: 1px solid #eee;
 }
 
-#details figure.nodata {
-  height: 100px;
-  line-height: 100px;
-  text-align: center;
-  font-style: italic;
-  color: #888;
-}
-
 #details .inscription.loading {
   margin: 40px 0;
 }
@@ -340,8 +340,12 @@ nav li.selected a {
   color: #888;
 }
 
-#details .inscription p {
+#details .inscription {
   padding: 0 170px 0 0;
+}
+
+#details .inscription p:first-child {
+  margin-top: -5px;
 }
 
 #details h2 {
@@ -891,7 +895,7 @@ function processWikidataQuery() {
       liNode.innerHTML = record.indexTitle;
       liNode._wikidataId = wikidataId;
       liNode.addEventListener('click', function(ev) {
-        activateMarker(ev.currentTarget._wikidataId);
+        activateMarker(ev.currentTarget._wikidataId, true);
       });
       record.indexListNode = liNode;
       listElem.appendChild(liNode);
@@ -919,7 +923,7 @@ function processWikidataQuery() {
   // Update the map view to fit the markers or display the selected marker if any
   fragmentId = window.location.hash.replace('#', '');
   if (Markers[fragmentId]) {
-    activateMarker(fragmentId);
+    activateMarker(fragmentId, true);
   }
   else {
     if (fragmentId == 'about') showAbout();
@@ -968,22 +972,24 @@ function showAbout() {
 }
 
 function handlePopup(e) {
-  activateMarker(e.popup._wikidataId);
+  activateMarker(e.popup._wikidataId, false);
 }
 
 // Function to zoom to a specified historical marker and open its popup
-function activateMarker(wikidataId) {
+function activateMarker(wikidataId, updateMap) {
 
   var record = Markers[wikidataId];
 
   // Update the map state to show the historical marker
-  var mapMarker = record.mapMarker;
-  Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM, {
-    animate: false,  // TODO: Try to enable animation
-  });
-  Cluster.zoomToShowLayer(mapMarker, function() {
-    mapMarker.openPopup();
-  });
+  if (updateMap) {
+    var mapMarker = record.mapMarker;
+    Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM, {
+      animate: false,  // TODO: Try to enable animation
+    });
+    Cluster.zoomToShowLayer(mapMarker, function() {
+      mapMarker.openPopup();
+    });
+  }
 
   var panelNode;
   var mediawikiApiUrl;
