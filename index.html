@@ -613,7 +613,7 @@ const SPARQL_QUERY =
 '}';
 
 const SPARQL_QUERY_ESCAPED = escape(SPARQL_QUERY);
-const WDQS_API_URL         = 'https://query.wikidata.org/sparql?format=json&query=' + SPARQL_QUERY_ESCAPED;
+const WDQS_API_URL         = 'https://query.wikidata.org/sparql';
 const WDQS_GUI_URL         = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
 const YEAR_PRECISION       = '9';
 const DATE_PRECISION       = '11';
@@ -680,9 +680,10 @@ function init() {
 
   // Query Wikidata
   xhrObject.onreadystatechange = processWikidataQuery;
-  xhrObject.open('GET', WDQS_API_URL, true);
+  xhrObject.open('POST', WDQS_API_URL, true);
   xhrObject.overrideMimeType('text/plain');
-  xhrObject.send(null);
+  xhrObject.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+  xhrObject.send('format=json&query=' + SPARQL_QUERY_ESCAPED);
 }
 
 // Function to process the results of the Wikidata query
