@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:600,600i,700|Merriweather:300,300i" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,600i,700|Merriweather:300,300i" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
 <link rel="stylesheet" href="MarkerCluster.css" />
 <link rel="stylesheet" href="MarkerCluster.Default.css" />
@@ -196,7 +196,8 @@ nav li.selected a {
   font-size: 12.5px;
   line-height: 22px;
   border-bottom: 1px solid #ade;
-  font-family: Merriweather, serif;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -218,6 +219,12 @@ nav li.selected a {
 #details figcaption a:hover, #details p a:hover {
   background: #eee;
   border-bottom: 1px solid #eee;
+}
+
+#details .main-wikidata-link {
+  display: block;
+  float: right;
+  margin: 0 0 0 20px;
 }
 
 #details h1 {
@@ -243,16 +250,26 @@ nav li.selected a {
   font-style: italic;
 }
 
-#details p {
-  margin: 0 0 10px 0;
-  padding: 0 170px 0 0;
+#details p, #details li {
   font-size: 12.5px;
   line-height: 22px;
   font-family: Merriweather, serif;
 }
 
-#details p+p {
-  margin-top: 10px;
+#details p {
+  margin: 0 0 10px 0;
+  padding: 0;
+}
+
+#details ul {
+  margin: 0 0 0 24px;
+  padding: 0;
+}
+
+#details ul li {
+  margin: 0 0 5px 0;
+  padding: 0;
+  list-style: square;
 }
 
 #details figure {
@@ -284,10 +301,12 @@ nav li.selected a {
 #details figure figcaption {
   display: block;
   padding: 5px 0 0 0;
-  font-size: 11px;
-  line-height: 20px;
+  font-size: 10px;
+  line-height: 18px;
   color: #888;
   background: #fff;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 400;
 }
 
 #details figure figcaption a {
@@ -321,6 +340,10 @@ nav li.selected a {
   color: #888;
 }
 
+#details .inscription p {
+  padding: 0 170px 0 0;
+}
+
 #details h2 {
   margin: 0 0 5px 0;
   font-size: 12px;
@@ -348,23 +371,31 @@ nav li.selected a {
   color: #888;
 }
 
-#details div.vicinity {
-  clear: right;
+#details p a.image, #details li a.image {
+  display: inline-block;
+  border: none;
+  margin-left: 10px;
 }
-
-#details div.vicinity p {
-  font-style: italic;
-}
-
-#details hr {
-  clear: both;
-  height: 1px;
-  border-top: 1px solid #ade;
+#details p a.image:hover, #details li a.image:hover {
+  background: none;
   border-bottom: none;
 }
 
-#details .wikidata-link {
-  display: block;
+#details p a.image img, #details li a.image img {
+  vertical-align: middle;
+}
+
+#details p.address {
+  padding: 0 170px 0 0;
+}
+
+#details .vicinity {
+  clear: right;
+}
+
+#details .vicinity p {
+  padding: 0 170px 0 0;
+  font-style: italic;
 }
 
 #about {
@@ -985,9 +1016,13 @@ function activateMarker(wikidataId) {
     titleHtml = '<h1 class="untitled">Untitled</h1>';
   }
 
-  let markerImageHtml =
-    '<figure' + (record.imageFilename ? '' : '  class="nodata"') + '>' +
-    (record.imageFilename ? '<div class="loader"></div>' : 'No photo available' ) + '</figure>';
+  let markerFigureHtml;
+  if (record.imageFilename) {
+    markerFigureHtml = '<figure><div class="loader"></div></figure>';
+  }
+  else {
+    markerFigureHtml = '<figure class="nodata">No photo available</figure>';
+  }
 
   let inscriptionHtml;
   if (record.inscription) {
@@ -1013,15 +1048,25 @@ function activateMarker(wikidataId) {
   let commemoratesHtml = '';
   if (record.commemorates) {
     let commemoratesIds = Object.keys(record.commemorates);
+    let tagName = commemoratesIds.length > 1 ? 'li' : 'p';
+    commemoratesHtml = commemoratesIds.length > 1 ? '<ul>' : '';
     for (let i = 0; i < commemoratesIds.length; i++) {
       let commemoratesData = record.commemorates[commemoratesIds[i]];
-      if (commemoratesData.wp_url) {
-        commemoratesHtml += '<p><a href="' + commemoratesData.wp_url + '">' + commemoratesData.title + '</a></p>';
-      }
-      else {
-        commemoratesHtml += '<p>' + commemoratesData.title + '</p>';
-      }
+      commemoratesHtml +=
+        '<' + tagName + '>' + commemoratesData.title +
+        '<a class="image" href="https://www.wikidata.org/wiki/' + commemoratesIds[i] + '" title="View in Wikidata">' +
+        '<img src="wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
+        (
+          commemoratesData.wp_url
+          ? (
+            '<a class="image" href="' + commemoratesData.wp_url + '" title="View in Wikipedia">' +
+            '<img src="wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>'
+          )
+          : ''
+        ) +
+        '</' + tagName + '>';
     }
+    commemoratesHtml += commemoratesIds.length > 1 ? '</ul>' : '';
   }
   else {
     commemoratesHtml = '<p class="nodata">Unspecified</p>';
@@ -1032,14 +1077,29 @@ function activateMarker(wikidataId) {
     locationFigureHtml = '<figure class="location"><div class="loader"></div></figure>';
   }
 
-  let vicinityFigureHtml = '';
+  let addressHtml;
+  if (record.location.address) {
+    addressHtml = '<p class="address">' + record.location.address + '</p>';
+  }
+  else {
+    addressHtml = '<p class="nodata">Unspecified</p>';
+  }
+
+  let vicinityHtml = '';
   if (record.vicinity) {
-    vicinityFigureHtml = '<figure class="vicinity"><div class="loader"></div></figure>';
+    vicinityHtml = '<div class="vicinity">';
+    vicinityHtml += '<figure class="vicinity"><div class="loader"></div></figure>';
+    if (record.vicinity.description) {
+      vicinityHtml += '<p>' + record.vicinity.description + '</p>';
+    }
+    vicinityHtml += '</div>'
   }
 
   let panelHtml =
+    '<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/' + wikidataId + '" title="View in Wikidata">' +
+    '<img src="wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
     titleHtml +
-    markerImageHtml +
+    markerFigureHtml +
     inscriptionHtml +
     '<h2>' + (record.datePrecision === YEAR_PRECISION ? 'Year' : 'Date') + ' installed</h2>' +
     '<p' + (record.date ? ('>' + record.date) : ' class="nodata">Unknown') + '</p>' +
@@ -1047,22 +1107,13 @@ function activateMarker(wikidataId) {
     commemoratesHtml +
     '<h2>Location</h2>' +
     locationFigureHtml +
-    '<p' + (record.location.address ? ('>' + record.location.address) : ' class="nodata">Unspecified') + '</p>' +
-    (
-      record.vicinity ? (
-        '<div class="vicinity">' + 
-        vicinityFigureHtml +
-        (record.vicinity.description ? ('<p class="vicinity">' + record.vicinity.description + '</p>') : '') +
-        '</div>'
-      ) : ''
-    ) +
-    '<hr>' +
-    '<p class="wikidata-link"><a href="https://www.wikidata.org/wiki/' + wikidataId + '">View in Wikidata</a></p>';
+    addressHtml +
+    vicinityHtml;
 
   panelNode = document.createElement('div');
   panelNode.innerHTML = panelHtml;
-  let markerFigure = panelNode.childNodes[1];
-  let inscriptionNode = panelNode.childNodes[2];
+  let markerFigure = panelNode.childNodes[2];
+  let inscriptionNode = panelNode.childNodes[3];
   let locationFigure = panelNode.querySelector('figure.location');
   let vicinityFigure = panelNode.querySelector('figure.vicinity');
   record.panelNode = panelNode;
