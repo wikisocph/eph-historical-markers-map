@@ -747,10 +747,9 @@ function processWikidataQuery() {
   listElem.innerHTML = '';
 
   // Go through each query result
-  for (let i = 0; i < data.results.bindings.length; i++) {
+  data.results.bindings.forEach(function(queryResult) {
 
-    let queryResult = data.results.bindings[i];
-    let wikidataId  = getWikidataID(queryResult.marker);
+    let wikidataId = getWikidataID(queryResult.marker);
 
     if (!(wikidataId in Markers)) Markers[wikidataId] = new MarkerRecord;
     let record = Markers[wikidataId];
@@ -900,15 +899,14 @@ function processWikidataQuery() {
       record.indexListNode = liNode;
       listElem.appendChild(liNode);
     }
-  }
+  });
   
   // Clean up
-  let markerIds = Object.keys(Markers);
-  for (let i = 0; i < markerIds.length; i++) {
-    let record = Markers[markerIds[i]];
+  Object.keys(Markers).forEach(function(id) {
+    let record = Markers[id];
     if (Object.keys(record.commemorates).length === 0) record.commemorates = null;
     if (!record.vicinity.imageFilename) record.vicinity = null;
-  }
+  });
 
   // Update the map to add the clustered markers and display total number of markers
   Map.addLayer(Cluster);
@@ -1056,22 +1054,17 @@ function activateMarker(wikidataId, updateMap) {
     let commemoratesIds = Object.keys(record.commemorates);
     let tagName = commemoratesIds.length > 1 ? 'li' : 'p';
     commemoratesHtml = commemoratesIds.length > 1 ? '<ul>' : '';
-    for (let i = 0; i < commemoratesIds.length; i++) {
-      let commemoratesData = record.commemorates[commemoratesIds[i]];
-      commemoratesHtml +=
-        '<' + tagName + '>' + commemoratesData.title +
-        '<a class="image" href="https://www.wikidata.org/wiki/' + commemoratesIds[i] + '" title="View in Wikidata">' +
-        '<img src="wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
-        (
-          commemoratesData.wp_url
-          ? (
-            '<a class="image" href="' + commemoratesData.wp_url + '" title="View in Wikipedia">' +
-            '<img src="wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>'
-          )
-          : ''
-        ) +
-        '</' + tagName + '>';
-    }
+    commemoratesIds.forEach(function(id) {
+      let commemoratesData = record.commemorates[id];
+      commemoratesHtml += '<' + tagName + '>' + commemoratesData.title;
+      commemoratesHtml += '<a class="image" href="https://www.wikidata.org/wiki/' + id + '" title="View in Wikidata">';
+      commemoratesHtml += '<img src="wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>';
+      if (commemoratesData.wp_url) {
+        commemoratesHtml += '<a class="image" href="' + commemoratesData.wp_url + '" title="View in Wikipedia">';
+        commemoratesHtml += '<img src="wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>';
+      }
+      commemoratesHtml += '</' + tagName + '>';
+    });
     commemoratesHtml += commemoratesIds.length > 1 ? '</ul>' : '';
   }
   else {
@@ -1147,16 +1140,16 @@ function activateMarker(wikidataId, updateMap) {
         let talkContent = data.query.pages[pageId].revisions[0]['*'];
         let templateStrings = talkContent.match(/{{\s*LongInscription[^]+?}}/g);
         if (templateStrings) {
-          for (let i = 0; i < templateStrings.length; i++) {
-            let langWikidataId = templateStrings[i].match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
-            let inscription = templateStrings[i].match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
+          templateStrings.forEach(function(string) {
+            let langWikidataId = string.match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
+            let inscription = string.match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
             for (let j = 0; j < ORDERED_LANGUAGES.length; j++) {
               if (langWikidataId === LANGUAGES[ORDERED_LANGUAGES[j]].wikidataId) {
                 record.inscription[ORDERED_LANGUAGES[j]] = formatInscription(inscription);
                 break;
               }
             }
-          }
+          });
         }
       }
       if (Object.keys(record.inscription).length === 0) {
@@ -1210,9 +1203,9 @@ function switchSortMode() {
 
   listNode = document.getElementById('marker-list');
   listNode.innerHTML = '';
-  for (let i = 0; i < sortedItems.length; i++) {
-    listNode.appendChild(sortedItems[i]);
-  }
+  sortedItems.forEach(function(item) {
+    listNode.appendChild(item);
+  });
 }
 
 function getWikidataID(queryItem) {
