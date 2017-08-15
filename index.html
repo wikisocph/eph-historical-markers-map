@@ -726,8 +726,6 @@ function processWikidataQuery() {
 
   if (this.readyState != this.DONE || this.status != 200) return;
 
-  var numMarkers = 0;
-  var listElem;
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
   var fragmentId;
 
@@ -743,8 +741,6 @@ function processWikidataQuery() {
       if (z >= 19) return 10;
     },
   });
-  listElem = document.getElementById('marker-list');
-  listElem.innerHTML = '';
 
   // Go through each query result
   data.results.bindings.forEach(function(queryResult) {
@@ -764,12 +760,9 @@ function processWikidataQuery() {
         main : main,
         sub  : sub,
       };
-      record.indexTitle = main + (sub ? ((sub.substr(0, 1) === '(' ? '' : ':') + ' ' + sub) : '');
     }
     else {
-      if ('titleNoValue' in queryResult) {
-        record.title = null;
-      }
+      if ('titleNoValue' in queryResult) record.title = null;
       record.indexTitle = queryResult.markerLabel.value.replace(/ ?historical marker/i, '');
     }
     
@@ -874,39 +867,50 @@ function processWikidataQuery() {
       minLon = Math.min(record.lon, minLon);
       maxLon = Math.max(record.lon, maxLon);
     }
-
-    if (!record.mapMarker) {
-
-      numMarkers++;
-
-      // Create a map marker and add to the cluster
-      let mapMarker = L.marker([record.lat, record.lon]);
-      mapMarker.bindPopup(record.indexTitle);
-      mapMarker._wikidataId = wikidataId;
-      let popup = mapMarker.getPopup();
-      popup._wikidataId = wikidataId;
-      
-      Cluster.addLayer(mapMarker);
-      record.mapMarker = mapMarker;
-
-      // Add the historical marker to the list pane and add click event handling
-      let liNode = document.createElement('li');
-      liNode.innerHTML = record.indexTitle;
-      liNode._wikidataId = wikidataId;
-      liNode.addEventListener('click', function(ev) {
-        activateMarker(ev.currentTarget._wikidataId, true);
-      });
-      record.indexListNode = liNode;
-      listElem.appendChild(liNode);
-    }
   });
-  
-  // Clean up
+
+  let listElem = document.getElementById('marker-list');
+  listElem.innerHTML = '';
+
+  // Do post-processing and clean-up
   Object.keys(Markers).forEach(function(id) {
+
     let record = Markers[id];
+
+    if (record.title) {
+      let title = getTranslation(record.title);
+      if (title) {
+        record.indexTitle = title.main;
+        if (title.sub) {
+          record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ') + title.sub;
+        }
+      }
+    }
+
     if (Object.keys(record.commemorates).length === 0) record.commemorates = null;
+
     if (!record.vicinity.imageFilename) record.vicinity = null;
+
+    // Create a map marker and add to the cluster
+    let mapMarker = L.marker([record.lat, record.lon]);
+    mapMarker.bindPopup(record.indexTitle);
+    let popup = mapMarker.getPopup();
+    popup._wikidataId = id;
+    Cluster.addLayer(mapMarker);
+    record.mapMarker = mapMarker;
+
+    // Add the historical marker to the index and add click event handling
+    let li = document.createElement('li');
+    li.innerHTML = record.indexTitle;
+    li._wikidataId = id;
+    li.addEventListener('click', function(ev) {
+      activateMarker(ev.currentTarget._wikidataId, true);
+    });
+    record.indexLi = li;
+    listElem.appendChild(li);
   });
+
+  let numMarkers = Object.keys(Markers).length;
 
   // Update the map to add the clustered markers and display total number of markers
   Map.addLayer(Cluster);
@@ -989,9 +993,6 @@ function activateMarker(wikidataId, updateMap) {
     });
   }
 
-  var panelNode;
-  var mediawikiApiUrl;
-
   if (record.panelNode) {
     let detailsNode = document.querySelector('#details');
     detailsNode.replaceChild(record.panelNode, detailsNode.childNodes[0]);
@@ -1005,15 +1006,9 @@ function activateMarker(wikidataId, updateMap) {
   let titleHtml;
   if (record.title) {
     titleHtml = '<h1>';
-    for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
-      let langCode = ORDERED_LANGUAGES[i];
-      if (langCode in record.title) {
-        let title = record.title[langCode];
-        titleHtml += title.main;
-        if (title.sub) titleHtml += ' <span class="subtitle">' + title.sub + '</span>';
-        break;
-      }
-    }
+    let title = getTranslation(record.title);
+    titleHtml += title.main;
+    if (title.sub) titleHtml += ' <span class="subtitle">' + title.sub + '</span>';
     titleHtml += '</h1>';
   }
   else {
@@ -1030,14 +1025,7 @@ function activateMarker(wikidataId, updateMap) {
 
   let inscriptionHtml;
   if (record.inscription) {
-    let inscription;
-    for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
-      let langCode = ORDERED_LANGUAGES[i];
-      if (langCode in record.inscription) {
-        inscription = record.inscription[langCode];
-        break;
-      }
-    }
+    let inscription = getTranslation(record.inscription);
     if (inscription) {
       inscriptionHtml = '<div class="inscription">' + inscription + '</div>';
     }
@@ -1109,7 +1097,7 @@ function activateMarker(wikidataId, updateMap) {
     addressHtml +
     vicinityHtml;
 
-  panelNode = document.createElement('div');
+  let panelNode = document.createElement('div');
   panelNode.innerHTML = panelHtml;
   let markerFigure = panelNode.childNodes[2];
   let inscriptionNode = panelNode.childNodes[3];
@@ -1130,7 +1118,7 @@ function activateMarker(wikidataId, updateMap) {
   // Historical marker has no direct inscription:
   // try looking for the {{LongInscription}} template
   if (record.inscription && Object.keys(record.inscription).length === 0) {
-    mediawikiApiUrl =
+    let mediawikiApiUrl =
       'https://www.wikidata.org/w/api.php?action=query' +
       '&prop=revisions&rvprop=content&format=json' +
       '&titles=Talk:' + wikidataId;
@@ -1143,9 +1131,10 @@ function activateMarker(wikidataId, updateMap) {
           templateStrings.forEach(function(string) {
             let langWikidataId = string.match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
             let inscription = string.match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
-            for (let j = 0; j < ORDERED_LANGUAGES.length; j++) {
-              if (langWikidataId === LANGUAGES[ORDERED_LANGUAGES[j]].wikidataId) {
-                record.inscription[ORDERED_LANGUAGES[j]] = formatInscription(inscription);
+            for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
+              let langCode = ORDERED_LANGUAGES[i];
+              if (langWikidataId === LANGUAGES[langCode].wikidataId) {
+                record.inscription[langCode] = formatInscription(inscription);
                 break;
               }
             }
@@ -1157,13 +1146,7 @@ function activateMarker(wikidataId, updateMap) {
         inscriptionNode.innerHTML = '<p>No inscription encoded</p>';
       }
       else {
-        for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
-          let langCode = ORDERED_LANGUAGES[i];
-          if (langCode in record.inscription) {
-            inscriptionNode.innerHTML = record.inscription[langCode];
-            break;
-          }
-        }
+        inscriptionNode.innerHTML = getTranslation(record.inscription);
       }
       inscriptionNode.classList.remove('loading');
     });
@@ -1173,21 +1156,20 @@ function activateMarker(wikidataId, updateMap) {
 // Function to toggle the sort mode and then sort the markers list on the left pane
 function switchSortMode() {
 
-  var sorter, sortedItems, listNode;
-
   CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SortModes.length;
   document.getElementById('sort').innerHTML =
     'Sort list ' + SortModes[(CurrentSortModeIdx + 1) % SortModes.length].label;
 
-  sorter = function(getKey, compareKey) {
+  let sorter = function(getKey, compareKey) {
     return Object.keys(Markers)
       .map(function(el) {
-        return { key: getKey(el), item: Markers[el].indexListNode };
+        return { key: getKey(el), item: Markers[el].indexLi };
       })
       .sort(compareKey)
       .map(function(el) { return el.item });
   };
 
+  let sortedItems;
   if (SortModes[CurrentSortModeIdx].id == 'alpha') {
     sortedItems = sorter(
       function(el) { return Markers[el].indexTitle; },
@@ -1201,11 +1183,9 @@ function switchSortMode() {
     );
   }
 
-  listNode = document.getElementById('marker-list');
-  listNode.innerHTML = '';
-  sortedItems.forEach(function(item) {
-    listNode.appendChild(item);
-  });
+  let listElem = document.getElementById('marker-list');
+  listElem.innerHTML = '';
+  sortedItems.forEach(function(item) { listElem.appendChild(item); });
 }
 
 function getWikidataID(queryItem) {
@@ -1221,7 +1201,19 @@ function extractImageFilename(image) {
   return image.value.replace('http://commons.wikimedia.org/wiki/Special:FilePath/', '')
 }
 
-function displayFigure(filename, figureNode) {
+function getTranslation(dict, langCode) {
+
+  if (langCode && langCode in dict) return dict[langCode];
+
+  for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
+    let langCode = ORDERED_LANGUAGES[i];
+    if (langCode in dict) return dict[langCode];
+  }
+
+  return null;
+}
+
+function displayFigure(filename, figure) {
 
   var mediawikiApiUrl;
 
@@ -1233,13 +1225,13 @@ function displayFigure(filename, figureNode) {
   loadJSONP(mediawikiApiUrl, function(data) {
     let pageId = Object.keys(data.query.pages)[0];
     let imageInfo = data.query.pages[pageId].imageinfo[0];
-    let imageNode = document.createElement('img');
-    imageNode.src = imageInfo.thumburl;
+    let img = document.createElement('img');
+    img.src = imageInfo.thumburl;
     let anchor = document.createElement('a');
     anchor.href = imageInfo.descriptionurl;
     anchor.style.height = imageInfo.thumbheight + 'px';
-    anchor.appendChild(imageNode);
-    figureNode.replaceChild(anchor, figureNode.childNodes[0]);  // replace spinner
+    anchor.appendChild(img);
+    figure.replaceChild(anchor, figure.childNodes[0]);  // replace spinner
   });
 
   // Fetch the image attribution if needed
@@ -1256,7 +1248,7 @@ function displayFigure(filename, figureNode) {
         artistHtml = artistHtml.replace(/href="\/\//, window.location.protocol == 'https' ? 'href="https://' : 'href="http://');
       }
       let licenseShortName = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
-      figureNode.insertAdjacentHTML('beforeend', '<figcaption>' + artistHtml + '<br><a href="' + metadata.LicenseUrl.value + '">' + licenseShortName + '</a></figcaption>');
+      figure.insertAdjacentHTML('beforeend', '<figcaption>' + artistHtml + '<br><a href="' + metadata.LicenseUrl.value + '">' + licenseShortName + '</a></figcaption>');
     }
   });
 }
@@ -1305,7 +1297,7 @@ function MarkerRecord() {
   this.adminTypes    = [];
   this.mapMarker     = undefined;
   this.panelNode     = undefined;
-  this.indexListNode = undefined;
+  this.indexLi       = undefined;
 }
 
   </script>
