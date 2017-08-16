@@ -5,10 +5,9 @@
 <title>Encyclopedia of Philippine Heritage: Historical Markers Map</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,600i,700|Merriweather:300,300i" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
-<link rel="stylesheet" href="MarkerCluster.css" />
-<link rel="stylesheet" href="MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.6/dist/MarkerCluster.css" />
 <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
-<script src="leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.0.6/dist/leaflet.markercluster.js"></script>
 <style>
 
 html, body {
@@ -459,8 +458,22 @@ nav li.selected a {
 .marker-cluster-large      { background-color: rgba( 32,  96, 128, 0.4); }
 .marker-cluster-large  div { background-color: rgba( 32,  96, 128, 0.6); }
 
-.leaflet-popup-close-button {
-  display: none;
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #268;
+}
+
+.leaflet-popup-content {
+  font: 600 18px/20px "Open Sans", sans-serif;
+  text-transform: uppercase;
+  color: white;
+  text-align: center;
+}
+
+.leaflet-popup-content .subtitle {
+  padding: 2px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
 }
 
 /* Match Leaflet's control style */
@@ -679,6 +692,7 @@ var SortModes = [
   { id: 'qid',   label: 'by Wikidata ID' },
 ];
 var CurrentSortModeIdx;
+var PopUpIsAutomatic;
 
 window.addEventListener('load', init);
 
@@ -727,7 +741,6 @@ function processWikidataQuery() {
   if (this.readyState != this.DONE || this.status != 200) return;
 
   var maxLat = -90, maxLon = -180, minLat = 90, minLon = 180;
-  var fragmentId;
 
   var data = JSON.parse(this.responseText);
 
@@ -761,9 +774,9 @@ function processWikidataQuery() {
         sub  : sub,
       };
     }
-    else {
-      if ('titleNoValue' in queryResult) record.title = null;
-      record.indexTitle = queryResult.markerLabel.value.replace(/ ?historical marker/i, '');
+    else if ('titleNoValue' in queryResult) {
+      record.title = null;
+      record.indexTitle = '[' + queryResult.markerLabel.value.replace(/ ?historical marker/i, '') + ']';
     }
     
     if ('inscription' in queryResult) {
@@ -876,15 +889,19 @@ function processWikidataQuery() {
   Object.keys(Markers).forEach(function(id) {
 
     let record = Markers[id];
+    let popupHtml;
 
-    if (record.title) {
+    if (record.title && Object.keys(record.title).length > 0) {
       let title = getTranslation(record.title);
-      if (title) {
-        record.indexTitle = title.main;
-        if (title.sub) {
-          record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ') + title.sub;
-        }
+      record.indexTitle = title.main;
+      popupHtml = title.main;
+      if (title.sub) {
+        record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ') + title.sub;
+        popupHtml += '<div class="subtitle">' + title.sub + '</div>';
       }
+    }
+    else {
+      popupHtml = record.indexTitle;
     }
 
     if (Object.keys(record.commemorates).length === 0) record.commemorates = null;
@@ -893,7 +910,7 @@ function processWikidataQuery() {
 
     // Create a map marker and add to the cluster
     let mapMarker = L.marker([record.lat, record.lon]);
-    mapMarker.bindPopup(record.indexTitle);
+    mapMarker.bindPopup(popupHtml, { closeButton: false });
     let popup = mapMarker.getPopup();
     popup._wikidataId = id;
     Cluster.addLayer(mapMarker);
@@ -904,34 +921,36 @@ function processWikidataQuery() {
     li.innerHTML = record.indexTitle;
     li._wikidataId = id;
     li.addEventListener('click', function(ev) {
-      activateMarker(ev.currentTarget._wikidataId, true);
+      let record = Markers[ev.currentTarget._wikidataId];
+      Cluster.zoomToShowLayer(record.mapMarker, function() {
+        Map.setView([record.lat, record.lon], Map.getZoom());
+        record.mapMarker.openPopup();
+      });
     });
     record.indexLi = li;
     listElem.appendChild(li);
   });
 
-  let numMarkers = Object.keys(Markers).length;
 
   // Update the map to add the clustered markers and display total number of markers
   Map.addLayer(Cluster);
+  let numMarkers = Object.keys(Markers).length;
   document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
 
-  // TODO: Update the map to add popup event handlers
-  Map.on('popupopen', handlePopup);
-  //Map.on('popupclose', function() {
-  //  window.location.hash = '';
-  //});
+  Map.on('popupopen', function(e) {
+    activateMarker(e.popup._wikidataId);
+  });
 
   // Update the map view to fit the markers or display the selected marker if any
-  fragmentId = window.location.hash.replace('#', '');
-  if (Markers[fragmentId]) {
-    activateMarker(fragmentId, true);
+  let fragment = window.location.hash.replace('#', '');
+  if (fragment in Markers) {
+    let record = Markers[fragment];
+    Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM);
+    record.mapMarker.openPopup();
   }
   else {
-    if (fragmentId == 'about') showAbout();
-    Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]), {
-      padding: new L.Point(0, 0),  // TODO: Leaflet v1.0.0-rc.1 has a bug for padding
-    });
+    if (fragment == 'about') showAbout();
+    Map.fitBounds(new L.LatLngBounds([minLat, minLon], [maxLat, maxLon]));
   }
 
   // Enable sort button and add click event handler, and perform initial sort
@@ -973,26 +992,12 @@ function showAbout() {
   showPanelContent('about');
 }
 
-function handlePopup(e) {
-  activateMarker(e.popup._wikidataId, false);
-}
-
-// Function to zoom to a specified historical marker and open its popup
-function activateMarker(wikidataId, updateMap) {
+// This function display's the historical marker's information on the panel
+function activateMarker(wikidataId) {
 
   var record = Markers[wikidataId];
 
-  // Update the map state to show the historical marker
-  if (updateMap) {
-    var mapMarker = record.mapMarker;
-    Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM, {
-      animate: false,  // TODO: Try to enable animation
-    });
-    Cluster.zoomToShowLayer(mapMarker, function() {
-      mapMarker.openPopup();
-    });
-  }
-
+  // Marker was previously activated
   if (record.panelNode) {
     let detailsNode = document.querySelector('#details');
     detailsNode.replaceChild(record.panelNode, detailsNode.childNodes[0]);
