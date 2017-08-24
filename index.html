@@ -21,26 +21,6 @@ body {
   align-items: stretch;
 }
 
-button {
-  padding: 3px 6px;
-  font-size: 11px;
-  line-height: 11px;
-  border: 1px solid #555;
-  border-radius: 25px;
-  text-decoration: none;
-  text-transform: uppercase;
-  color: #ccc;
-  background: #707070;
-  background-image: linear-gradient(to bottom, #808080, #707070);
-  cursor: pointer;
-}
-button::-moz-focus-inner { border: none; }
-button:hover {
-  color: #fff;
-  background: #789;
-  background-image: linear-gradient(to bottom, #abc, #789);
-}
-
 .loader {
   border-radius: 50%;
   width: 40px;
@@ -128,6 +108,8 @@ nav li a {
   color: #046;
   text-decoration: none;
   text-transform: uppercase;
+  transition-property: background;
+  transition-duration: 0.3s;
 }
 
 nav li a:hover {
@@ -171,6 +153,7 @@ nav li.selected a {
 #index {
   display: none;
   flex-direction: column;
+  font-family: "Open Sans", sans-serif;
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
@@ -180,15 +163,35 @@ nav li.selected a {
   padding: 20px 20px 10px;
 }
 
-#index p {
+#index header p {
   margin: 0;
   color: #444;
-  font-size: 10px;
-  line-height: 10px;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 400;
 }
 
 #sort {
   margin-top: 10px;
+  padding: 6px 12px;
+  width: 250px;
+  border-radius: 25px;
+  border: none;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  background: #268;
+  color: #cde;
+  cursor: pointer;
+  transition-property: background, color;
+  transition-duration: 0.3s;
+}
+#sort::-moz-focus-inner { border: none; }
+#sort:hover {
+  color: #fff;
+  background: #598ca6;
 }
 
 #marker-list {
@@ -196,44 +199,40 @@ nav li.selected a {
   flex: 1;
   overflow-y: auto;
   margin: 0;
-  padding: 10px 20px;
+  padding: 10px 0;
   background: #e9f0f3;
 }
 
 #marker-list li {
   margin: 0;
-  padding: 5px 0;
-  font-size: 12.5px;
-  line-height: 22px;
-  border-bottom: 1px solid #ade;
-  font-family: "Open Sans", sans-serif;
-  font-weight: 400;
+  padding: 0;
+  transition-property: background, box-shadow;
+  transition-duration: 0.3s;
 }
-
-#marker-list li:last-child {
-  border-bottom: none;
-  margin-bottom: 10px;
+#marker-list li:hover {
+  background: #ade;
+  box-shadow: 0 -1px #ade;
 }
 
 #marker-list li a {
   display: block;
+  margin: 0 20px;
+  padding: 5px 0;
+  border-bottom: 1px solid #ade;
+  font-size: 12.5px;
+  line-height: 22px;
+  font-weight: 400;
   text-decoration: none;
   color: #000;
+}
+
+#marker-list li:last-child a {
+  border-bottom: none;
 }
 
 #details {
   display: none;
   padding: 20px;
-}
-
-#details figcaption a, #details p a {
-  color: #268;
-  text-decoration: none;
-  border-bottom: 1px dotted #ccc;
-}
-#details figcaption a:hover, #details p a:hover {
-  background: #eee;
-  border-bottom: 1px solid #eee;
 }
 
 #details .main-wikidata-link {
@@ -296,6 +295,8 @@ nav li.selected a {
   line-height: 20px;
   font-family: Merriweather, serif;
   background: #eee;
+  transition-property: height;
+  transition-duration: 0.5s;
 }
 
 #details figure .loader {
@@ -321,7 +322,7 @@ nav li.selected a {
   display: block;
 }
 
-#details figure figcaption {
+#details figcaption {
   display: block;
   padding: 5px 0 0 0;
   font-size: 10px;
@@ -332,14 +333,18 @@ nav li.selected a {
   font-weight: 400;
 }
 
-#details figure figcaption a {
-  color: #888;
+#details figcaption a {
+  border-bottom: 1px dotted #ccc;
   text-decoration: none;
-  border-bottom: 1px solid #ccc;
+  color: #888;
 }
-#details figure figcaption a:hover {
+#details figcaption a:hover {
   background: #eee;
   border-bottom: 1px solid #eee;
+}
+
+#details .inscription {
+  padding: 0 170px 0 0;
 }
 
 #details .inscription.loading {
@@ -353,10 +358,6 @@ nav li.selected a {
 #details .inscription.nodata {
   font-style: italic;
   color: #888;
-}
-
-#details .inscription {
-  padding: 0 170px 0 0;
 }
 
 #details .inscription p:first-child {
@@ -395,10 +396,6 @@ nav li.selected a {
   border: none;
   margin-left: 10px;
 }
-#details p a.image:hover, #details li a.image:hover {
-  background: none;
-  border-bottom: none;
-}
 
 #details p a.image img, #details li a.image img {
   vertical-align: middle;
@@ -435,13 +432,14 @@ nav li.selected a {
   font-family: Merriweather, serif;
 }
 
-#about a {
+#about p a {
+  border-bottom: 1px dotted #ccc;
   text-decoration: none;
-  color: #888;
+  color: #666;
 }
 #about p a:hover {
-  color: #bbf;
-  text-decoration: underline;
+  border-bottom: 1px solid #eee;
+  background: #eee;
 }
 
 #map {
@@ -465,14 +463,15 @@ nav li.selected a {
 
 .marker-cluster span {
   line-height: 30px;
+  color: #fff;
 }
 
-.marker-cluster-small      { background-color: rgba(144, 178, 196, 0.4); }
-.marker-cluster-small  div { background-color: rgba(144, 178, 196, 0.6); }
-.marker-cluster-medium     { background-color: rgba( 89, 140, 166, 0.4); }
-.marker-cluster-medium div { background-color: rgba( 89, 140, 166, 0.6); }
-.marker-cluster-large      { background-color: rgba( 32,  96, 128, 0.4); }
-.marker-cluster-large  div { background-color: rgba( 32,  96, 128, 0.6); }
+.marker-cluster-small      { background-color: rgba(68, 153, 204, 0.5); }
+.marker-cluster-small  div { background-color: rgba(68, 153, 204, 0.8); }
+.marker-cluster-medium     { background-color: rgba(51, 128, 170, 0.5); }
+.marker-cluster-medium div { background-color: rgba(51, 128, 170, 0.8); }
+.marker-cluster-large      { background-color: rgba(34, 102, 136, 0.5); }
+.marker-cluster-large  div { background-color: rgba(34, 102, 136, 0.8); }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
   background: #268;
@@ -710,6 +709,7 @@ var Markers = {}; // Hash to contain data about historical markers
 var Map;          // Leaflet map object
 var Cluster;      // Leaflet map cluster
 var CurrentSortModeIdx;
+var AppIsInitialized;
 
 // ------------------------------------------------------------
 
@@ -817,6 +817,7 @@ function processWikidataQuery() {
   switchSortMode();
 
   // Remove the app initialization spinner and activate the hashchange handler
+  AppIsInitialized = true;
   document.getElementById('init').remove();
   processHashChange();
 }
@@ -983,6 +984,23 @@ function postProcessRecord(qid, initBounds) {
     initBounds[1][0] = Math.max(record.lat, initBounds[1][0]);
     initBounds[1][1] = Math.max(record.lon, initBounds[1][1]);
   }
+}
+
+
+// This takes a historical marker QID and updates the map to show the
+// corresponding map marker, opens its popup if it isn't open yet, and
+// displays the marker's details on the side panel.
+function activateMarker(qid) {
+  let record = Markers[qid];
+  Cluster.zoomToShowLayer(record.mapMarker, function() {
+    Map.setView([record.lat, record.lon], Map.getZoom());
+    if (record.popup.isOpen()) {
+      displayMarkerDetails(qid);
+    }
+    else {
+      record.mapMarker.openPopup();
+    }
+  });
 }
 
 
@@ -1214,6 +1232,9 @@ function displayFigure(filename, figure) {
 
 // This event handler handles any change in the window URL hash
 function processHashChange() {
+
+  if (!AppIsInitialized) return;
+
   let fragment = window.location.hash.replace('#', '');
   if (fragment in Markers) {
     activateMarker(fragment);
@@ -1224,23 +1245,6 @@ function processHashChange() {
   else {
     displayPanelContent('index');
   }
-}
-
-
-// This takes a historical marker QID and updates the map to show the
-// corresponding map marker, opens its popup if it isn't open yet, and
-// displays the marker's details on the side panel.
-function activateMarker(qid) {
-  let record = Markers[qid];
-  Cluster.zoomToShowLayer(record.mapMarker, function() {
-    Map.setView([record.lat, record.lon], Map.getZoom());
-    if (record.popup.isOpen()) {
-      displayMarkerDetails(qid);
-    }
-    else {
-      record.mapMarker.openPopup();
-    }
-  });
 }
 
 
