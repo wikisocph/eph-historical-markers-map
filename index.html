@@ -6,8 +6,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,600i,700|Merriweather:300,300i" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.6/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="css/leaflet.extra-markers.min.css" />
 <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.0.6/dist/leaflet.markercluster.js"></script>
+<script src="js/leaflet.extra-markers.min.js"></script>
 <style>
 
 html, body {
@@ -560,11 +562,11 @@ nav li.selected a {
 // Constants and fixed parameters
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const LANGUAGES = {
-  'en': {name: 'English', qid: 'Q1860' },
-  'tl': {name: 'Tagalog', qid: 'Q34057'},
-  'es': {name: 'Spanish', qid: 'Q1321' },
-  'de': {name: 'German' , qid: 'Q188'  },
-  'fr': {name: 'French' , qid: 'Q150'  },
+  'en': { name: 'English', qid: 'Q1860'  },
+  'tl': { name: 'Tagalog', qid: 'Q34057' },
+  'es': { name: 'Spanish', qid: 'Q1321'  },
+  'de': { name: 'German' , qid: 'Q188'   },
+  'fr': { name: 'French' , qid: 'Q150'   },
 };
 const ORDERED_LANGUAGES = ['en', 'tl', 'es', 'de', 'fr'];
 const NL = '\n';
@@ -748,7 +750,7 @@ function initMap() {
   }).addTo(Map);
 
   // Add powered by Wikidata map control
-  let powered = L.control({position: 'bottomleft'});
+  let powered = L.control({ position: 'bottomleft' });
   powered.onAdd = function(Map) {
     var divElem = L.DomUtil.create('div', 'powered');
     divElem.innerHTML =
@@ -959,7 +961,9 @@ function postProcessRecord(qid, initBounds) {
   }
 
   // Create a map marker and add to the cluster
-  let mapMarker = L.marker([record.lat, record.lon]);
+  let mapMarker = L.marker([record.lat, record.lon], {
+    icon: L.ExtraMarkers.icon({ icon: '', markerColor : 'cyan' })
+  });
   mapMarker.bindPopup(popupHtml, { closeButton: false });
   Cluster.addLayer(mapMarker);
   record.mapMarker = mapMarker;
