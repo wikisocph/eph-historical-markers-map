@@ -707,7 +707,7 @@ const SORT_MODES             = [
 ];
 
 // Globals
-var Markers = {}; // Hash to contain data about historical markers
+var Markers = {}; // Hash to contain data about the historical markers
 var Map;          // Leaflet map object
 var Cluster;      // Leaflet map cluster
 var CurrentSortModeIdx;
@@ -754,7 +754,7 @@ function initMap() {
   powered.onAdd = function(Map) {
     var divElem = L.DomUtil.create('div', 'powered');
     divElem.innerHTML =
-      '<a href="https://www.wikidata.org/"><img src="powered_by_wikidata.png"></a>';
+      '<a href="https://www.wikidata.org/"><img src="img/powered_by_wikidata.png"></a>';
     return divElem;
   };
   powered.addTo(Map);
@@ -799,7 +799,7 @@ function processWikidataQuery() {
   let numMarkers = Object.keys(Markers).length;
   document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
 
-  // Re-initialize the map view to display the parmalinked marker or
+  // Re-initialize the map view to display the permalinked marker or
   // to fit the Philippine markers
   let fragment = window.location.hash.replace('#', '');
   if (fragment in Markers) {
@@ -993,7 +993,7 @@ function postProcessRecord(qid, initBounds) {
 
 // This takes a historical marker QID and updates the map to show the
 // corresponding map marker, opens its popup if it isn't open yet, and
-// displays the marker's details on the side panel.
+// displays the historical marker's details on the side panel.
 function activateMarker(qid) {
   let record = Markers[qid];
   Cluster.zoomToShowLayer(record.mapMarker, function() {
@@ -1068,10 +1068,10 @@ function generateMarkerDetails(qid, record) {
       let commemoratesData = record.commemorates[qid];
       commemoratesHtml += '<' + tagName + '>' + commemoratesData.title;
       commemoratesHtml += '<a class="image" href="https://www.wikidata.org/wiki/' + qid + '" title="View in Wikidata">';
-      commemoratesHtml += '<img src="wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>';
+      commemoratesHtml += '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>';
       if (commemoratesData.wp_url) {
         commemoratesHtml += '<a class="image" href="' + commemoratesData.wp_url + '" title="View in Wikipedia">';
-        commemoratesHtml += '<img src="wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>';
+        commemoratesHtml += '<img src="img/wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>';
       }
       commemoratesHtml += '</' + tagName + '>';
     });
@@ -1106,7 +1106,7 @@ function generateMarkerDetails(qid, record) {
 
   let detailsHtml =
     '<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/' + qid + '" title="View in Wikidata">' +
-    '<img src="wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
+    '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
     titleHtml +
     markerFigureHtml +
     inscriptionHtml +
