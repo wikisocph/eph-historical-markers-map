@@ -1147,44 +1147,50 @@ function generateMarkerDetails(qid, record) {
 // are, this parses the templates, stores the inscriptions into the record, then
 // inserts the preferred inscription into the details content.
 function checkAndDisplayLongInscription(qid, record) {
+  loadJSONP(
+    'https://www.wikidata.org/w/api.php',
+    {
+      action : 'query',
+      format : 'json',
+      prop   : 'revisions',
+      rvprop : 'content',
+      titles : 'Talk:' + qid,
+    },
+    function(data) {
 
-  // Parse the talk page
-  let url =
-    'https://www.wikidata.org/w/api.php?action=query' +
-    '&prop=revisions&rvprop=content&format=json' +
-    '&titles=Talk:' + qid;
-  loadJSONP(url, function(data) {
-    let pageId = Object.keys(data.query.pages)[0];
-    if (pageId !== '-1') {
-      let talkContent = data.query.pages[pageId].revisions[0]['*'];
-      let templateStrings = talkContent.match(/{{\s*LongInscription[^]+?}}/g);
-      if (templateStrings) {
-        templateStrings.forEach(function(string) {
-          let langQid = string.match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
-          let inscription = string.match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
-          for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
-            let langCode = ORDERED_LANGUAGES[i];
-            if (langQid === LANGUAGES[langCode].qid) {
-              record.inscription[langCode] = formatInscription(inscription);
-              break;
+      // Extract inscriptions and add them to the database
+      let pageId = Object.keys(data.query.pages)[0];
+      if (pageId !== '-1') {
+        let talkContent = data.query.pages[pageId].revisions[0]['*'];
+        let templateStrings = talkContent.match(/{{\s*LongInscription[^]+?}}/g);
+        if (templateStrings) {
+          templateStrings.forEach(function(string) {
+            let langQid = string.match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
+            let inscription = string.match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
+            for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
+              let langCode = ORDERED_LANGUAGES[i];
+              if (langQid === LANGUAGES[langCode].qid) {
+                record.inscription[langCode] = formatInscription(inscription);
+                break;
+              }
             }
-          }
-        });
+          });
+        }
       }
-    }
 
-    // Populate the details content with the inscription,
-    // or indicate that there's none
-    let inscriptionElem = record.panelElem.childNodes[3];
-    if (Object.keys(record.inscription).length > 0) {
-      inscriptionElem.innerHTML = getTranslation(record.inscription);
+      // Populate the details content with the inscription,
+      // or indicate that there's none
+      let inscriptionElem = record.panelElem.childNodes[3];
+      if (Object.keys(record.inscription).length > 0) {
+        inscriptionElem.innerHTML = getTranslation(record.inscription);
+      }
+      else {
+        inscriptionElem.classList.add('nodata');
+        inscriptionElem.innerHTML = '<p>No inscription has been encoded yet.</p>';
+      }
+      inscriptionElem.classList.remove('loading');
     }
-    else {
-      inscriptionElem.classList.add('nodata');
-      inscriptionElem.innerHTML = '<p>No inscription has been encoded yet.</p>';
-    }
-    inscriptionElem.classList.remove('loading');
-  });
+  );
 }
 
 
@@ -1193,47 +1199,58 @@ function checkAndDisplayLongInscription(qid, record) {
 // a figcaption element.
 function displayFigure(filename, figure) {
 
-  var url;
-
   // Fetch the image thumbnail
-  url =
-    'https://commons.wikimedia.org/w/api.php?action=query' +
-    '&prop=imageinfo&iiprop=url&iiurlwidth=150&format=json' +
-    '&titles=File:' + filename;
-  loadJSONP(url, function(data) {
-    let pageId = Object.keys(data.query.pages)[0];
-    let imageInfo = data.query.pages[pageId].imageinfo[0];
-    let img = document.createElement('img');
-    img.src = imageInfo.thumburl;
-    let anchor = document.createElement('a');
-    anchor.href = imageInfo.descriptionurl;
-    anchor.style.height = imageInfo.thumbheight + 'px';
-    anchor.appendChild(img);
-    figure.replaceChild(anchor, figure.childNodes[0]);  // replace spinner
-  });
+  loadJSONP(
+    'https://commons.wikimedia.org/w/api.php',
+    {
+      action     : 'query',
+      format     : 'json',
+      prop       : 'imageinfo',
+      iiprop     : 'url',
+      iiurlwidth : 150,
+      titles     : 'File:' + filename,
+    },
+    function(data) {
+      let pageId = Object.keys(data.query.pages)[0];
+      let imageInfo = data.query.pages[pageId].imageinfo[0];
+      let img = document.createElement('img');
+      img.src = imageInfo.thumburl;
+      let anchor = document.createElement('a');
+      anchor.href = imageInfo.descriptionurl;
+      anchor.style.height = imageInfo.thumbheight + 'px';
+      anchor.appendChild(img);
+      figure.replaceChild(anchor, figure.childNodes[0]);  // replace spinner
+    }
+  );
 
   // Fetch the image attribution and see if it is needed
-  url =
-    'https://commons.wikimedia.org/w/api.php?action=query' +
-    '&prop=imageinfo&iiprop=extmetadata&format=json' +
-    '&titles=File:' + filename;
-  loadJSONP(url, function(data) {
-    let pageId = Object.keys(data.query.pages)[0];
-    let metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
-    let artistHtml = metadata.Artist.value;
-    if (artistHtml.search('href="//') >= 0) {
-      artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//, 'href="https://');
-    }
-    let licenseHtml = '';
-    if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
-      licenseHtml = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
-      if ('LicenseUrl' in metadata) {
-        licenseHtml = '<a href="' + metadata.LicenseUrl.value + '">' + licenseHtml + '</a>';
+  loadJSONP(
+    'https://commons.wikimedia.org/w/api.php',
+    {
+      action : 'query',
+      format : 'json',
+      prop   : 'imageinfo',
+      iiprop : 'extmetadata',
+      titles : 'File:' + filename,
+    },
+    function(data) {
+      let pageId = Object.keys(data.query.pages)[0];
+      let metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
+      let artistHtml = metadata.Artist.value;
+      if (artistHtml.search('href="//') >= 0) {
+        artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//, 'href="https://');
       }
-      licenseHtml = '<br>' + licenseHtml;
+      let licenseHtml = '';
+      if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
+        licenseHtml = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
+        if ('LicenseUrl' in metadata) {
+          licenseHtml = '<a href="' + metadata.LicenseUrl.value + '">' + licenseHtml + '</a>';
+        }
+        licenseHtml = '<br>' + licenseHtml;
+      }
+      figure.insertAdjacentHTML('beforeend', '<figcaption>' + artistHtml + licenseHtml + '</figcaption>');
     }
-    figure.insertAdjacentHTML('beforeend', '<figcaption>' + artistHtml + licenseHtml + '</figcaption>');
-  });
+  );
 }
 
 
@@ -1251,6 +1268,7 @@ function processHashChange() {
     displayPanelContent('about');
   }
   else {
+    window.location.hash = '';  // Disable invalid fragments
     document.title = BASE_TITLE;
     displayPanelContent('index');
   }
@@ -1320,7 +1338,8 @@ function getQid(queryItem) {
 
 // This takes a WDQS query result image data and returns the image filename.
 function extractImageFilename(image) {
-  return image.value.replace(/https?:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//, '');
+  let regex = /https?:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//;
+  return unescape(image.value.replace(regex, ''));
 }
 
 
@@ -1352,15 +1371,22 @@ function getTranslation(dict, langCode) {
 // Adapted from https://gist.github.com/gf3/132080/110d1b68d7328d7bfe7e36617f7df85679a08968
 var loadJSONP = (function(){
   var unique = 0;
-  return function(url, callback) {
+  return function(endpoint, params, callback) {
 
     // Create unique function name
     let name = '_jsonp_' + unique++;
 
+    // Construct URL
+    let queryParams = Object.keys(params).map(function(el) {
+      return escape(el) + '=' + escape(params[el]);
+    }).join('&');
+    queryParams += queryParams ? '&' : '';
+    queryParams += '&callback=' + name;
+
     // Create script element
     let script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = url + '&callback=' + name;
+    script.src = endpoint + '?' + queryParams;
 
     // Setup handler
     window[name] = function(data) {
