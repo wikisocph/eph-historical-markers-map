@@ -997,13 +997,11 @@ function postProcessRecord(qid, initBounds) {
 // corresponding map marker, opens its popup if it isn't open yet, and
 // displays the historical marker's details on the side panel.
 function activateMarker(qid) {
+  displayMarkerDetails(qid);
   let record = Markers[qid];
   Cluster.zoomToShowLayer(record.mapMarker, function() {
     Map.setView([record.lat, record.lon], Map.getZoom());
-    if (record.popup.isOpen()) {
-      displayMarkerDetails(qid);
-    }
-    else {
+    if (!record.popup.isOpen()) {
       record.mapMarker.openPopup();
     }
   });
