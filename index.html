@@ -793,22 +793,17 @@ function processWikidataQuery() {
   });
 
   // Do post-processing
-  let initBounds = [[90, 180], [-90, -180]];
-  Object.keys(Markers).forEach(function(qid) { postProcessRecord(qid, initBounds) });
+  Object.keys(Markers).forEach(function(qid) { postProcessRecord(qid) });
 
   // Update stats
   let numMarkers = Object.keys(Markers).length;
   document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
 
-  // Re-initialize the map view to display the permalinked marker or
-  // to fit the Philippine markers
+  // If there is a permalinked marker, re-initialize the map view
   let fragment = window.location.hash.replace('#', '');
   if (fragment in Markers) {
     let record = Markers[fragment];
     Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM);
-  }
-  else {
-    Map.fitBounds(new L.LatLngBounds(initBounds[0], initBounds[1]));
   }
 
   // Enable the index sort button and add click event handler,
@@ -936,10 +931,9 @@ function processQueryResult(result, record) {
 }
 
 
-// This takes a historical marker QID and the initial bounding box and
-// cleans up the corresponding record, generates a map marker and index entry
-// for the historical marker, and updates the bounding box as needed.
-function postProcessRecord(qid, initBounds) {
+// This takes a historical marker QID then cleans up the corresponding record,
+// and generates a map marker and index entry for the historical marker.
+function postProcessRecord(qid) {
 
   let record = Markers[qid];
 
@@ -978,18 +972,6 @@ function postProcessRecord(qid, initBounds) {
   li.innerHTML = '<a href="#' + qid + '">' + record.indexTitle + '</a>';
   document.getElementById('marker-list').appendChild(li);
   record.indexLi = li;
-
-  // Update the bounding box containing all the historical markers in the
-  // Philippines
-  if (
-    MIN_PH_LAT <= record.lat && record.lat <= MAX_PH_LAT &&
-    MIN_PH_LON <= record.lon && record.lon <= MAX_PH_LON
-  ) {
-    initBounds[0][0] = Math.min(record.lat, initBounds[0][0]);
-    initBounds[0][1] = Math.min(record.lon, initBounds[0][1]);
-    initBounds[1][0] = Math.max(record.lat, initBounds[1][0]);
-    initBounds[1][1] = Math.max(record.lon, initBounds[1][1]);
-  }
 }
 
 
