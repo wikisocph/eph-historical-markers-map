@@ -497,13 +497,36 @@ nav li.selected a {
   font-weight: 700;
 }
 
-/* Match Leaflet's control style */
 .powered {
   line-height: 0.5;
   background: #fff;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
   border-radius: 4px;
   overflow: hidden;
+}
+
+.leaflet-control-zoom, .leaflet-control-layers, .powered {
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+}
+
+.leaflet-control-layers {
+  border-radius: 4px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 26px;
+  height: 26px;
+  background-size: 18px 18px;
+}
+
+.leaflet-touch .leaflet-control-layers-toggle {
+  width: 30px;
+  height: 30px;
+  background-size: 20px 20px;
+}
+
+.leaflet-touch .powered {
+  box-shadow: none;
+  border: 2px solid rgba(0,0,0,0.2);
 }
 
 </style>
@@ -683,26 +706,28 @@ const SPARQL_QUERY =
 '  }' + NL +
 '  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }' + NL +
 '}';
-const SPARQL_QUERY_ESCAPED   = escape(SPARQL_QUERY);
-const WDQS_API_URL           = 'https://query.wikidata.org/sparql';
-const WDQS_GUI_URL           = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
-const YEAR_PRECISION         = '9';
-const PH_QID                 = 'Q928';
-const COUNTRY_QID            = 'Q6256';
-const REGION_QID             = 'Q24698';
-const PROVINCE_QID           = 'Q24746';
-const HUC_QID                = 'Q29946056';
-const CITY_QID               = 'Q104157';
-const ADMIN_QIDS             = [COUNTRY_QID, REGION_QID, PROVINCE_QID, HUC_QID, CITY_QID];
-const ADMIN_LEVELS           = 4;
-const TILE_LAYER_URL         = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
-const TILE_LAYER_MAX_ZOOM    = 19;
-const MIN_PH_LAT             =   4.5;
-const MAX_PH_LAT             =  21.0;
-const MIN_PH_LON             = 116.5;
-const MAX_PH_LON             = 126.5;
-const SORT_MODES             = [
+const SPARQL_QUERY_ESCAPED    = escape(SPARQL_QUERY);
+const WDQS_API_URL            = 'https://query.wikidata.org/sparql';
+const WDQS_GUI_URL            = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
+const YEAR_PRECISION          = '9';
+const PH_QID                  = 'Q928';
+const COUNTRY_QID             = 'Q6256';
+const REGION_QID              = 'Q24698';
+const PROVINCE_QID            = 'Q24746';
+const HUC_QID                 = 'Q29946056';
+const CITY_QID                = 'Q104157';
+const ADMIN_QIDS              = [COUNTRY_QID, REGION_QID, PROVINCE_QID, HUC_QID, CITY_QID];
+const ADMIN_LEVELS            = 4;
+const OSM_LAYER_URL           = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OSM_LAYER_ATTRIBUTION   = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
+const CARTO_LAYER_URL         = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_labels_under/{z}/{x}/{y}.png';
+const CARTO_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/">CARTO</a> (style)';
+const TILE_LAYER_MAX_ZOOM     = 19;
+const MIN_PH_LAT              =   4.5;
+const MAX_PH_LAT              =  21.0;
+const MIN_PH_LON              = 116.5;
+const MAX_PH_LON              = 126.5;
+const SORT_MODES              = [
   { id: 'alpha', label: 'alphabetically'  },
   { id: 'qid',   label: 'by Wikidata QID' },
 ];
@@ -744,11 +769,20 @@ function initMap() {
   Map = new L.map('map');
   Map.fitBounds([[MAX_PH_LAT, MAX_PH_LON], [MIN_PH_LAT, MIN_PH_LON]]);
 
-  // Add specified tile layer
-  new L.tileLayer(TILE_LAYER_URL, {
-    attribution : TILE_LAYER_ATTRIBUTION,
+  // Add tile layers
+  let osmLayer = new L.tileLayer(OSM_LAYER_URL, {
+    attribution : OSM_LAYER_ATTRIBUTION,
+    maxZoom     : TILE_LAYER_MAX_ZOOM,
+  })
+  let cartoLayer = new L.tileLayer(CARTO_LAYER_URL, {
+    attribution : CARTO_LAYER_ATTRIBUTION,
     maxZoom     : TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
+  let baseMaps = {
+    'CARTO Voyager'       : cartoLayer,
+    'OpenStreetMap Carto' : osmLayer,
+  };
+  L.control.layers(baseMaps, null, {position: 'topleft'}).addTo(Map);
 
   // Add powered by Wikidata map control
   let powered = L.control({ position: 'bottomleft' });
