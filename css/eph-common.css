@@ -1,0 +1,422 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: stretch;
+}
+
+.loader {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 10px;
+  text-indent: -9999em;
+  border: 5px solid;
+  transform: translateZ(0);
+  animation: load8 1.1s infinite linear;
+}
+
+@keyframes load8 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 500px;
+  height: 100%;
+}
+
+#branding {
+  font-family: "Open Sans", sans-serif;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+#branding p {
+  margin: 20px 20px 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+#branding h1 {
+  margin: 5px 20px 15px;
+  padding: 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #fff;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0 20px;
+  padding: 0;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+nav li {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+
+nav li a {
+  display: block;
+  position: relative;
+  margin: 0 12px 0 0;
+  padding: 6px 12px 6px 16px;
+  font-size: 12px;
+  line-height: 12px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  border-radius: 6px 6px 0 0;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition-property: background;
+  transition-duration: 0.3s;
+}
+
+nav li a::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0; right: -8px;
+  width: 15px;
+  height: 24px;
+  border-radius: 0 6px 0 0;
+  background: inherit;
+  transform: skew(30deg);
+}
+
+nav li.selected a,
+nav li.selected a:hover {
+  background: #fff;
+}
+
+#init {
+  flex: 1;
+  margin: 0 0 20px 0;
+  padding: 20px;
+  background: #fff;
+}
+
+#init .loader {
+  margin: 20px auto;
+}
+
+.panel-content {
+  flex: 1;
+  margin: 0 0 20px 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+#index {
+  display: none;
+  flex-direction: column;
+  font-family: "Open Sans", sans-serif;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+#index-list {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 10px 0;
+}
+
+#index-list li {
+  margin: 0;
+  padding: 0;
+  transition-property: background, box-shadow;
+  transition-duration: 0.3s;
+}
+
+#index-list li a {
+  display: block;
+  margin: 0 20px;
+  padding: 5px 0;
+  border-bottom: 1px solid;
+  font-size: 12.5px;
+  line-height: 22px;
+  font-weight: 400;
+  text-decoration: none;
+  color: #000;
+}
+
+#index-list li:last-child a {
+  border-bottom: none;
+}
+
+#details {
+  display: none;
+  padding: 20px;
+}
+
+#details .main-wikidata-link {
+  display: block;
+  float: right;
+  margin: 0 0 0 20px;
+}
+
+#details h1 {
+  margin: 0 0 20px;
+  padding: 0 0 10px;
+  font-size: 24px;
+  line-height: 24px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  border-bottom: 1px solid;
+}
+
+#details h1 .subtitle {
+  font-size: 0.75em;
+}
+#details h1 .subtitle::before {
+  content: '\a';
+  white-space: pre;
+}
+
+#details p, #details li {
+  font-size: 12.5px;
+  line-height: 22px;
+  font-family: Merriweather, serif;
+}
+
+#details figure {
+  float: right;
+  margin: 0 0 20px 0;
+  padding: 0;
+  width: 156px;
+  font-size: 13px;
+  line-height: 20px;
+  font-family: Merriweather, serif;
+  background: #eee;
+  transition-property: height;
+  transition-duration: 0.5s;
+}
+
+#details figure .loader {
+  margin: 20px auto;
+}
+
+#details figure.nodata {
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+  font-style: italic;
+  color: #888;
+}
+
+#details figure > a {
+  display: block;
+  border: 1px solid;
+  text-decoration: none;
+}
+
+#details figure img {
+  display: block;
+  border: 2px solid white;
+  width: 150px;
+}
+
+#details figcaption {
+  display: block;
+  padding: 5px 0 0 0;
+  font-size: 10px;
+  line-height: 18px;
+  color: #888;
+  background: #fff;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 400;
+}
+
+#details figcaption a {
+  border-bottom: 1px dotted #ccc;
+  text-decoration: none;
+  color: #888;
+}
+#details figcaption a:hover {
+  background: #eee;
+  border-bottom: 1px solid #eee;
+}
+
+#details .main-text {
+  padding: 0 170px 0 0;
+}
+
+#details .main-text.loading {
+  margin: 40px 0;
+}
+
+#details .main-text .loader {
+  margin: 0 auto;
+}
+
+#details .main-text.nodata {
+  font-style: italic;
+  color: #888;
+}
+
+#details .main-text p:first-child {
+  margin-top: -5px;
+}
+
+#details h2 {
+  clear: right;
+  margin: 20px 0 5px 0;
+  padding-top: 20px;
+  border-top: 1px solid;
+  font-size: 12px;
+  line-height: 12px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+#details p+h2 {
+  margin-top: 15px;
+}
+
+#details p.nodata {
+  font-style: italic;
+  color: #888;
+}
+
+#details p  a.image,
+#details li a.image {
+  display: inline-block;
+  border: none;
+  margin-left: 10px;
+}
+
+#details p  a.image img,
+#details li a.image img {
+  vertical-align: middle;
+}
+
+#about {
+  display: none;
+  padding: 20px;
+}
+
+#about #eph {
+  float: right;
+  margin: 0 0 10px 10px;
+}
+
+#about p {
+  margin: 0 0 10px 0;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 22px;
+  font-family: Merriweather, serif;
+}
+
+#about p a {
+  border-bottom: 1px dotted #ccc;
+  text-decoration: none;
+  color: #666;
+}
+#about p a:hover {
+  border-bottom: 1px solid #eee;
+  background: #eee;
+}
+
+#map {
+  flex: 1;
+}
+
+.marker-cluster {
+  background-clip: padding-box;
+  border-radius: 20px;
+}
+
+.marker-cluster div {
+  margin: 5px 0 0 5px;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  border-radius: 15px;
+  font: 12px "Open Sans", sans-serif;
+  font-weight: bold;
+}
+
+.marker-cluster span {
+  line-height: 30px;
+  color: #fff;
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.leaflet-popup-content {
+  font: 600 18px/20px "Open Sans", sans-serif;
+  text-transform: uppercase;
+  color: white;
+  text-align: center;
+}
+
+.leaflet-popup-content .subtitle {
+  padding: 2px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+}
+
+.powered {
+  line-height: 0.5;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.leaflet-control-zoom, .leaflet-control-layers, .powered {
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+}
+
+.leaflet-control-layers {
+  border-radius: 4px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 26px;
+  height: 26px;
+  background-size: 18px 18px;
+}
+
+.leaflet-touch .leaflet-control-layers-toggle {
+  width: 30px;
+  height: 30px;
+  background-size: 20px 20px;
+}
+
+.leaflet-touch .powered {
+  box-shadow: none;
+  border: 2px solid rgba(0,0,0,0.2);
+}

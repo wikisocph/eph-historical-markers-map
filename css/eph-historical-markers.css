@@ -1,0 +1,126 @@
+.loader {
+  border-color: rgba(34, 102, 136, 0.2);
+  border-left-color: #268;
+}
+
+#panel {
+  background: #268;
+}
+
+#branding p {
+  color: #598ca6;
+}
+
+nav li a {
+  background: #598ca6;
+  color: #046;
+}
+nav li a:hover {
+  background: #90b2c4;
+}
+
+#index header {
+  padding: 20px 20px 10px;
+}
+
+#index header p {
+  margin: 0;
+  color: #444;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 400;
+}
+
+#sort {
+  margin-top: 10px;
+  padding: 6px 12px;
+  width: 250px;
+  border-radius: 25px;
+  border: none;
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  background: #268;
+  color: #cde;
+  cursor: pointer;
+  transition-property: background, color;
+  transition-duration: 0.3s;
+}
+#sort::-moz-focus-inner { border: none; }
+#sort:hover {
+  color: #fff;
+  background: #598ca6;
+}
+
+#index-list {
+  background: #e9f0f3;
+}
+
+#index-list li:hover {
+  background: #ade;
+  box-shadow: 0 -1px #ade;
+}
+
+#index-list li a {
+  border-bottom-color: #ade;
+}
+
+#details h1 {
+  border-bottom-color: #ade;
+  color: #134;
+}
+
+#details h1.untitled {
+  font-style: italic;
+}
+
+#details p {
+  margin: 0 0 10px 0;
+  padding: 0;
+}
+
+#details ul {
+  margin: 0 0 0 24px;
+  padding: 0;
+}
+
+#details ul li {
+  margin: 0 0 5px 0;
+  padding: 0;
+  list-style: square;
+}
+
+#details figure > a {
+  border-color: #ade;
+}
+
+#details h2 {
+  color: #8bd;
+  border-top-color: #ade;
+}
+
+#details p.address {
+  padding: 0 170px 0 0;
+}
+
+#details .vicinity {
+  clear: right;
+}
+
+#details .vicinity p {
+  padding: 0 170px 0 0;
+  font-style: italic;
+}
+
+.marker-cluster-small      { background-color: rgba(68, 153, 204, 0.5); }
+.marker-cluster-small  div { background-color: rgba(68, 153, 204, 0.8); }
+.marker-cluster-medium     { background-color: rgba(51, 128, 170, 0.5); }
+.marker-cluster-medium div { background-color: rgba(51, 128, 170, 0.8); }
+.marker-cluster-large      { background-color: rgba(34, 102, 136, 0.5); }
+.marker-cluster-large  div { background-color: rgba(34, 102, 136, 0.8); }
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #268;
+}
