@@ -23,6 +23,7 @@ const SPARQL_QUERY =
 '       ?commemorates ?commemoratesLabel ?commemoratesArticle WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ;' + NL +
 '          wdt:P625 ?coord .' + NL +
+'  FILTER (!isBLANK(?coord)) .' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker p:P1476 ?titleStatement .' + NL +
 '    OPTIONAL {' + NL +
