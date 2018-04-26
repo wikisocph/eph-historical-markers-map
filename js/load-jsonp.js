@@ -12,7 +12,7 @@ var loadJsonp = (function(){
 
     // Construct URL
     let queryParams = Object.keys(params).map(function(el) {
-      return escape(el) + '=' + escape(params[el]);
+      return escape(el) + '=' + escape(params[el]).replace(/\+/, '%2B');
     }).join('&');
     queryParams += queryParams ? '&' : '';
     if (!callbackParamName) callbackParamName = 'callback';
