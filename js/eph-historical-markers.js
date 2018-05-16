@@ -105,6 +105,8 @@ function processQueryResult(result, record) {
   if ('streetAddress' in result) {
     address += (address ? ', ' : '') + result.streetAddress.value;
   }
+  let islandAdminTypeQid;
+  if ('islandLabel' in result) islandAdminTypeQid = getQid(result.islandAdminType);
   for (let i = 0; i < ADMIN_LEVELS; i++) {
     if (
       adminLabels[i] && adminTypes[i] !== COUNTRY_QID && (i === 0 || (
@@ -118,9 +120,9 @@ function processQueryResult(result, record) {
         )
       ))
     ) {
-      if (!(adminQids[i] in SKIPPED_ADMIN_LABELS)) {
-        address += (address ? ', ' : '') + adminLabels[i];
-      }
+      if (adminQids[i] in SKIPPED_ADMIN_LABELS) continue;
+      if (islandAdminTypeQid && islandAdminTypeQid === adminTypes[i]) address += (address ? ', ' : '') + result.islandLabel.value;
+      address += (address ? ', ' : '') + adminLabels[i];
     }
     else {
       break;

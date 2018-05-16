@@ -19,6 +19,7 @@ const SPARQL_QUERY =
 '       ?country ?countryLabel ?locationLabel ?locationImage ?streetAddress' + NL +
 '       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type' + NL +
 '       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type' + NL +
+'       ?islandLabel ?islandAdminType' + NL +
 '       ?vicinityImage ?vicinityDescription' + NL +
 '       ?commemorates ?commemoratesLabel ?commemoratesArticle WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ;' + NL +
@@ -70,11 +71,13 @@ const SPARQL_QUERY =
 '    OPTIONAL {' + NL +
 '      ?admin0 wdt:P31 ?admin0Type .' + NL +
 '      FILTER (' + NL +
-'        ?admin0Type = wd:Q6256   ||' + NL +
-'        ?admin0Type = wd:Q24698  ||' + NL +
-'        ?admin0Type = wd:Q24746  ||' + NL +
-'        ?admin0Type = wd:Q104157 ||' + NL +
-'        ?admin0Type = wd:Q29946056' + NL +
+'        ?admin0Type = wd:Q6256     ||' + NL +
+'        ?admin0Type = wd:Q24698    ||' + NL +
+'        ?admin0Type = wd:Q24746    ||' + NL +
+'        ?admin0Type = wd:Q104157   ||' + NL +
+'        ?admin0Type = wd:Q29946056 ||' + NL +
+'        ?admin0Type = wd:Q24764    ||' + NL +
+'        ?admin0Type = wd:Q61878' + NL +
 '      )' + NL +
 '    }' + NL +
 '    OPTIONAL {' + NL +
@@ -82,11 +85,13 @@ const SPARQL_QUERY =
 '      OPTIONAL {' + NL +
 '        ?admin1 wdt:P31 ?admin1Type .' + NL +
 '        FILTER (' + NL +
-'          ?admin1Type = wd:Q6256   ||' + NL +
-'          ?admin1Type = wd:Q24698  ||' + NL +
-'          ?admin1Type = wd:Q24746  ||' + NL +
-'          ?admin1Type = wd:Q104157 ||' + NL +
-'          ?admin1Type = wd:Q29946056' + NL +
+'          ?admin1Type = wd:Q6256     ||' + NL +
+'          ?admin1Type = wd:Q24698    ||' + NL +
+'          ?admin1Type = wd:Q24746    ||' + NL +
+'          ?admin1Type = wd:Q104157   ||' + NL +
+'          ?admin1Type = wd:Q29946056 ||' + NL +
+'          ?admin1Type = wd:Q24764    ||' + NL +
+'          ?admin1Type = wd:Q61878' + NL +
 '        )' + NL +
 '      }' + NL +
 '      OPTIONAL {' + NL +
@@ -94,11 +99,13 @@ const SPARQL_QUERY =
 '        OPTIONAL {' + NL +
 '          ?admin2 wdt:P31 ?admin2Type .' + NL +
 '          FILTER (' + NL +
-'            ?admin2Type = wd:Q6256   ||' + NL +
-'            ?admin2Type = wd:Q24698  ||' + NL +
-'            ?admin2Type = wd:Q24746  ||' + NL +
-'            ?admin2Type = wd:Q104157 ||' + NL +
-'            ?admin2Type = wd:Q29946056' + NL +
+'            ?admin2Type = wd:Q6256     ||' + NL +
+'            ?admin2Type = wd:Q24698    ||' + NL +
+'            ?admin2Type = wd:Q24746    ||' + NL +
+'            ?admin2Type = wd:Q104157   ||' + NL +
+'            ?admin2Type = wd:Q29946056 ||' + NL +
+'            ?admin2Type = wd:Q24764    ||' + NL +
+'            ?admin2Type = wd:Q61878' + NL +
 '          )' + NL +
 '        }' + NL +
 '        OPTIONAL {' + NL +
@@ -106,16 +113,29 @@ const SPARQL_QUERY =
 '          OPTIONAL {' + NL +
 '            ?admin3 wdt:P31 ?admin3Type .' + NL +
 '            FILTER (' + NL +
-'              ?admin3Type = wd:Q6256   ||' + NL +
-'              ?admin3Type = wd:Q24698  ||' + NL +
-'              ?admin3Type = wd:Q24746  ||' + NL +
-'              ?admin3Type = wd:Q104157 ||' + NL +
-'              ?admin3Type = wd:Q29946056' + NL +
+'              ?admin3Type = wd:Q6256     ||' + NL +
+'              ?admin3Type = wd:Q24698    ||' + NL +
+'              ?admin3Type = wd:Q24746    ||' + NL +
+'              ?admin3Type = wd:Q104157   ||' + NL +
+'              ?admin3Type = wd:Q29946056 ||' + NL +
+'              ?admin3Type = wd:Q24764    ||' + NL +
+'              ?admin3Type = wd:Q61878' + NL +
 '            )' + NL +
 '          }' + NL +
 '        }' + NL +
 '      }' + NL +
 '    }' + NL +
+'  }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker wdt:P5130 ?island .' + NL +
+'    ?island wdt:P131 ?islandAdmin .' + NL +
+'    ?islandAdmin wdt:P31 ?islandAdminType .' + NL +
+'    FILTER (' + NL +
+'      ?islandAdminType = wd:Q104157   ||' + NL +
+'      ?islandAdminType = wd:Q29946056 ||' + NL +
+'      ?islandAdminType = wd:Q24764    ||' + NL +
+'      ?islandAdminType = wd:Q61878' + NL +
+'    )' + NL +
 '  }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P547 ?commemorates .' + NL +
