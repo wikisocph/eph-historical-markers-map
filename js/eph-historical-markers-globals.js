@@ -17,8 +17,8 @@ const SPARQL_QUERY =
 'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?image' + NL +
 '       ?date ?datePrecision ?inscription ?inscriptionNoValue' + NL +
 '       ?country ?countryLabel ?locationLabel ?locationImage ?streetAddress' + NL +
-'       ?admin0Label ?admin0Type ?admin1Label ?admin1Type' + NL +
-'       ?admin2Label ?admin2Type ?admin3Label ?admin3Type' + NL +
+'       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type' + NL +
+'       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type' + NL +
 '       ?vicinityImage ?vicinityDescription' + NL +
 '       ?commemorates ?commemoratesLabel ?commemoratesArticle WHERE {' + NL +
 '  ?marker wdt:P31 wd:Q21562164 ;' + NL +
@@ -130,6 +130,16 @@ const SORT_MODES              = [
   { id: 'alpha', label: 'alphabetically'  },
   { id: 'qid',   label: 'by Wikidata QID' },
 ];
+const SKIPPED_ADMIN_LABELS = {
+  Q2863958 : true,  // arrondissement of Paris
+  Q90870   : true,  // Arrondissement of Brussels-Capital
+  Q240     : true,  // Brussels-Capital Region
+  Q8165    : true,  // Karlsruhe Government Region
+  Q2013767 : true,  // Mitte (locality in Mitte)
+};
+const ADMIN_LABEL_REPLACEMENT = {
+  Q245546 : '6th arrondissement',
+};
 
 // Globals
 var Markers = {};  // Hash to contain data about the historical markers

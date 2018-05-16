@@ -84,12 +84,17 @@ function processQueryResult(result, record) {
     };
   }
 
-  let adminLabels = [], adminTypes = [];
+  let adminQids = [], adminLabels = [], adminTypes = [];
   for (let i = 0; i < ADMIN_LEVELS; i++) {
-    let labelProp = 'admin' + i + 'Label';
-    if (labelProp in result) adminLabels[i] = result[labelProp].value;
-    let typeProp = 'admin' + i + 'Type';
-    if (typeProp in result) adminTypes[i] = getQid(result[typeProp]);
+    let qidProp = 'admin' + i;
+    if (qidProp in result) {
+      adminQids[i] = getQid(result[qidProp]);
+      let labelProp = 'admin' + i + 'Label';
+      if (labelProp in result) adminLabels[i] = result[labelProp].value;
+      if (adminQids[i] in ADMIN_LABEL_REPLACEMENT) adminLabels[i] = ADMIN_LABEL_REPLACEMENT[adminQids[i]];
+      let typeProp = 'admin' + i + 'Type';
+      if (typeProp in result) adminTypes[i] = getQid(result[typeProp]);
+    }
   }
 
   // Construct address
@@ -113,7 +118,9 @@ function processQueryResult(result, record) {
         )
       ))
     ) {
-      address += (address ? ', ' : '') + adminLabels[i];
+      if (!(adminQids[i] in SKIPPED_ADMIN_LABELS)) {
+        address += (address ? ', ' : '') + adminLabels[i];
+      }
     }
     else {
       break;
@@ -122,9 +129,6 @@ function processQueryResult(result, record) {
   if ('country' in result && getQid(result.country) !== PH_QID) {
     address += (address ? ', ' : '') + result.countryLabel.value;
   }
-
-  // Deduplicate entities in the address
-  address = address.replace(/(^|, )([^, ]*)(?:, \2)+(, |$)/g, '$1$2$3');
 
   record.location.address = address;
 
@@ -312,7 +316,7 @@ function generateMarkerDetails(qid, record) {
     titleHtml +
     markerFigureHtml +
     inscriptionHtml +
-    '<h2>' + (record.datePrecision === YEAR_PRECISION ? 'Year' : 'Date') + ' installed</h2>' +
+    '<h2>' + (record.datePrecision === YEAR_PRECISION ? 'Year' : 'Date') + ' unveiled</h2>' +
     '<p' + (record.date ? ('>' + record.date) : ' class="nodata">Unknown') + '</p>' +
     '<h2>Commemorates</h2>' +
     commemoratesHtml +
