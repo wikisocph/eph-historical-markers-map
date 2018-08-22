@@ -3,15 +3,16 @@
 // Constants and fixed parameters
 const BASE_TITLE = 'Historical Markers Map – Encyclopedia of Philippine Heritage';
 const LANGUAGES = {
-  'en'  : { name: 'English', qid: 'Q1860'  },
-  'tl'  : { name: 'Tagalog', qid: 'Q34057' },
-  'ceb' : { name: 'Cebuano', qid: 'Q33239' },
-  'ilo' : { name: 'Ilocano', qid: 'Q35936' },
-  'es'  : { name: 'Spanish', qid: 'Q1321'  },
-  'de'  : { name: 'German' , qid: 'Q188'   },
-  'fr'  : { name: 'French' , qid: 'Q150'   },
+  'en'  : { name: 'English'    , qid: 'Q1860'  },
+  'tl'  : { name: 'Tagalog'    , qid: 'Q34057' },
+  'ceb' : { name: 'Cebuano'    , qid: 'Q33239' },
+  'ilo' : { name: 'Ilocano'    , qid: 'Q35936' },
+  'pam' : { name: 'Kapampangan', qid: 'Q36121' },
+  'es'  : { name: 'Spanish'    , qid: 'Q1321'  },
+  'de'  : { name: 'German'     , qid: 'Q188'   },
+  'fr'  : { name: 'French'     , qid: 'Q150'   },
 };
-const ORDERED_LANGUAGES = ['en', 'tl', 'ceb', 'ilo', 'es', 'de', 'fr'];
+const ORDERED_LANGUAGES = ['en', 'tl', 'ceb', 'ilo', 'pam', 'es', 'de', 'fr'];
 const NL = '\n';
 const SPARQL_QUERY =
 'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?image' + NL +
