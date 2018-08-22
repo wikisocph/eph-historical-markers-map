@@ -15,7 +15,7 @@ const LANGUAGES = {
 const ORDERED_LANGUAGES = ['en', 'tl', 'ceb', 'ilo', 'pam', 'es', 'de', 'fr'];
 const NL = '\n';
 const SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?image' + NL +
+'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?titleLang ?image' + NL +
 '       ?date ?datePrecision ?inscription ?inscriptionNoValue' + NL +
 '       ?country ?countryLabel ?locationLabel ?locationImage ?streetAddress' + NL +
 '       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type' + NL +
@@ -31,10 +31,12 @@ const SPARQL_QUERY =
 '    OPTIONAL {' + NL +
 '      ?titleStatement ps:P1476 ?title .' + NL +
 '      OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
+'      OPTIONAL { ?titleStatement pq:P518 ?titleLang }' + NL +
 '    }' + NL +
 '    OPTIONAL {' + NL +
 '      ?titleStatement a ?titleNoValue .' + NL +
 '      FILTER (?titleNoValue = wdno:P1476)' + NL +
+'      OPTIONAL { ?titleStatement pq:P518 ?titleLang }' + NL +
 '    }' + NL +
 '  }' + NL +
 '  OPTIONAL {' + NL +

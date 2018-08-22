@@ -52,7 +52,16 @@ function processQueryResult(result, record) {
     };
   }
   else if ('titleNoValue' in result) {
-    record.title = null;
+    if ('titleLang' in result) {
+      let langCode;
+      Object.keys(LANGUAGES).forEach(function(code) {
+        if (LANGUAGES[code].qid === getQid(result.titleLang)) langCode = code;
+      });
+      record.title[langCode] = null;
+    }
+    else {
+      record.title = null;
+    }
     // ASSUME: All markers have an English label on Wikidata
     let substituteTitle = result.markerLabel.value.replace(/ ?historical marker/i, '');
     record.indexTitle = '[' + substituteTitle + ']';
@@ -451,7 +460,7 @@ function getTranslation(dict, langCode) {
   if (langCode && langCode in dict) return dict[langCode];
   for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
     let langCode = ORDERED_LANGUAGES[i];
-    if (langCode in dict) return dict[langCode];
+    if (langCode in dict && dict[langCode]) return dict[langCode];
   }
   return '';
 }
