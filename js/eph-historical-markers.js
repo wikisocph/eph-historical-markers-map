@@ -1,28 +1,386 @@
 'use strict';
 
-// This is the AJAX event handler for the Wikidata query.
-function processWikidataQuery() {
 
-  if (this.readyState !== this.DONE || this.status !== 200) return;
+// This loads and parses all the primary data that can be obtained from WDQS
+// in several batches then enables the app.
+function loadPrimaryData() {
+  let promise;
 
-  var data = JSON.parse(this.responseText);
+  generateTopLevelData()
+    .then(constructSparqlValuesClause)
+    .then(function() {
+      return Promise.all([
+        generateAddressData(),
+        generateTitleData(),
+        generateShortInscriptionData(),
+        generateUnveilingDateData(),
+        generatePhotoData(),
+        generateCommemoratesData(),
+      ]);
+    })
+    .then(preEnableApp)
+    .then(enableApp);
+}
 
-  // Go through each query result and populate the Markers database
-  data.results.bindings.forEach(function(result) {
-    let qid = getQid(result.marker);
-    if (!(qid in Markers)) Markers[qid] = new MarkerRecord;
+
+// This queries WDQS for the historical marker Wikidata items that have current
+// coordinates, then based on the query sets the "lat", "lon", "qidSortKey"
+// fields of the Markers database, then returns a promise which resolves upon
+// completion of the process.
+function generateTopLevelData() {
+  let promise = queryWikidataQueryService(SPARQL_QUERY_0);
+  promise.then(function(data) {
+
+    // Query parsing
+    data.results.bindings.forEach(function(result) {
+      let qid = getQid(result.marker);
+      if (!(qid in Markers)) Markers[qid] = new MarkerRecord;
+      let record = Markers[qid];
+      let wktBits = result.coord.value.split(/\(|\)| /);  // Note: format is Point WKT
+      record.lat.push(parseFloat(wktBits[2]));
+      record.lon.push(parseFloat(wktBits[1]));
+    });
+
+    // Post-processing: Get the average of the coordinates
+    Object.values(Markers).forEach(function(record) {
+      let numCoords = record.lat.length;
+      let sumLats = 0;
+      let sumLons = 0;
+      record.lat.forEach(function(lat) { sumLats += lat });
+      record.lon.forEach(function(lon) { sumLons += lon });
+      record.lat = sumLats / numCoords;
+      record.lon = sumLons / numCoords;
+    });
+
+    // Post-processing: Generate QID sort key
+    Object.keys(Markers).forEach(function(qid) {
+      Markers[qid].qidSortKey = Number(qid.substring(1));
+    });
+
+    // Update stats
+    let numMarkers = Object.keys(Markers).length;
+    document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
+  });
+  return promise;
+}
+
+
+// This generates the SPARQL "VALUES" clause that will be used by subsequent queries
+function constructSparqlValuesClause() {
+  SparqlValuesClause =
+    'VALUES ?marker {' +
+    Object.keys(Markers).map(function(qid) { return 'wd:' + qid }).join(' ') +
+    '}';
+}
+
+
+// This queries WDQS and sets the "location" field of the Markers database,
+// then returns a promise which resolves upon completion of the process.
+function generateAddressData() {
+  let query = SPARQL_QUERY_1.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+  let promise = queryWikidataQueryService(query);
+  promise.then(function(data) {
+    data.results.bindings.forEach(function(result) {
+
+      // Combine admin parts into array of objects
+      let adminData = [];
+      for (let i = 0; i < ADMIN_LEVELS; i++) {
+        if (!(('admin' + i) in result)) break;
+        let qid = getQid(result['admin' + i]);
+        adminData[i] = {
+          qid   : qid,
+          type  : getQid(result['admin' + i + 'Type']),
+        };
+        adminData[i].label = qid in ADDRESS_LABEL_REPLACEMENT
+          ? ADDRESS_LABEL_REPLACEMENT[qid]
+          : result['admin' + i + 'Label'].value
+      }
+
+      // Construct address as array
+      let addressParts = [];
+      if ('location' in result && !(getQid(result.location) in SKIPPED_ADDRESS_LABELS)) {
+        addressParts.push(result.locationLabel.value);
+      }
+      if ('streetAddress' in result) {
+        addressParts.push(result.streetAddress.value);
+      }
+      let islandAdminTypeQid;
+      if ('islandLabel' in result) islandAdminTypeQid = getQid(result.islandAdminType);
+      for (let i = 0; i < ADMIN_LEVELS; i++) {
+        if (
+          adminData[i].label && adminData[i].type !== COUNTRY_QID && (i === 0 || (
+            adminData[i - 1].type !== PROVINCE_QID &&
+            adminData[i - 1].type !== REGION_QID && (
+              // Don't display the region for HUCs and Cotabato City unless it's
+              // Metro Manila
+              (adminData[i - 1].type !== CITY_QID && adminData[i - 1].type !== HUC_QID) ||
+              adminData[i].type !== REGION_QID ||
+              adminData[i].qid === METRO_MANILA_QID
+            )
+          ))
+        ) {
+          if (adminData[i].qid in SKIPPED_ADDRESS_LABELS) continue;
+          if (islandAdminTypeQid && islandAdminTypeQid === adminData[i].type) addressParts.push(result.islandLabel.value);
+          addressParts.push(adminData[i].label);
+        }
+        else {
+          break;
+        }
+      }
+      if ('country' in result && getQid(result.country) !== PH_QID) {
+        addressParts.push(result.countryLabel.value);
+      }
+
+      let locRecord = Markers[getQid(result.marker)].location;
+      locRecord.address = addressParts.join(', ');
+
+      if ('locationImage' in result) {
+        locRecord.imageFilename = extractImageFilename(result.locationImage);
+      }
+    });
+  });
+  return promise;
+}
+
+
+// This queries WDQS and sets the "indexTitle", "title", "alphaSortKey",
+// "popupHtml", "indexLi" fields of the Markers database, then returns a promise
+// which resolves upon completion of the process.
+function generateTitleData() {
+  let query = SPARQL_QUERY_2.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+  let promise = queryWikidataQueryService(query);
+  promise.then(function(data) {
+
+    // Query parsing
+    data.results.bindings.forEach(function(result) {
+
+      let record = Markers[getQid(result.marker)];
+
+      let langCode;
+      if ('title' in result) langCode = result.title['xml:lang'];
+      if ('targetLang' in result) langCode = getLangCode(result.targetLang);
+
+      if ('titleNoValue' in result) {
+        if (langCode) {
+          record.title[langCode] = null;
+        }
+        else {
+          record.title = null;
+        }
+        // ASSUME: All markers have an English label on Wikidata
+        let substituteTitle = result.markerLabel.value.replace(/ *historical marker/i, '');
+        record.indexTitle = '[' + substituteTitle + ']';
+      }
+      else if ('title' in result) {
+        record.title[langCode] = {
+          main : result.title.value,
+          sub  : ('subtitle' in result) ? result.subtitle.value : null,
+        };
+      }
+    });
+
+    // Post-processing: Generate the map marker popup HTML and index entry
+    let listIndex = document.getElementById('index-list');
+    Object.keys(Markers).forEach(function(qid) {
+
+      let record = Markers[qid];
+
+      let popupHtml;
+      if (record.title && Object.keys(record.title).length > 0) {
+        let title = getTranslation(record.title);
+        record.indexTitle = title.main.replace(/<br\s*\/?>/g, ' ');
+        popupHtml = title.main;
+        if (title.sub) {
+          record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ');
+          record.indexTitle += title.sub.replace(/<br\s*\/?>/g, ' ');
+          popupHtml += '<div class="subtitle">' + title.sub + '</div>';
+        }
+      }
+      else {
+        popupHtml = record.indexTitle;
+      }
+      record.popupHtml = popupHtml;
+
+      // Generate alphabetical sort key and create an index entry and add to the index
+      record.alphaSortKey = record.indexTitle.replace(/^[^A-Za-z0-9]/, '');
+      record.alphaSortKey = record.alphaSortKey.replace(/^(?:The |Ang )/, '');
+      let li = document.createElement('li');
+      li.innerHTML = '<a href="#' + qid + '">' + record.indexTitle + '</a>';
+      listIndex.appendChild(li);
+      record.indexLi = li;
+    });
+  });
+  return promise;
+}
+
+
+// This queries WDQS and sets the "inscription" field of the Markers database,
+// then returns a promise which resolves upon completion of the process.
+function generateShortInscriptionData() {
+  let query = SPARQL_QUERY_3.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+  let promise = queryWikidataQueryService(query);
+  promise.then(function(data) {
+    data.results.bindings.forEach(function(result) {
+      let record = Markers[getQid(result.marker)];
+      if ('inscription' in result) {
+        record.inscription[result.inscription['xml:lang']] = formatInscription(result.inscription.value);
+      }
+      else if ('inscriptionNoValue' in result) {
+        record.inscription = null;
+      }
+    });
+  });
+  return promise;
+}
+
+
+// This queries WDQS and sets the "date" field of the Markers database,
+// then returns a promise which resolves upon completion of the process.
+function generateUnveilingDateData() {
+  let query = SPARQL_QUERY_4.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+  let promise = queryWikidataQueryService(query);
+  promise.then(function(data) {
+    data.results.bindings.forEach(function(result) {
+      let record = Markers[getQid(result.marker)];
+      let date = parseDate(result, 'date');
+      if ('targetLang' in result) {
+        if (!record.date) record.date = {};
+        record.date[getLangCode(result.targetLang)] = date;
+      }
+      else {
+        record.date = date;
+      }
+    });
+  });
+  return promise;
+}
+
+
+// This queries WDQS and sets the "imageFilename" and "vicinity" fields of the
+// Markers database, then returns a promise which resolves upon completion
+// of the process.
+function generatePhotoData() {
+  let query = SPARQL_QUERY_5.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+  let promise = queryWikidataQueryService(query);
+  promise.then(function(data) {
+
+    // Query parsing
+    data.results.bindings.forEach(function(result) {
+      let record = Markers[getQid(result.marker)];
+      if ('image' in result) {
+        let filename = extractImageFilename(result.image);
+        if ('targetLang' in result) {
+          if (!record.imageFilename) record.imageFilename = {};
+          record.imageFilename[getLangCode(result.targetLang)] = filename;
+        }
+        else if ('ordinal' in result) {
+          if (!record.imageFilename) record.imageFilename = [];
+          record.imageFilename[parseInt(result.ordinal.value) - 1] = filename;
+        }
+        else {
+          record.imageFilename = filename;
+        }
+      }
+      if ('vicinityImage' in result) {
+        record.vicinity.imageFilename = extractImageFilename(result.vicinityImage);
+        record.vicinity.description = result.vicinityDescription.value;
+      }
+    });
+
+    // Post-processing: indicate missing vicinity data
+    Object.values(Markers).forEach(function(record) {
+      if (!record.vicinity.imageFilename) record.vicinity = null;
+    });
+  });
+  return promise;
+}
+
+
+// This queries WDQS and sets the "commemorates" field of the Markers database,
+// then returns a promise which resolves upon completion of the process.
+function generateCommemoratesData() {
+  let query = SPARQL_QUERY_6.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+  let promise = queryWikidataQueryService(query);
+  promise.then(function(data) {
+    data.results.bindings.forEach(function(result) {
+      let record = Markers[getQid(result.marker)];
+      if (!record.commemorates) record.commemorates = {};
+      record.commemorates[getQid(result.commemorates)] = {
+        title  : result.commemoratesLabel.value,
+        wp_url : ('commemoratesArticle' in result) ? result.commemoratesArticle.value : null,
+      };
+    });
+  });
+  return promise;
+}
+
+
+// This queries WDQS using the specified query and returns a promise that
+// resolves with the parsed query JSON data or rejects with an HTTP error code.
+function queryWikidataQueryService(query) {
+  return new Promise(function(resolve, reject) {
+    let xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== xhr.DONE) return;
+      if (xhr.status === 200){
+        var data = JSON.parse(xhr.responseText);
+        resolve(data);
+      }
+      else {
+        reject(xhr.status);
+      }
+    };
+    xhr.open('POST', WDQS_API_URL, true);
+    xhr.overrideMimeType('text/plain');
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhr.send('format=json&query=' + escape(query));
+  });
+}
+
+
+// This does any further data post-processing including generating the map markers.
+// Also sets the "mapMarker", "popup", "languages" fields of the Markers database.
+function preEnableApp() {
+
+  // Do further post-processing
+  Object.keys(Markers).forEach(function(qid) {
+
     let record = Markers[qid];
-    processQueryResult(result, record);
+
+    // Generate map marker
+    let mapMarker = L.marker(
+      [record.lat, record.lon],
+      { icon: L.ExtraMarkers.icon({ icon: '', markerColor : 'cyan' }) },
+    );
+    record.mapMarker = mapMarker;
+    Cluster.addLayer(mapMarker);
+
+    // Generate map marker popup based on the stored HTML string
+    mapMarker.bindPopup(record.popupHtml, { closeButton: false });
+    let popup = record.mapMarker.getPopup();
+    popup._qid = qid;
+    record.popup = popup;
+
+    // Generate the list of codes of the languages of the historical marker
+    // and indicate missing language values
+    ORDERED_LANGUAGES.forEach(function(langCode) {
+      if (
+        record.inscription   && typeof record.inscription   === 'object' && langCode in record.inscription ||
+        record.title         && typeof record.title         === 'object' && langCode in record.title       ||
+        record.date          && typeof record.date          === 'object' && langCode in record.date        ||
+        record.imageFilename && typeof record.imageFilename === 'object' && langCode in record.imageFilename
+      ) {
+        if (!record.languages) record.languages = [];
+        record.languages.push(langCode);
+        if (record.inscription   &&                                             !(langCode in record.inscription  )) record.inscription  [langCode] = undefined;
+        if (record.title         &&                                             !(langCode in record.title        )) record.title        [langCode] = null;
+        if (record.date          && typeof record.date          === 'object' && !(langCode in record.date         )) record.date         [langCode] = null;
+        if (record.imageFilename && typeof record.imageFilename === 'object' && !(langCode in record.imageFilename)) record.imageFilename[langCode] = null;
+      }
+    });
   });
 
-  // Do post-processing
-  Object.keys(Markers).forEach(function(qid) { postProcessRecord(qid) });
-
-  // Update stats
-  let numMarkers = Object.keys(Markers).length;
-  document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
-
-  // If there is a permalinked marker, re-initialize the map view
+  // If the URL indicates a permalinked marker, re-initialize the map view
   let fragment = window.location.hash.replace('#', '');
   if (fragment in Markers) {
     let record = Markers[fragment];
@@ -37,170 +395,15 @@ function processWikidataQuery() {
   CurrentSortModeIdx = SORT_MODES.length - 1;
   switchSortMode();
 
-  enableApp();
+  // Set the about page WDQS link
+  let anchorElem = document.getElementById('wdqs-link');
+  anchorElem.href = 'https://query.wikidata.org/#' + escape(ABOUT_SPARQL_QUERY);
 }
 
 
-// This takes a query result and its corresponding record and updates that
-// record with any new data provided in the result.
-function processQueryResult(result, record) {
-
-  if ('title' in result) {
-    record.title[result.title['xml:lang']] = {
-      main : result.title.value,
-      sub  : ('subtitle' in result) ? result.subtitle.value : null,
-    };
-  }
-  else if ('titleNoValue' in result) {
-    if ('titleLang' in result) {
-      let langCode;
-      Object.keys(LANGUAGES).forEach(function(code) {
-        if (LANGUAGES[code].qid === getQid(result.titleLang)) langCode = code;
-      });
-      record.title[langCode] = null;
-    }
-    else {
-      record.title = null;
-    }
-    // ASSUME: All markers have an English label on Wikidata
-    let substituteTitle = result.markerLabel.value.replace(/ ?historical marker/i, '');
-    record.indexTitle = '[' + substituteTitle + ']';
-  }
-
-  if ('inscription' in result) {
-    record.inscription[result.inscription['xml:lang']] = formatInscription(result.inscription.value);
-  }
-  else if ('inscriptionNoValue' in result) {
-    record.inscription = null;
-  }
-
-  let wktBits = result.coord.value.split(/\(|\)| /);  // Note: format is Point WKT
-  record.lat = parseFloat(wktBits[2]);
-  record.lon = parseFloat(wktBits[1]);
-
-  if ('image' in result) {
-    record.imageFilename = extractImageFilename(result.image);
-  }
-
-  if ('date' in result) {
-    parseDate(result, 'date', record);
-  }
-
-  if ('commemorates' in result) {
-    record.commemorates[getQid(result.commemorates)] = {
-      title  : result.commemoratesLabel.value,
-      wp_url : ('commemoratesArticle' in result) ? result.commemoratesArticle.value : null,
-    };
-  }
-
-  let adminQids = [], adminLabels = [], adminTypes = [];
-  for (let i = 0; i < ADMIN_LEVELS; i++) {
-    let qidProp = 'admin' + i;
-    if (qidProp in result) {
-      adminQids[i] = getQid(result[qidProp]);
-      let labelProp = 'admin' + i + 'Label';
-      if (labelProp in result) adminLabels[i] = result[labelProp].value;
-      if (adminQids[i] in ADMIN_LABEL_REPLACEMENT) adminLabels[i] = ADMIN_LABEL_REPLACEMENT[adminQids[i]];
-      let typeProp = 'admin' + i + 'Type';
-      if (typeProp in result) adminTypes[i] = getQid(result[typeProp]);
-    }
-  }
-
-  // Construct address
-  let address = '';
-  if ('locationLabel' in result) {
-    address = result.locationLabel.value;
-  }
-  if ('streetAddress' in result) {
-    address += (address ? ', ' : '') + result.streetAddress.value;
-  }
-  let islandAdminTypeQid;
-  if ('islandLabel' in result) islandAdminTypeQid = getQid(result.islandAdminType);
-  for (let i = 0; i < ADMIN_LEVELS; i++) {
-    if (
-      adminLabels[i] && adminTypes[i] !== COUNTRY_QID && (i === 0 || (
-        adminTypes[i - 1] !== PROVINCE_QID &&
-        adminTypes[i - 1] !== REGION_QID && (
-          // Don't display the region for HUCs and Cotabato City unless it's
-          // Metro Manila
-          (adminTypes[i - 1] !== CITY_QID && adminTypes[i - 1] !== HUC_QID) ||
-          adminTypes[i] !== REGION_QID ||
-          adminLabels[i] === 'Metro Manila'
-        )
-      ))
-    ) {
-      if (adminQids[i] in SKIPPED_ADMIN_LABELS) continue;
-      if (islandAdminTypeQid && islandAdminTypeQid === adminTypes[i]) address += (address ? ', ' : '') + result.islandLabel.value;
-      address += (address ? ', ' : '') + adminLabels[i];
-    }
-    else {
-      break;
-    }
-  }
-  if ('country' in result && getQid(result.country) !== PH_QID) {
-    address += (address ? ', ' : '') + result.countryLabel.value;
-  }
-
-  record.location.address = address;
-
-  if ('locationImage' in result) {
-    record.location.imageFilename = extractImageFilename(result.locationImage);
-  }
-
-  if ('vicinityImage' in result) {
-    record.vicinity.imageFilename = extractImageFilename(result.vicinityImage);
-    if ('vicinityDescription' in result) {
-      record.vicinity.description = result.vicinityDescription.value;
-    }
-  }
-}
-
-
-// This takes a historical marker QID then cleans up the corresponding record,
-// and generates a map marker and index entry for the historical marker.
-function postProcessRecord(qid) {
-
-  let record = Markers[qid];
-
-  // Clean up record
-  if (Object.keys(record.commemorates).length === 0) record.commemorates = null;
-  if (!record.vicinity.imageFilename) record.vicinity = null;
-
-  // Generate the map marker popup HTML
-  let popupHtml;
-  if (record.title && Object.keys(record.title).length > 0) {
-    let title = getTranslation(record.title);
-    record.indexTitle = title.main;
-    popupHtml = title.main;
-    if (title.sub) {
-      record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ') + title.sub;
-      popupHtml += '<div class="subtitle">' + title.sub + '</div>';
-    }
-  }
-  else {
-    popupHtml = record.indexTitle;
-  }
-
-  // Create a map marker and add to the cluster
-  let mapMarker = L.marker([record.lat, record.lon], {
-    icon: L.ExtraMarkers.icon({ icon: '', markerColor : 'cyan' })
-  });
-  mapMarker.bindPopup(popupHtml, { closeButton: false });
-  Cluster.addLayer(mapMarker);
-  record.mapMarker = mapMarker;
-  let popup = mapMarker.getPopup();
-  popup._qid = qid;
-  record.popup = popup;
-
-  // Create an index entry and add to the index
-  let li = document.createElement('li');
-  li.innerHTML = '<a href="#' + qid + '">' + record.indexTitle + '</a>';
-  document.getElementById('index-list').appendChild(li);
-  record.indexLi = li;
-}
-
-
-// TODO
+// This checks if the specified URL fragment is the QID of a valid historical
+// marker and activates the display of that marker if so.
+// Returns true if the fragment is valid and false otherwise.
 function processFragment(fragment) {
   if (!(fragment in Markers)) return false;
   activateMarker(fragment);
@@ -228,10 +431,12 @@ function displayRecordDetails(qid) {
 
   let record = Markers[qid];
 
+  // Set URL hash and window title
   window.location.hash = '#' + qid;
   let title = getTranslation(record.title);
   document.title = (title ? title.main : record.indexTitle) + ' – ' + BASE_TITLE;
 
+  // Update panel
   if (!record.panelElem) generateMarkerDetails(qid, record);
   displayPanelContent('details');
   let detailsElem = document.querySelector('#details');
@@ -242,38 +447,111 @@ function displayRecordDetails(qid) {
 // This generates the details content of a historical marker for the side panel.
 function generateMarkerDetails(qid, record) {
 
-  let titleHtml;
+  let langBarHtml = '';
+  if (record.languages.length > 1) {
+    langBarHtml = '<ol class="language-bar">';
+    record.languages.forEach(function(langCode) {
+      langBarHtml +=
+        '<li onclick="selectLanguage(\'' + langCode + '\')"' +
+        (langCode === record.languages[0] ? ' class="selected"' : '') +
+        ' data-lang-code="' + langCode + '">' +
+        LANGUAGES[langCode].name + '</li>';
+    });
+    langBarHtml += '</ol>';
+  }
+
+  let titleHtml = '';
   if (record.title) {
-    titleHtml = '<h1>';
-    let title = getTranslation(record.title);
-    titleHtml += title.main;
-    if (title.sub) titleHtml += ' <span class="subtitle">' + title.sub + '</span>';
-    titleHtml += '</h1>';
+    Object.keys(record.title).forEach(function(langCode) {
+      titleHtml += '<h1 class="l10n ' + langCode + '">';
+      let titleData = record.title[langCode] || getTranslation(record.title);
+      titleHtml += titleData.main;
+      if (titleData.sub) titleHtml += ' <span class="subtitle">' + titleData.sub + '</span>';
+      titleHtml += '</h1>';
+    });
   }
   else {
     titleHtml = '<h1 class="untitled">Untitled</h1>';
   }
 
-  let markerFigureHtml;
-  if (record.imageFilename) {
-    markerFigureHtml = '<figure class="marker"><div class="loader"></div></figure>';
-  }
-  else {
+  let markerFigureHtml = '';
+  let figureLoaders = [];
+  if (!record.imageFilename) {
     markerFigureHtml = '<figure class="marker nodata">No photo available</figure>';
   }
-
-  let inscriptionHtml;
-  if (record.inscription) {
-    let inscription = getTranslation(record.inscription);
-    if (inscription) {
-      inscriptionHtml = '<div class="inscription main-text">' + inscription + '</div>';
+  else {
+    if (typeof record.imageFilename !== 'object') {
+      markerFigureHtml = '<figure class="marker"><div class="loader"></div></figure>';
+      figureLoaders.push({ filename: record.imageFilename, selector: 'figure.marker' });
+    }
+    else if (Array.isArray(record.imageFilename)) {
+      for (let idx = 0; idx < record.imageFilename.length; idx++) {
+        let filename = record.imageFilename[idx];
+        markerFigureHtml += '<figure class="marker list' + idx + '"><div class="loader"></div></figure>';
+        figureLoaders.push({ filename: filename, selector: 'figure.marker.list' + idx });
+      }
     }
     else {
-      inscriptionHtml = '<div class="inscription main-text loading"><div class="loader"></div></div>';
+      record.languages.forEach(function(langCode) {
+        let filename = record.imageFilename[langCode];
+        markerFigureHtml += '<figure class="marker l10n ' + langCode;
+        if (filename) {
+          markerFigureHtml += '"><div class="loader"></div>';
+          figureLoaders.push({ filename: filename, selector: 'figure.marker.' + langCode });
+        }
+        else {
+          markerFigureHtml += ' nodata">No photo available';
+        }
+        markerFigureHtml += '</figure>';
+      });
+    }
+  }
+
+  let inscriptionHtml = '';
+  let longInscriptionShouldBeChecked = false;
+  if (!record.inscription) {
+    inscriptionHtml = '<div class="inscription main-text nodata"><p>This historical marker has no inscription.</p></div>';
+  }
+  else {
+    inscriptionHtml = '<div class="inscription main-text">';
+    record.languages.forEach(function(langCode) {
+      let inscription = record.inscription[langCode];
+      if (inscription) {
+        inscriptionHtml += '<div class="l10n ' + langCode + '">' + inscription + '</div>';
+      }
+      else {
+        inscriptionHtml += '<div class="l10n ' + langCode + ' loading"><div class="loader"></div></div>';
+        longInscriptionShouldBeChecked = true;
+      }
+    });
+    inscriptionHtml += '</div>';
+  }
+
+  let unveiledHtml = '';
+  if (record.date) {
+    if (typeof record.date === 'object') {
+      record.languages.forEach(function(langCode) {
+        let date = record.date[langCode];
+        if (date) {
+          unveiledHtml +=
+            '<h2 class="l10n ' + langCode + '">' + (date.length === 4 ? 'Year' : 'Date') + ' unveiled</h2>' +
+            '<p class="l10n ' + langCode + '">' + date + '</p>';
+        }
+        else {
+          unveiledHtml +=
+            '<h2 class="l10n ' + langCode + '">Date unveiled</h2>' +
+            '<p class="nodata l10n ' + langCode + '"">Unknown</p>';
+        }
+      });
+    }
+    else {
+      unveiledHtml =
+        '<h2>' + (record.date.length === 4 ? 'Year' : 'Date') + ' unveiled</h2>' +
+        '<p>' + record.date + '</p>';
     }
   }
   else {
-    inscriptionHtml = '<div class="inscription main-text nodata"><p>This historical marker has no inscription.</p></div>';
+    unveiledHtml = '<h2>Date unveiled</h2><p class="nodata">Unknown</p>';
   }
 
   let commemoratesHtml;
@@ -301,6 +579,7 @@ function generateMarkerDetails(qid, record) {
   let locationFigureHtml = '';
   if (record.location.imageFilename) {
     locationFigureHtml = '<figure class="location"><div class="loader"></div></figure>';
+    figureLoaders.push({ filename: record.location.imageFilename, selector: 'figure.location' });
   }
 
   let addressHtml;
@@ -315,6 +594,7 @@ function generateMarkerDetails(qid, record) {
   if (record.vicinity) {
     vicinityHtml = '<div class="vicinity">';
     vicinityHtml += '<figure class="vicinity"><div class="loader"></div></figure>';
+    figureLoaders.push({ filename: record.vicinity.imageFilename, selector: 'figure.vicinity' });
     if (record.vicinity.description) {
       vicinityHtml += '<p>' + record.vicinity.description + '</p>';
     }
@@ -322,13 +602,13 @@ function generateMarkerDetails(qid, record) {
   }
 
   let detailsHtml =
+    langBarHtml +
     '<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/' + qid + '" title="View in Wikidata">' +
     '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
     titleHtml +
     markerFigureHtml +
     inscriptionHtml +
-    '<h2>' + (record.datePrecision === YEAR_PRECISION ? 'Year' : 'Date') + ' unveiled</h2>' +
-    '<p' + (record.date ? ('>' + record.date) : ' class="nodata">Unknown') + '</p>' +
+    unveiledHtml +
     '<h2>Commemorates</h2>' +
     commemoratesHtml +
     '<h2>Location</h2>' +
@@ -337,21 +617,18 @@ function generateMarkerDetails(qid, record) {
     vicinityHtml;
 
   let panelElem = document.createElement('div');
+  if (record.languages.length > 1) panelElem.classList.add('l10n-top', record.languages[0]);
   panelElem.innerHTML = detailsHtml;
   record.panelElem = panelElem;
 
   // Load images
-  let markerFigure   = panelElem.querySelector('figure.marker'  );
-  let locationFigure = panelElem.querySelector('figure.location');
-  let vicinityFigure = panelElem.querySelector('figure.vicinity');
-  if (record         .imageFilename) displayFigure(record         .imageFilename, markerFigure  );
-  if (record.location.imageFilename) displayFigure(record.location.imageFilename, locationFigure);
-  if (record.vicinity              ) displayFigure(record.vicinity.imageFilename, vicinityFigure);
+  figureLoaders.forEach(function(loaderData) {
+    let figure = panelElem.querySelector(loaderData.selector);
+    displayFigure(loaderData.filename, figure);
+  });
 
-  // Historical marker has no direct inscription: check the talk page
-  if (record.inscription && Object.keys(record.inscription).length === 0) {
-    checkAndDisplayLongInscription(qid, record);
-  }
+  // Historical marker has missing inscriptions: check the talk page
+  if (longInscriptionShouldBeChecked) checkAndDisplayLongInscription(qid, record);
 }
 
 
@@ -393,15 +670,19 @@ function checkAndDisplayLongInscription(qid, record) {
 
       // Populate the details content with the inscription,
       // or indicate that there's none
-      let inscriptionElem = record.panelElem.childNodes[3];
-      if (Object.keys(record.inscription).length > 0) {
-        inscriptionElem.innerHTML = getTranslation(record.inscription);
-      }
-      else {
-        inscriptionElem.classList.add('nodata');
-        inscriptionElem.innerHTML = '<p>No inscription has been encoded yet.</p>';
-      }
-      inscriptionElem.classList.remove('loading');
+      record.languages.forEach(function(langCode) {
+        let inscriptionElem = record.panelElem.querySelector('.inscription .l10n.' + langCode);
+        if (!inscriptionElem.classList.contains('loading')) return;
+        inscriptionElem.classList.remove('loading');
+        let inscription = record.inscription[langCode];
+        if (inscription) {
+          inscriptionElem.innerHTML = inscription;
+        }
+        else {
+          inscriptionElem.classList.add('nodata');
+          inscriptionElem.innerHTML = '<p>No inscription has been encoded yet.</p>';
+        }
+      });
     }
   );
 }
@@ -413,40 +694,59 @@ function switchSortMode() {
   CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SORT_MODES.length;
   document.getElementById('sort').innerHTML =
     'Sort list ' + SORT_MODES[(CurrentSortModeIdx + 1) % SORT_MODES.length].label;
-
-  let sorter = function(getKey, compareKey) {
-    return Object.keys(Markers)
-      .map(function(el) {
-        return { key: getKey(el), item: Markers[el].indexLi };
-      })
-      .sort(compareKey)
-      .map(function(el) { return el.item });
-  };
-
-  let lis;
-  if (SORT_MODES[CurrentSortModeIdx].id === 'alpha') {
-    lis = sorter(
-      function(el) { return Markers[el].indexTitle.replace(/^[^A-Za-z0-9]/, ''); },
-      function(a, b) { return a.key > b.key ? 1 : -1; }
-    );
-  }
-  else { // 'qid'
-    lis = sorter(
-      function(el) { return Number(el.substring(1)); },
-      function(a, b) { return a.key - b.key; }
-    );
-  }
+  let currentSortModeId = SORT_MODES[CurrentSortModeIdx].id;
 
   let list = document.getElementById('index-list');
   list.innerHTML = '';
-  lis.forEach(function(li) { list.appendChild(li); });
+  Object.keys(Markers).map(
+    function(qid) {
+      return {
+        key  : Markers[qid][currentSortModeId + 'SortKey'],
+        item : Markers[qid].indexLi,
+      };
+    }
+  ).sort(
+    currentSortModeId === 'alpha'
+    ? function(a, b) { return a.key > b.key ? 1 : -1 }
+    : function(a, b) { return a.key - b.key          }
+  ).map(
+    function(el) { return el.item }
+  ).forEach(
+    function(li) { list.appendChild(li); }
+  );
+}
+
+
+// This activates the specified language in the current
+// multilingual historical marker's details content.
+function selectLanguage(langCode) {
+  document.querySelector('#details .l10n-top').className = 'l10n-top ' + langCode;
+  document.querySelectorAll('#details .language-bar li').forEach(function(elem) {
+    if (elem.dataset.langCode === langCode) {
+      elem.classList.add('selected');
+    }
+    else {
+      elem.classList.remove('selected');
+    }
+  });
 }
 
 
 // This takes an inscription text from Wikidata and reformats it into
 // paragraphs.
 function formatInscription(text) {
-  return '<p>' + text.replace(/\s*<br\s*\/?>(?:<br\s*\/?>)?\s*/gi, '</p><p>') + '</p>';
+  return '<p>' + text.replace(/\s*<br\s*\/?>\s*<br\s*\/?>\s*/gi, '</p><p>') + '</p>';
+}
+
+
+// This takes a WDQS query result language Wikidata item data
+// and returns the language code.
+function getLangCode(queryItem) {
+  let langCode;
+  Object.keys(LANGUAGES).forEach(function(code) {
+    if (LANGUAGES[code].qid === getQid(queryItem)) langCode = code;
+  });
+  return langCode;
 }
 
 
@@ -469,19 +769,22 @@ function getTranslation(dict, langCode) {
 
 // Class declaration for representing a historical marker
 function MarkerRecord() {
+  this.qidSortKey    = undefined;
+  this.alphaSortKey  = undefined;
+  this.lat           = [];
+  this.lon           = [];
   this.indexTitle    = '';
   this.title         = {};  // empty if not encoded yet; null if novalue
   this.inscription   = {};  // empty if not encoded yet; null if novalue
-  this.lat           = 0;
-  this.lon           = 0;
-  this.imageFilename = '';
-  this.date          = '';
-  this.datePrecision = YEAR_PRECISION;
-  this.commemorates  = {};
+  this.imageFilename = undefined;
+  this.date          = undefined;
+  this.commemorates  = undefined;
   this.location      = { address:     '', imageFilename: '' };
   this.vicinity      = { description: '', imageFilename: '' };
+  this.languages     = undefined;
+  this.indexLi       = undefined;
   this.mapMarker     = undefined;
+  this.popupHtml     = undefined;
   this.popup         = undefined;
   this.panelElem     = undefined;
-  this.indexLi       = undefined;
 }

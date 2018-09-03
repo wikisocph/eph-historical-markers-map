@@ -67,6 +67,61 @@ nav li a:hover {
   border-bottom-color: #ade;
 }
 
+#details .language-bar {
+  display: flex;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+#details .language-bar li {
+  display: block;
+  flex: 1;
+  margin: 0;
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 12px;
+  text-align: center;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #c0d4df;
+  transition-property: background;
+  transition-duration: 0.3s;
+}
+
+#details .language-bar li.selected {
+  background: #90b2c4;
+}
+
+#details .language-bar li:not(.selected) {
+  cursor: pointer;
+}
+
+#details .language-bar li:not(.selected):hover {
+  background: #90b2c4;
+}
+
+#details .language-bar li:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+#details .language-bar li:last-child {
+  border-radius: 0 4px 3px 0;
+}
+
+#details .language-bar li+li {
+  margin-left: 1px;
+}
+
+#details .l10n-top.en  .l10n:not(.en ) { display: none }
+#details .l10n-top.tl  .l10n:not(.tl ) { display: none }
+#details .l10n-top.ceb .l10n:not(.ceb) { display: none }
+#details .l10n-top.ilo .l10n:not(.ilo) { display: none }
+#details .l10n-top.pam .l10n:not(.pam) { display: none }
+#details .l10n-top.es  .l10n:not(.es ) { display: none }
+#details .l10n-top.de  .l10n:not(.de ) { display: none }
+#details .l10n-top.fr  .l10n:not(.fr ) { display: none }
+
 #details h1 {
   border-bottom-color: #ade;
   color: #134;
@@ -112,6 +167,10 @@ nav li a:hover {
 #details .vicinity p {
   padding: 0 170px 0 0;
   font-style: italic;
+}
+
+#about h2 {
+  color: #8bd;
 }
 
 .marker-cluster-small      { background-color: rgba(68, 153, 204, 0.5); }

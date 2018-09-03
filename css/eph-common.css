@@ -205,6 +205,7 @@ nav li.selected a:hover {
 
 #details figure {
   float: right;
+  clear: right;
   margin: 0 0 20px 0;
   padding: 0;
   width: 156px;
@@ -321,9 +322,20 @@ nav li.selected a:hover {
   padding: 20px;
 }
 
+#about h2 {
+  margin: 20px 0 10px 0;
+  font-size: 16px;
+  line-height: 16px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 #about #eph {
   float: right;
   margin: 0 0 10px 10px;
+  width: 150px;
 }
 
 #about p {

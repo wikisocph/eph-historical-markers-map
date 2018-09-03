@@ -14,56 +14,22 @@ const LANGUAGES = {
 };
 const ORDERED_LANGUAGES = ['en', 'tl', 'ceb', 'ilo', 'pam', 'es', 'de', 'fr'];
 const NL = '\n';
-const SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?titleNoValue ?titleLang ?image' + NL +
-'       ?date ?datePrecision ?inscription ?inscriptionNoValue' + NL +
-'       ?country ?countryLabel ?locationLabel ?locationImage ?streetAddress' + NL +
+const SPARQL_QUERY_0 =
+'SELECT ?marker ?coord WHERE {' + NL +
+'  ?marker wdt:P31 wd:Q21562164 ;' + NL +
+'          p:P625 ?coordStatement .' + NL +
+'  ?coordStatement ps:P625 ?coord .' + NL +
+'  FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }' + NL +
+'  FILTER (!ISBLANK(?coord)) .' + NL +
+'}';
+const SPARQL_QUERY_1 =
+'SELECT ?marker ?location ?locationLabel ?locationImage ?streetAddress' + NL +
+'       ?islandLabel ?islandAdminType ?country ?countryLabel' + NL +
 '       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type' + NL +
 '       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type' + NL +
-'       ?islandLabel ?islandAdminType' + NL +
-'       ?vicinityImage ?vicinityDescription' + NL +
-'       ?commemorates ?commemoratesLabel ?commemoratesArticle WHERE {' + NL +
-'  ?marker wdt:P31 wd:Q21562164 ;' + NL +
-'          wdt:P625 ?coord .' + NL +
-'  FILTER (!isBLANK(?coord)) .' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P1476 ?titleStatement .' + NL +
-'    OPTIONAL {' + NL +
-'      ?titleStatement ps:P1476 ?title .' + NL +
-'      OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
-'      OPTIONAL { ?titleStatement pq:P518 ?titleLang }' + NL +
-'    }' + NL +
-'    OPTIONAL {' + NL +
-'      ?titleStatement a ?titleNoValue .' + NL +
-'      FILTER (?titleNoValue = wdno:P1476)' + NL +
-'      OPTIONAL { ?titleStatement pq:P518 ?titleLang }' + NL +
-'    }' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P18 ?imageStatement .' + NL +
-'    OPTIONAL {' + NL +
-'      ?imageStatement ps:P18 ?image .' + NL +
-'      FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
-'    }' + NL +
-'    OPTIONAL {' + NL +
-'      ?imageStatement ps:P18 ?vicinityImage .' + NL +
-'      OPTIONAL { ?imageStatement pq:P2096 ?vicinityDescription }' + NL +
-'      FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
-'    }' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P571 ?dateStatement .' + NL +
-'    ?dateStatement psv:P571 ?dateValue .' + NL +
-'    ?dateValue wikibase:timeValue ?date .' + NL +
-'    ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
-'  }' + NL +
-'  OPTIONAL { ?marker wdt:P1684 ?inscription }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P1684 ?inscriptionStatement .' + NL +
-'    ?inscriptionStatement a ?inscriptionNoValue .' + NL +
-'    FILTER (?inscriptionNoValue = wdno:P1684)' + NL +
-'  }' + NL +
-'  OPTIONAL { ?marker wdt:P17 ?country }' + NL +
+'WHERE {' + NL +
+'  <SPARQLVALUESCLAUSE>' + NL +
+'  ?marker wdt:P17 ?country' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P276 ?location .' + NL +
 '    OPTIONAL { ?location wdt:P18 ?locationImage }' + NL +
@@ -140,30 +106,116 @@ const SPARQL_QUERY =
 '      ?islandAdminType = wd:Q61878' + NL +
 '    )' + NL +
 '  }' + NL +
+'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }' + NL +
+'}';
+const SPARQL_QUERY_2 =
+'SELECT ?marker ?markerLabel ?title ?targetLang ?subtitle ?titleNoValue' + NL +
+'WHERE {' + NL +
+'  <SPARQLVALUESCLAUSE>' + NL +
+'  ?marker p:P1476 ?titleStatement .' + NL +
 '  OPTIONAL {' + NL +
-'    ?marker wdt:P547 ?commemorates .' + NL +
-'    OPTIONAL {' + NL +
-'      ?commemoratesArticle schema:about ?commemorates ;' + NL +
-'               schema:isPartOf <https://en.wikipedia.org/> .' + NL +
-'    }' + NL +
+'    ?titleStatement ps:P1476 ?title .' + NL +
+'    OPTIONAL { ?titleStatement pq:P518 ?targetLang }' + NL +
+'    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
+'  }' + NL +
+'  OPTIONAL {' + NL +
+'    ?titleStatement a ?titleNoValue .' + NL +
+'    FILTER (?titleNoValue = wdno:P1476)' + NL +
+'    OPTIONAL { ?titleStatement pq:P518 ?targetLang }' + NL +
+'    ?marker rdfs:label ?markerLabel .' + NL +
+'    FILTER (LANG(?markerLabel) = "en")' + NL +
+'  }' + NL +
+'}';
+const SPARQL_QUERY_3 =
+'SELECT ?marker ?inscription ?inscriptionNoValue' + NL +
+'WHERE {' + NL +
+'  <SPARQLVALUESCLAUSE>' + NL +
+'  ?marker p:P1684 ?inscriptionStatement .' + NL +
+'  OPTIONAL { ?inscriptionStatement ps:P1684 ?inscription }' + NL +
+'  OPTIONAL {' + NL +
+'    ?inscriptionStatement a ?inscriptionNoValue .' + NL +
+'    FILTER (?inscriptionNoValue = wdno:P1684)' + NL +
+'  }' + NL +
+'}';
+const SPARQL_QUERY_4 =
+'SELECT ?marker ?date ?datePrecision ?targetLang' + NL +
+'WHERE {' + NL +
+'  <SPARQLVALUESCLAUSE>' + NL +
+'  ?marker p:P571 ?dateStatement .' + NL +
+'  OPTIONAL { ?dateStatement pq:P518 ?targetLang }' + NL +
+'  ?dateStatement psv:P571 ?dateValue .' + NL +
+'  ?dateValue wikibase:timeValue ?date .' + NL +
+'  ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
+'}';
+const SPARQL_QUERY_5 =
+'SELECT ?marker ?image ?targetLang ?ordinal ?vicinityImage ?vicinityDescription' + NL +
+'WHERE {' + NL +
+'  <SPARQLVALUESCLAUSE>' + NL +
+'  ?marker p:P18 ?imageStatement .' + NL +
+'  OPTIONAL {' + NL +
+'    ?imageStatement ps:P18 ?image .' + NL +
+'    OPTIONAL { ?imageStatement pq:P518 ?targetLang }' + NL +
+'    OPTIONAL { ?imageStatement pq:P1545 ?ordinal }' + NL +
+'    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
+'  }' + NL +
+'  OPTIONAL {' + NL +
+'    ?imageStatement ps:P18 ?vicinityImage ;' + NL +
+'                    pq:P2096 ?vicinityDescription .' + NL +
+'    FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
+'  }' + NL +
+'}';
+const SPARQL_QUERY_6 =
+'SELECT ?marker ?commemoratesLabel ?commemoratesArticle' + NL +
+'WHERE {' + NL +
+'  <SPARQLVALUESCLAUSE>' + NL +
+'  ?marker wdt:P547 ?commemorates .' + NL +
+'  ?commemorates rdfs:label ?commemoratesLabel' + NL +
+'  FILTER (LANG(?commemoratesLabel) = "en")' + NL +
+'  ?commemoratesArticle schema:about ?commemorates ;' + NL +
+'                       schema:isPartOf <https://en.wikipedia.org/> .' + NL +
+'}';
+const ABOUT_SPARQL_QUERY =
+'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?date ?image WHERE {' + NL +
+'  ?marker wdt:P31 wd:Q21562164 ;' + NL +
+'          p:P625 ?coordStatement .' + NL +
+'  ?coordStatement ps:P625 ?coord .' + NL +
+'  FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }' + NL +
+'  FILTER (!ISBLANK(?coord)) .' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P1476 ?titleStatement .' + NL +
+'    ?titleStatement ps:P1476 ?title .' + NL +
+'    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
+'  }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P571 ?dateStatement .' + NL +
+'    ?dateStatement psv:P571 ?dateValue .' + NL +
+'    ?dateValue wikibase:timeValue ?date .' + NL +
+'  }' + NL +
+'  OPTIONAL {' + NL +
+'    ?marker p:P18 ?imageStatement .' + NL +
+'    ?imageStatement ps:P18 ?image .' + NL +
+'    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
 '  }' + NL +
 '  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }' + NL +
 '}';
-const SORT_MODES              = [
-  { id: 'alpha', label: 'alphabetically'  },
-  { id: 'qid',   label: 'by Wikidata QID' },
-];
-const SKIPPED_ADMIN_LABELS = {
-  Q2863958 : true,  // arrondissement of Paris
-  Q90870   : true,  // Arrondissement of Brussels-Capital
-  Q240     : true,  // Brussels-Capital Region
-  Q8165    : true,  // Karlsruhe Government Region
-  Q2013767 : true,  // Mitte (locality in Mitte)
-};
-const ADMIN_LABEL_REPLACEMENT = {
+const ADDRESS_LABEL_REPLACEMENT = {
   Q245546 : '6th arrondissement',
 };
+const SKIPPED_ADDRESS_LABELS = {
+  Q2863958  : true,  // arrondissement of Paris
+  Q16665915 : true,  // Metropolis of Greater Paris
+  Q90870    : true,  // Arrondissement of Brussels-Capital
+  Q240      : true,  // Brussels-Capital Region
+  Q8165     : true,  // Karlsruhe Government Region
+  Q2013767  : true,  // Mitte (locality in Mitte)
+};
+const METRO_MANILA_QID = 'Q13580';
+const SORT_MODES              = [
+  { id: 'alpha', label: 'alphabetically'  },
+  { id: 'qid'  , label: 'by Wikidata QID' },
+];
 
 // Globals
 var Markers = {};  // Hash to contain data about the historical markers
+var SparqlValuesClause;  // SPARQL "VALUES" clause containing the QIDs of all relevant historical marker Wikidata items
 var CurrentSortModeIdx;

@@ -1,10 +1,8 @@
 'use strict';
 
 // Constants and fixed parameters
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const SPARQL_QUERY_ESCAPED    = escape(SPARQL_QUERY);
 const WDQS_API_URL            = 'https://query.wikidata.org/sparql';
-const WDQS_GUI_URL            = 'https://query.wikidata.org/#' + SPARQL_QUERY_ESCAPED;
+const COMMONS_API_URL         = 'https://commons.wikimedia.org/w/api.php';
 const YEAR_PRECISION          = '9';
 const PH_QID                  = 'Q928';
 const COUNTRY_QID             = 'Q6256';
@@ -36,23 +34,9 @@ window.addEventListener('load', init);
 
 // This initializes the app once the page has been loaded.
 function init() {
-
   initMap();
-
-  // Add Wikidata Query Service GUI URL
-  let anchorElem = document.getElementById('wdqs-link');
-  anchorElem.href = WDQS_GUI_URL;
-
-  // Query Wikidata
-  let xhrObject = new XMLHttpRequest();
-  xhrObject.onreadystatechange = processWikidataQuery;
-  xhrObject.open('POST', WDQS_API_URL, true);
-  xhrObject.overrideMimeType('text/plain');
-  xhrObject.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-  xhrObject.send('format=json&query=' + SPARQL_QUERY_ESCAPED);
-
+  loadPrimaryData();
   window.addEventListener('hashchange', processHashChange);
-
   Map.on('popupopen', function(e) { displayRecordDetails(e.popup._qid) });
 }
 
@@ -156,13 +140,13 @@ function displayFigure(filename, figure) {
 
   // Fetch the image thumbnail
   loadJsonp(
-    'https://commons.wikimedia.org/w/api.php',
+    COMMONS_API_URL,
     {
       action     : 'query',
       format     : 'json',
       prop       : 'imageinfo',
       iiprop     : 'url',
-      iiurlwidth : 150,
+      iiurlwidth : 300,
       titles     : 'File:' + filename,
     },
     function(data) {
@@ -172,7 +156,7 @@ function displayFigure(filename, figure) {
       img.src = imageInfo.thumburl;
       let anchor = document.createElement('a');
       anchor.href = imageInfo.descriptionurl;
-      img.style.height = imageInfo.thumbheight + 'px';
+      img.style.height = (imageInfo.thumbheight / 2) + 'px';
       anchor.appendChild(img);
       figure.replaceChild(anchor, figure.childNodes[0]);  // replace spinner
     }
@@ -180,7 +164,7 @@ function displayFigure(filename, figure) {
 
   // Fetch the image attribution and see if it is needed
   loadJsonp(
-    'https://commons.wikimedia.org/w/api.php',
+    COMMONS_API_URL,
     {
       action : 'query',
       format : 'json',
@@ -225,17 +209,22 @@ function extractImageFilename(image) {
 }
 
 
-// TODO: Supply comment
-function parseDate(result, keyName, dict) {
+// This takes a WDQS result record, takes the date value based on the specified
+// key name and then returns a formatted date string.
+function parseDate(result, keyName) {
   let dateVal = result[keyName].value;
-  dict.datePrecision = result[keyName + 'Precision'].value;
-  if (dict.datePrecision === YEAR_PRECISION) {
-    dict.date = dateVal.substr(0, 4);
+  if (result[keyName + 'Precision'].value === YEAR_PRECISION) {
+    return dateVal.substr(0, 4);
   }
   else {
-    let month = MONTH_NAMES[Number(dateVal.substr(5, 2)) - 1];
-    let day   = Number(dateVal.substr(8, 2));
-    let year  = dateVal.substr(0, 4);
-    dict.date = month + ' ' + day + ', ' + year;
+    let date = new Date(dateVal);
+    return date.toLocaleDateString(
+      'en-US',
+      {
+        month : 'long',
+        day   : 'numeric',
+        year  : 'numeric',
+      },
+    );
   }
 }
