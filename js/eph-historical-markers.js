@@ -370,7 +370,6 @@ function preEnableApp() {
         record.date          && typeof record.date          === 'object' && langCode in record.date        ||
         record.imageFilename && typeof record.imageFilename === 'object' && langCode in record.imageFilename
       ) {
-        if (!record.languages) record.languages = [];
         record.languages.push(langCode);
         if (record.inscription   &&                                             !(langCode in record.inscription  )) record.inscription  [langCode] = undefined;
         if (record.title         &&                                             !(langCode in record.title        )) record.title        [langCode] = null;
@@ -524,6 +523,10 @@ function generateMarkerDetails(qid, record) {
         longInscriptionShouldBeChecked = true;
       }
     });
+    if (record.languages.length === 0) {
+      inscriptionHtml += '<div class="loading"><div class="loader"></div></div>';
+      longInscriptionShouldBeChecked = true;
+    }
     inscriptionHtml += '</div>';
   }
 
@@ -661,6 +664,10 @@ function checkAndDisplayLongInscription(qid, record) {
               let langCode = ORDERED_LANGUAGES[i];
               if (langQid === LANGUAGES[langCode].qid) {
                 record.inscription[langCode] = formatInscription(inscription);
+                if (record.languages.length === 0) {
+                  record.languages.push(langCode);
+                  record.panelElem.querySelector('.inscription .loading').classList.add('l10n', langCode);
+                }
                 break;
               }
             }
@@ -781,7 +788,7 @@ function MarkerRecord() {
   this.commemorates  = undefined;
   this.location      = { address:     '', imageFilename: '' };
   this.vicinity      = { description: '', imageFilename: '' };
-  this.languages     = undefined;
+  this.languages     = [];
   this.indexLi       = undefined;
   this.mapMarker     = undefined;
   this.popupHtml     = undefined;
