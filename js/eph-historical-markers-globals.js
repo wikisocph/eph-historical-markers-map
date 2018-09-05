@@ -171,8 +171,10 @@ const SPARQL_QUERY_6 =
 '  ?marker wdt:P547 ?commemorates .' + NL +
 '  ?commemorates rdfs:label ?commemoratesLabel' + NL +
 '  FILTER (LANG(?commemoratesLabel) = "en")' + NL +
-'  ?commemoratesArticle schema:about ?commemorates ;' + NL +
-'                       schema:isPartOf <https://en.wikipedia.org/> .' + NL +
+'  OPTIONAL {' + NL +
+'    ?commemoratesArticle schema:about ?commemorates ;' + NL +
+'                         schema:isPartOf <https://en.wikipedia.org/> .' + NL +
+'  }' + NL +
 '}';
 const ABOUT_SPARQL_QUERY =
 'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?date ?image WHERE {' + NL +
