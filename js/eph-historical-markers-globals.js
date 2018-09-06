@@ -165,7 +165,7 @@ const SPARQL_QUERY_5 =
 '  }' + NL +
 '}';
 const SPARQL_QUERY_6 =
-'SELECT ?marker ?commemoratesLabel ?commemoratesArticle' + NL +
+'SELECT ?marker ?commemorates ?commemoratesLabel ?commemoratesArticle' + NL +
 'WHERE {' + NL +
 '  <SPARQLVALUESCLAUSE>' + NL +
 '  ?marker wdt:P547 ?commemorates .' + NL +
