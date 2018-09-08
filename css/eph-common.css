@@ -274,7 +274,8 @@ nav li.selected a:hover {
   margin: 0 auto;
 }
 
-#details .main-text.nodata {
+#details .main-text.nodata,
+#details .main-text .nodata {
   font-style: italic;
   color: #888;
 }
