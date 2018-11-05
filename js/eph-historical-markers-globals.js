@@ -40,7 +40,6 @@ const SPARQL_QUERY_1 =
 '    OPTIONAL {' + NL +
 '      ?admin0 wdt:P31 ?admin0Type .' + NL +
 '      FILTER (' + NL +
-'        ?admin0Type = wd:Q6256     ||' + NL +
 '        ?admin0Type = wd:Q24698    ||' + NL +
 '        ?admin0Type = wd:Q24746    ||' + NL +
 '        ?admin0Type = wd:Q104157   ||' + NL +
@@ -54,7 +53,6 @@ const SPARQL_QUERY_1 =
 '      OPTIONAL {' + NL +
 '        ?admin1 wdt:P31 ?admin1Type .' + NL +
 '        FILTER (' + NL +
-'          ?admin1Type = wd:Q6256     ||' + NL +
 '          ?admin1Type = wd:Q24698    ||' + NL +
 '          ?admin1Type = wd:Q24746    ||' + NL +
 '          ?admin1Type = wd:Q104157   ||' + NL +
@@ -68,7 +66,6 @@ const SPARQL_QUERY_1 =
 '        OPTIONAL {' + NL +
 '          ?admin2 wdt:P31 ?admin2Type .' + NL +
 '          FILTER (' + NL +
-'            ?admin2Type = wd:Q6256     ||' + NL +
 '            ?admin2Type = wd:Q24698    ||' + NL +
 '            ?admin2Type = wd:Q24746    ||' + NL +
 '            ?admin2Type = wd:Q104157   ||' + NL +
@@ -82,7 +79,6 @@ const SPARQL_QUERY_1 =
 '          OPTIONAL {' + NL +
 '            ?admin3 wdt:P31 ?admin3Type .' + NL +
 '            FILTER (' + NL +
-'              ?admin3Type = wd:Q6256     ||' + NL +
 '              ?admin3Type = wd:Q24698    ||' + NL +
 '              ?admin3Type = wd:Q24746    ||' + NL +
 '              ?admin3Type = wd:Q104157   ||' + NL +

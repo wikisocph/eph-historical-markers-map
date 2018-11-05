@@ -82,10 +82,11 @@ function generateAddressData() {
   promise.then(function(data) {
     data.results.bindings.forEach(function(result) {
 
-      // Combine admin parts into array of objects
+      // Combine admin parts into array of objects and ignore countries
       let adminData = [];
       for (let i = 0; i < ADMIN_LEVELS; i++) {
         if (!(('admin' + i) in result)) break;
+        if (result['admin' + i].value === result.country.value) break;
         let qid = getQid(result['admin' + i]);
         adminData[i] = {
           qid   : qid,
@@ -108,16 +109,18 @@ function generateAddressData() {
       if ('islandLabel' in result) islandAdminTypeQid = getQid(result.islandAdminType);
       for (let i = 0; i < ADMIN_LEVELS; i++) {
         if (
-          adminData[i].label && adminData[i].type !== COUNTRY_QID && (i === 0 || (
-            adminData[i - 1].type !== PROVINCE_QID &&
-            adminData[i - 1].type !== REGION_QID && (
-              // Don't display the region for HUCs and Cotabato City unless it's
-              // Metro Manila
-              (adminData[i - 1].type !== CITY_QID && adminData[i - 1].type !== HUC_QID) ||
-              adminData[i].type !== REGION_QID ||
-              adminData[i].qid === METRO_MANILA_QID
+          adminData[i] && adminData[i].label && (
+            i === 0 || (
+              adminData[i - 1].type !== PROVINCE_QID &&
+              adminData[i - 1].type !== REGION_QID && (
+                // Don't display the region for HUCs and Cotabato City unless it's
+                // Metro Manila
+                (adminData[i - 1].type !== CITY_QID && adminData[i - 1].type !== HUC_QID) ||
+                adminData[i].type !== REGION_QID ||
+                adminData[i].qid === METRO_MANILA_QID
+              )
             )
-          ))
+          )
         ) {
           if (adminData[i].qid in SKIPPED_ADDRESS_LABELS) continue;
           if (islandAdminTypeQid && islandAdminTypeQid === adminData[i].type) addressParts.push(result.islandLabel.value);
@@ -127,7 +130,7 @@ function generateAddressData() {
           break;
         }
       }
-      if ('country' in result && getQid(result.country) !== PH_QID) {
+      if (getQid(result.country) !== PH_QID) {
         addressParts.push(result.countryLabel.value);
       }
 
