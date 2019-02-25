@@ -45,6 +45,7 @@ const SPARQL_QUERY_1 =
 '        ?admin0Type = wd:Q104157   ||' + NL +
 '        ?admin0Type = wd:Q29946056 ||' + NL +
 '        ?admin0Type = wd:Q24764    ||' + NL +
+'        ?admin0Type = wd:Q15634883 ||' + NL +
 '        ?admin0Type = wd:Q61878' + NL +
 '      )' + NL +
 '    }' + NL +
@@ -58,6 +59,7 @@ const SPARQL_QUERY_1 =
 '          ?admin1Type = wd:Q104157   ||' + NL +
 '          ?admin1Type = wd:Q29946056 ||' + NL +
 '          ?admin1Type = wd:Q24764    ||' + NL +
+'          ?admin1Type = wd:Q15634883 ||' + NL +
 '          ?admin1Type = wd:Q61878' + NL +
 '        )' + NL +
 '      }' + NL +
@@ -70,8 +72,7 @@ const SPARQL_QUERY_1 =
 '            ?admin2Type = wd:Q24746    ||' + NL +
 '            ?admin2Type = wd:Q104157   ||' + NL +
 '            ?admin2Type = wd:Q29946056 ||' + NL +
-'            ?admin2Type = wd:Q24764    ||' + NL +
-'            ?admin2Type = wd:Q61878' + NL +
+'            ?admin2Type = wd:Q24764' + NL +
 '          )' + NL +
 '        }' + NL +
 '        OPTIONAL {' + NL +
@@ -80,11 +81,7 @@ const SPARQL_QUERY_1 =
 '            ?admin3 wdt:P31 ?admin3Type .' + NL +
 '            FILTER (' + NL +
 '              ?admin3Type = wd:Q24698    ||' + NL +
-'              ?admin3Type = wd:Q24746    ||' + NL +
-'              ?admin3Type = wd:Q104157   ||' + NL +
-'              ?admin3Type = wd:Q29946056 ||' + NL +
-'              ?admin3Type = wd:Q24764    ||' + NL +
-'              ?admin3Type = wd:Q61878' + NL +
+'              ?admin3Type = wd:Q24746' + NL +
 '            )' + NL +
 '          }' + NL +
 '        }' + NL +
@@ -92,13 +89,15 @@ const SPARQL_QUERY_1 =
 '    }' + NL +
 '  }' + NL +
 '  OPTIONAL {' + NL +
-'    ?marker wdt:P5130 ?island .' + NL +
+'    ?marker wdt:P706 ?island .' + NL +
+'    FILTER EXISTS { ?island wdt:P31/wdt:P279* wd:Q23442 }' + NL +
 '    ?island wdt:P131 ?islandAdmin .' + NL +
 '    ?islandAdmin wdt:P31 ?islandAdminType .' + NL +
 '    FILTER (' + NL +
 '      ?islandAdminType = wd:Q104157   ||' + NL +
 '      ?islandAdminType = wd:Q29946056 ||' + NL +
 '      ?islandAdminType = wd:Q24764    ||' + NL +
+'      ?islandAdminType = wd:Q15634883 ||' + NL +
 '      ?islandAdminType = wd:Q61878' + NL +
 '    )' + NL +
 '  }' + NL +
