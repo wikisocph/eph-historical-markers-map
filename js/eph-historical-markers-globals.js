@@ -34,7 +34,7 @@ const SPARQL_QUERY_1 =
 '    ?marker wdt:P276 ?location .' + NL +
 '    OPTIONAL { ?location wdt:P18 ?locationImage }' + NL +
 '  }' + NL +
-'  OPTIONAL { ?marker wdt:P969 ?streetAddress }' + NL +
+'  OPTIONAL { ?marker wdt:P6375 ?streetAddress }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P131 ?admin0 .' + NL +
 '    OPTIONAL {' + NL +
