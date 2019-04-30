@@ -24,7 +24,7 @@ const SPARQL_QUERY_0 =
 '}';
 const SPARQL_QUERY_1 =
 'SELECT ?marker ?location ?locationLabel ?locationImage ?streetAddress' + NL +
-'       ?islandLabel ?islandAdminType ?country ?countryLabel' + NL +
+'       ?islandLabel ?islandAdminType ?country ?countryLabel ?directions' + NL +
 '       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type' + NL +
 '       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type' + NL +
 'WHERE {' + NL +
@@ -35,6 +35,7 @@ const SPARQL_QUERY_1 =
 '    OPTIONAL { ?location wdt:P18 ?locationImage }' + NL +
 '  }' + NL +
 '  OPTIONAL { ?marker wdt:P6375 ?streetAddress }' + NL +
+'  OPTIONAL { ?marker wdt:P2795 ?directions }' + NL +
 '  OPTIONAL {' + NL +
 '    ?marker wdt:P131 ?admin0 .' + NL +
 '    OPTIONAL {' + NL +
@@ -143,7 +144,7 @@ const SPARQL_QUERY_4 =
 '  ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
 '}';
 const SPARQL_QUERY_5 =
-'SELECT ?marker ?image ?targetLang ?ordinal ?vicinityImage ?vicinityDescription' + NL +
+'SELECT ?marker ?image ?targetLang ?ordinal ?vicinityImage' + NL +
 'WHERE {' + NL +
 '  <SPARQLVALUESCLAUSE>' + NL +
 '  ?marker p:P18 ?imageStatement .' + NL +
@@ -154,8 +155,7 @@ const SPARQL_QUERY_5 =
 '    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
 '  }' + NL +
 '  OPTIONAL {' + NL +
-'    ?imageStatement ps:P18 ?vicinityImage ;' + NL +
-'                    pq:P2096 ?vicinityDescription .' + NL +
+'    ?imageStatement ps:P18 ?vicinityImage .' + NL +
 '    FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
 '  }' + NL +
 '}';

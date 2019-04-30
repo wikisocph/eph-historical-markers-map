@@ -134,11 +134,15 @@ function generateAddressData() {
         addressParts.push(result.countryLabel.value);
       }
 
-      let locRecord = Markers[getQid(result.marker)].location;
-      locRecord.address = addressParts.join(', ');
+      let record = Markers[getQid(result.marker)];
+      record.location.address = addressParts.join(', ');
 
       if ('locationImage' in result) {
-        locRecord.imageFilename = extractImageFilename(result.locationImage);
+        record.location.imageFilename = extractImageFilename(result.locationImage);
+      }
+
+      if ('directions' in result) {
+        record.vicinity.description = result.directions.value;
       }
     });
   });
@@ -286,13 +290,7 @@ function generatePhotoData() {
       }
       if ('vicinityImage' in result) {
         record.vicinity.imageFilename = extractImageFilename(result.vicinityImage);
-        record.vicinity.description = result.vicinityDescription.value;
       }
-    });
-
-    // Post-processing: indicate missing vicinity data
-    Object.values(Markers).forEach(function(record) {
-      if (!record.vicinity.imageFilename) record.vicinity = null;
     });
   });
   return promise;
@@ -345,10 +343,13 @@ function queryWikidataQueryService(query) {
 // Also sets the "mapMarker", "popup", "languages" fields of the Markers database.
 function preEnableApp() {
 
-  // Do further post-processing
+  // Do further data post-processing
   Object.keys(Markers).forEach(function(qid) {
 
     let record = Markers[qid];
+
+    // Indicate missing vicinity data
+    if (!record.vicinity.imageFilename && !record.vicinity.description) record.vicinity = null;
 
     // Generate map marker
     let mapMarker = L.marker(
@@ -599,8 +600,10 @@ function generateMarkerDetails(qid, record) {
   let vicinityHtml = '';
   if (record.vicinity) {
     vicinityHtml = '<div class="vicinity">';
-    vicinityHtml += '<figure class="vicinity"><div class="loader"></div></figure>';
-    figureLoaders.push({ filename: record.vicinity.imageFilename, selector: 'figure.vicinity' });
+    if (record.vicinity.imageFilename) {
+      vicinityHtml += '<figure class="vicinity"><div class="loader"></div></figure>';
+      figureLoaders.push({ filename: record.vicinity.imageFilename, selector: 'figure.vicinity' });
+    }
     if (record.vicinity.description) {
       vicinityHtml += '<p>' + record.vicinity.description + '</p>';
     }
