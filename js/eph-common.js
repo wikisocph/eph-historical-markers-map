@@ -2,6 +2,7 @@
 
 // Constants and fixed parameters
 const WDQS_API_URL            = 'https://query.wikidata.org/sparql';
+const COMMONS_WIKI_URL_PREF   = 'https://commons.wikimedia.org/wiki/';
 const COMMONS_API_URL         = 'https://commons.wikimedia.org/w/api.php';
 const YEAR_PRECISION          = '9';
 const PH_QID                  = 'Q928';
@@ -131,65 +132,56 @@ function displayPanelContent(contentId) {
 }
 
 
-// This takes a Commons image filename and a figure HTML element and populates
-// the element with the 150-pixel wide image and any required attribution inside
-// a figcaption element.
-function displayFigure(filename, figure) {
+// Given a Commons image filename and an array of class names, generates
+// a figure HTML string, returns it, and calls the Commons API to fetch
+// and insert the image attribution if needed. If the filename is false,
+// the figure element will indicate "No photo available".
+function generateFigure(filename, classNames = []) {
+  if (filename) {
 
-  // Fetch the image thumbnail
-  loadJsonp(
-    COMMONS_API_URL,
-    {
-      action     : 'query',
-      format     : 'json',
-      prop       : 'imageinfo',
-      iiprop     : 'url',
-      iiurlwidth : 300,
-      titles     : 'File:' + filename,
-    },
-    function(data) {
-      let pageId = Object.keys(data.query.pages)[0];
-      let imageInfo = data.query.pages[pageId].imageinfo[0];
-      let img = document.createElement('img');
-      img.src = imageInfo.thumburl;
-      let anchor = document.createElement('a');
-      anchor.href = imageInfo.descriptionurl;
-      img.style.height = (imageInfo.thumbheight / 2) + 'px';
-      anchor.appendChild(img);
-      figure.replaceChild(anchor, figure.childNodes[0]);  // replace spinner
-    }
-  );
-
-  // Fetch the image attribution and see if it is needed
-  loadJsonp(
-    COMMONS_API_URL,
-    {
-      action : 'query',
-      format : 'json',
-      prop   : 'imageinfo',
-      iiprop : 'extmetadata',
-      titles : 'File:' + filename,
-    },
-    function(data) {
-      let pageId = Object.keys(data.query.pages)[0];
-      let metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
-      let artistHtml = metadata.Artist.value;
-      if (artistHtml.search('href="//') >= 0) {
-        artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//, 'href="https://');
-      }
-      let licenseHtml = '';
-      if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
-        licenseHtml = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
-        licenseHtml = licenseHtml.replace(/-/g, '&#8209;');
-        licenseHtml = `[${licenseHtml}]`;
-        if ('LicenseUrl' in metadata) {
-          licenseHtml = `<a href="${metadata.LicenseUrl.value}">${licenseHtml}</a>`;
+    // Fetch the image attribution asynchronously then add it to the figure element
+    loadJsonp(
+      COMMONS_API_URL,
+      {
+        action : 'query',
+        format : 'json',
+        prop   : 'imageinfo',
+        iiprop : 'extmetadata',
+        titles : 'File:' + filename,
+      },
+      function(data) {
+        let pageId = Object.keys(data.query.pages)[0];
+        let metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
+        let artistHtml = metadata.Artist.value;
+        if (artistHtml.search('href="//') >= 0) {
+          artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//, 'href="https://');
         }
-        licenseHtml = ' ' + licenseHtml;
+        let licenseHtml = '';
+        if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
+          licenseHtml = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
+          licenseHtml = licenseHtml.replace(/-/g, '&#8209;');
+          licenseHtml = `[${licenseHtml}]`;
+          if ('LicenseUrl' in metadata) {
+            licenseHtml = `<a href="${metadata.LicenseUrl.value}">${licenseHtml}</a>`;
+          }
+          licenseHtml = ' ' + licenseHtml;
+        }
+        document.querySelector(`figure.${classNames.join('.')} figcaption`).innerHTML = artistHtml + licenseHtml;
       }
-      figure.insertAdjacentHTML('beforeend', `<figcaption>${artistHtml}${licenseHtml}</figcaption>`);
-    }
-  );
+    );
+
+    return (
+      `<figure class="${classNames.join(' ')}">` +
+        `<a href="${COMMONS_WIKI_URL_PREF}File:${filename}">` +
+          `<img class="loading" src="${COMMONS_WIKI_URL_PREF}Special:FilePath/${filename}?width=300" alt="" onload="this.className=''">` +
+        '</a>' +
+        '<figcaption>(Loading…)</figcaption>' +
+      '</figure>'
+    );
+  }
+  else {
+    return `<figure class="${classNames.join(' ')} nodata">No photo available</figure>`;
+  }
 }
 
 

@@ -474,36 +474,20 @@ function generateMarkerDetails(qid, record) {
   }
 
   let markerFigureHtml = '';
-  let figureLoaders = [];
-  if (!record.imageFilename) {
-    markerFigureHtml = '<figure class="marker nodata">No photo available</figure>';
-  }
-  else {
-    if (typeof record.imageFilename !== 'object') {
-      markerFigureHtml = '<figure class="marker"><div class="loader"></div></figure>';
-      figureLoaders.push({ filename: record.imageFilename, selector: 'figure.marker' });
-    }
-    else if (Array.isArray(record.imageFilename)) {
-      for (let idx = 0; idx < record.imageFilename.length; idx++) {
-        let filename = record.imageFilename[idx];
-        markerFigureHtml += `<figure class="marker list${idx}"><div class="loader"></div></figure>`;
-        figureLoaders.push({ filename: filename, selector: `figure.marker.list${idx}` });
-      }
+  if (record.imageFilename && typeof record.imageFilename === 'object') {
+    if (Array.isArray(record.imageFilename)) {
+      record.imageFilename.forEach((filename, idx) => {
+        markerFigureHtml += generateFigure(filename, ['marker', `list${idx}`]);
+      });
     }
     else {
       record.languages.forEach(langCode => {
-        let filename = record.imageFilename[langCode];
-        markerFigureHtml += `<figure class="marker l10n ${langCode}`;
-        if (filename) {
-          markerFigureHtml += '"><div class="loader"></div>';
-          figureLoaders.push({ filename: filename, selector: `figure.marker.${langCode}` });
-        }
-        else {
-          markerFigureHtml += ' nodata">No photo available';
-        }
-        markerFigureHtml += '</figure>';
+        markerFigureHtml += generateFigure(record.imageFilename[langCode], ['marker', 'l10n', langCode]);
       });
     }
+  }
+  else {
+    markerFigureHtml = generateFigure(record.imageFilename, ['marker']);
   }
 
   let inscriptionHtml = '';
@@ -581,8 +565,7 @@ function generateMarkerDetails(qid, record) {
 
   let locationFigureHtml = '';
   if (record.location.imageFilename) {
-    locationFigureHtml = '<figure class="location"><div class="loader"></div></figure>';
-    figureLoaders.push({ filename: record.location.imageFilename, selector: 'figure.location' });
+    locationFigureHtml = generateFigure(record.location.imageFilename, ['location']);
   }
 
   let addressHtml;
@@ -597,8 +580,7 @@ function generateMarkerDetails(qid, record) {
   if (record.vicinity) {
     vicinityHtml = '<div class="vicinity">';
     if (record.vicinity.imageFilename) {
-      vicinityHtml += '<figure class="vicinity"><div class="loader"></div></figure>';
-      figureLoaders.push({ filename: record.vicinity.imageFilename, selector: 'figure.vicinity' });
+      vicinityHtml += generateFigure(record.vicinity.imageFilename, ['vicinity']);
     }
     if (record.vicinity.description) {
       vicinityHtml += `<p>${record.vicinity.description}</p>`;
@@ -625,12 +607,6 @@ function generateMarkerDetails(qid, record) {
   if (record.languages.length > 1) panelElem.classList.add('l10n-top', record.languages[0]);
   panelElem.innerHTML = detailsHtml;
   record.panelElem = panelElem;
-
-  // Load images
-  figureLoaders.forEach(loaderData => {
-    let figure = panelElem.querySelector(loaderData.selector);
-    displayFigure(loaderData.filename, figure);
-  });
 
   // Historical marker has missing inscriptions: check the talk page
   if (longInscriptionShouldBeChecked) checkAndDisplayLongInscription(qid, record);
