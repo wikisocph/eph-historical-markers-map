@@ -13,188 +13,187 @@ const LANGUAGES = {
   'fr'  : { name: 'French'     , qid: 'Q150'   },
 };
 const ORDERED_LANGUAGES = ['en', 'tl', 'ceb', 'ilo', 'pam', 'es', 'de', 'fr'];
-const NL = '\n';
 const SPARQL_QUERY_0 =
-'SELECT ?marker ?coord WHERE {' + NL +
-'  ?marker wdt:P31 wd:Q21562164 ;' + NL +
-'          p:P625 ?coordStatement .' + NL +
-'  ?coordStatement ps:P625 ?coord .' + NL +
-'  FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }' + NL +
-'  FILTER (!ISBLANK(?coord)) .' + NL +
-'}';
+`SELECT ?marker ?coord WHERE {
+  ?marker wdt:P31 wd:Q21562164 ;
+          p:P625 ?coordStatement .
+  ?coordStatement ps:P625 ?coord .
+  FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }
+  FILTER (!ISBLANK(?coord)) .
+}`;
 const SPARQL_QUERY_1 =
-'SELECT ?marker ?location ?locationLabel ?locationImage ?streetAddress' + NL +
-'       ?islandLabel ?islandAdminType ?country ?countryLabel ?directions' + NL +
-'       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type' + NL +
-'       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type' + NL +
-'WHERE {' + NL +
-'  <SPARQLVALUESCLAUSE>' + NL +
-'  ?marker wdt:P17 ?country' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker wdt:P276 ?location .' + NL +
-'    OPTIONAL { ?location wdt:P18 ?locationImage }' + NL +
-'  }' + NL +
-'  OPTIONAL { ?marker wdt:P6375 ?streetAddress }' + NL +
-'  OPTIONAL { ?marker wdt:P2795 ?directions }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker wdt:P131 ?admin0 .' + NL +
-'    OPTIONAL {' + NL +
-'      ?admin0 wdt:P31 ?admin0Type .' + NL +
-'      FILTER (' + NL +
-'        ?admin0Type = wd:Q24698    ||' + NL +
-'        ?admin0Type = wd:Q24746    ||' + NL +
-'        ?admin0Type = wd:Q104157   ||' + NL +
-'        ?admin0Type = wd:Q29946056 ||' + NL +
-'        ?admin0Type = wd:Q24764    ||' + NL +
-'        ?admin0Type = wd:Q15634883 ||' + NL +
-'        ?admin0Type = wd:Q61878' + NL +
-'      )' + NL +
-'    }' + NL +
-'    OPTIONAL {' + NL +
-'      ?admin0 wdt:P131 ?admin1 .' + NL +
-'      OPTIONAL {' + NL +
-'        ?admin1 wdt:P31 ?admin1Type .' + NL +
-'        FILTER (' + NL +
-'          ?admin1Type = wd:Q24698    ||' + NL +
-'          ?admin1Type = wd:Q24746    ||' + NL +
-'          ?admin1Type = wd:Q104157   ||' + NL +
-'          ?admin1Type = wd:Q29946056 ||' + NL +
-'          ?admin1Type = wd:Q24764    ||' + NL +
-'          ?admin1Type = wd:Q15634883 ||' + NL +
-'          ?admin1Type = wd:Q61878' + NL +
-'        )' + NL +
-'      }' + NL +
-'      OPTIONAL {' + NL +
-'        ?admin1 wdt:P131 ?admin2 .' + NL +
-'        OPTIONAL {' + NL +
-'          ?admin2 wdt:P31 ?admin2Type .' + NL +
-'          FILTER (' + NL +
-'            ?admin2Type = wd:Q24698    ||' + NL +
-'            ?admin2Type = wd:Q24746    ||' + NL +
-'            ?admin2Type = wd:Q104157   ||' + NL +
-'            ?admin2Type = wd:Q29946056 ||' + NL +
-'            ?admin2Type = wd:Q24764' + NL +
-'          )' + NL +
-'        }' + NL +
-'        OPTIONAL {' + NL +
-'          ?admin2 wdt:P131 ?admin3 .' + NL +
-'          OPTIONAL {' + NL +
-'            ?admin3 wdt:P31 ?admin3Type .' + NL +
-'            FILTER (' + NL +
-'              ?admin3Type = wd:Q24698    ||' + NL +
-'              ?admin3Type = wd:Q24746' + NL +
-'            )' + NL +
-'          }' + NL +
-'        }' + NL +
-'      }' + NL +
-'    }' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker wdt:P706 ?island .' + NL +
-'    FILTER EXISTS { ?island wdt:P31/wdt:P279* wd:Q23442 }' + NL +
-'    ?island wdt:P131 ?islandAdmin .' + NL +
-'    ?islandAdmin wdt:P31 ?islandAdminType .' + NL +
-'    FILTER (' + NL +
-'      ?islandAdminType = wd:Q104157   ||' + NL +
-'      ?islandAdminType = wd:Q29946056 ||' + NL +
-'      ?islandAdminType = wd:Q24764    ||' + NL +
-'      ?islandAdminType = wd:Q15634883 ||' + NL +
-'      ?islandAdminType = wd:Q61878' + NL +
-'    )' + NL +
-'  }' + NL +
-'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }' + NL +
-'}';
+`SELECT ?marker ?location ?locationLabel ?locationImage ?streetAddress
+       ?islandLabel ?islandAdminType ?country ?countryLabel ?directions
+       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type
+       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker wdt:P17 ?country
+  OPTIONAL {
+    ?marker wdt:P276 ?location .
+    OPTIONAL { ?location wdt:P18 ?locationImage }
+  }
+  OPTIONAL { ?marker wdt:P6375 ?streetAddress }
+  OPTIONAL { ?marker wdt:P2795 ?directions }
+  OPTIONAL {
+    ?marker wdt:P131 ?admin0 .
+    OPTIONAL {
+      ?admin0 wdt:P31 ?admin0Type .
+      FILTER (
+        ?admin0Type = wd:Q24698    ||
+        ?admin0Type = wd:Q24746    ||
+        ?admin0Type = wd:Q104157   ||
+        ?admin0Type = wd:Q29946056 ||
+        ?admin0Type = wd:Q24764    ||
+        ?admin0Type = wd:Q15634883 ||
+        ?admin0Type = wd:Q61878
+      )
+    }
+    OPTIONAL {
+      ?admin0 wdt:P131 ?admin1 .
+      OPTIONAL {
+        ?admin1 wdt:P31 ?admin1Type .
+        FILTER (
+          ?admin1Type = wd:Q24698    ||
+          ?admin1Type = wd:Q24746    ||
+          ?admin1Type = wd:Q104157   ||
+          ?admin1Type = wd:Q29946056 ||
+          ?admin1Type = wd:Q24764    ||
+          ?admin1Type = wd:Q15634883 ||
+          ?admin1Type = wd:Q61878
+        )
+      }
+      OPTIONAL {
+        ?admin1 wdt:P131 ?admin2 .
+        OPTIONAL {
+          ?admin2 wdt:P31 ?admin2Type .
+          FILTER (
+            ?admin2Type = wd:Q24698    ||
+            ?admin2Type = wd:Q24746    ||
+            ?admin2Type = wd:Q104157   ||
+            ?admin2Type = wd:Q29946056 ||
+            ?admin2Type = wd:Q24764
+          )
+        }
+        OPTIONAL {
+          ?admin2 wdt:P131 ?admin3 .
+          OPTIONAL {
+            ?admin3 wdt:P31 ?admin3Type .
+            FILTER (
+              ?admin3Type = wd:Q24698    ||
+              ?admin3Type = wd:Q24746
+            )
+          }
+        }
+      }
+    }
+  }
+  OPTIONAL {
+    ?marker wdt:P706 ?island .
+    FILTER EXISTS { ?island wdt:P31/wdt:P279* wd:Q23442 }
+    ?island wdt:P131 ?islandAdmin .
+    ?islandAdmin wdt:P31 ?islandAdminType .
+    FILTER (
+      ?islandAdminType = wd:Q104157   ||
+      ?islandAdminType = wd:Q29946056 ||
+      ?islandAdminType = wd:Q24764    ||
+      ?islandAdminType = wd:Q15634883 ||
+      ?islandAdminType = wd:Q61878
+    )
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}`;
 const SPARQL_QUERY_2 =
-'SELECT ?marker ?markerLabel ?title ?targetLang ?subtitle ?titleNoValue' + NL +
-'WHERE {' + NL +
-'  <SPARQLVALUESCLAUSE>' + NL +
-'  ?marker p:P1476 ?titleStatement .' + NL +
-'  OPTIONAL {' + NL +
-'    ?titleStatement ps:P1476 ?title .' + NL +
-'    OPTIONAL { ?titleStatement pq:P518 ?targetLang }' + NL +
-'    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?titleStatement a ?titleNoValue .' + NL +
-'    FILTER (?titleNoValue = wdno:P1476)' + NL +
-'    OPTIONAL { ?titleStatement pq:P518 ?targetLang }' + NL +
-'    ?marker rdfs:label ?markerLabel .' + NL +
-'    FILTER (LANG(?markerLabel) = "en")' + NL +
-'  }' + NL +
-'}';
+`SELECT ?marker ?markerLabel ?title ?targetLang ?subtitle ?titleNoValue
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker p:P1476 ?titleStatement .
+  OPTIONAL {
+    ?titleStatement ps:P1476 ?title .
+    OPTIONAL { ?titleStatement pq:P518 ?targetLang }
+    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }
+  }
+  OPTIONAL {
+    ?titleStatement a ?titleNoValue .
+    FILTER (?titleNoValue = wdno:P1476)
+    OPTIONAL { ?titleStatement pq:P518 ?targetLang }
+    ?marker rdfs:label ?markerLabel .
+    FILTER (LANG(?markerLabel) = "en")
+  }
+}`;
 const SPARQL_QUERY_3 =
-'SELECT ?marker ?inscription ?inscriptionNoValue' + NL +
-'WHERE {' + NL +
-'  <SPARQLVALUESCLAUSE>' + NL +
-'  ?marker p:P1684 ?inscriptionStatement .' + NL +
-'  OPTIONAL { ?inscriptionStatement ps:P1684 ?inscription }' + NL +
-'  OPTIONAL {' + NL +
-'    ?inscriptionStatement a ?inscriptionNoValue .' + NL +
-'    FILTER (?inscriptionNoValue = wdno:P1684)' + NL +
-'  }' + NL +
-'}';
+`SELECT ?marker ?inscription ?inscriptionNoValue
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker p:P1684 ?inscriptionStatement .
+  OPTIONAL { ?inscriptionStatement ps:P1684 ?inscription }
+  OPTIONAL {
+    ?inscriptionStatement a ?inscriptionNoValue .
+    FILTER (?inscriptionNoValue = wdno:P1684)
+  }
+}`;
 const SPARQL_QUERY_4 =
-'SELECT ?marker ?date ?datePrecision ?targetLang' + NL +
-'WHERE {' + NL +
-'  <SPARQLVALUESCLAUSE>' + NL +
-'  ?marker p:P571 ?dateStatement .' + NL +
-'  OPTIONAL { ?dateStatement pq:P518 ?targetLang }' + NL +
-'  ?dateStatement psv:P571 ?dateValue .' + NL +
-'  ?dateValue wikibase:timeValue ?date .' + NL +
-'  ?dateValue wikibase:timePrecision ?datePrecision .' + NL +
-'}';
+`SELECT ?marker ?date ?datePrecision ?targetLang
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker p:P571 ?dateStatement .
+  OPTIONAL { ?dateStatement pq:P518 ?targetLang }
+  ?dateStatement psv:P571 ?dateValue .
+  ?dateValue wikibase:timeValue ?date .
+  ?dateValue wikibase:timePrecision ?datePrecision .
+}`;
 const SPARQL_QUERY_5 =
-'SELECT ?marker ?image ?targetLang ?ordinal ?vicinityImage' + NL +
-'WHERE {' + NL +
-'  <SPARQLVALUESCLAUSE>' + NL +
-'  ?marker p:P18 ?imageStatement .' + NL +
-'  OPTIONAL {' + NL +
-'    ?imageStatement ps:P18 ?image .' + NL +
-'    OPTIONAL { ?imageStatement pq:P518 ?targetLang }' + NL +
-'    OPTIONAL { ?imageStatement pq:P1545 ?ordinal }' + NL +
-'    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?imageStatement ps:P18 ?vicinityImage .' + NL +
-'    FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
-'  }' + NL +
-'}';
+`SELECT ?marker ?image ?targetLang ?ordinal ?vicinityImage
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker p:P18 ?imageStatement .
+  OPTIONAL {
+    ?imageStatement ps:P18 ?image .
+    OPTIONAL { ?imageStatement pq:P518 ?targetLang }
+    OPTIONAL { ?imageStatement pq:P1545 ?ordinal }
+    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
+  }
+  OPTIONAL {
+    ?imageStatement ps:P18 ?vicinityImage .
+    FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
+  }
+}`;
 const SPARQL_QUERY_6 =
-'SELECT ?marker ?commemorates ?commemoratesLabel ?commemoratesArticle' + NL +
-'WHERE {' + NL +
-'  <SPARQLVALUESCLAUSE>' + NL +
-'  ?marker wdt:P547 ?commemorates .' + NL +
-'  ?commemorates rdfs:label ?commemoratesLabel' + NL +
-'  FILTER (LANG(?commemoratesLabel) = "en")' + NL +
-'  OPTIONAL {' + NL +
-'    ?commemoratesArticle schema:about ?commemorates ;' + NL +
-'                         schema:isPartOf <https://en.wikipedia.org/> .' + NL +
-'  }' + NL +
-'}';
+`SELECT ?marker ?commemorates ?commemoratesLabel ?commemoratesArticle
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker wdt:P547 ?commemorates .
+  ?commemorates rdfs:label ?commemoratesLabel
+  FILTER (LANG(?commemoratesLabel) = "en")
+  OPTIONAL {
+    ?commemoratesArticle schema:about ?commemorates ;
+                         schema:isPartOf <https://en.wikipedia.org/> .
+  }
+}`;
 const ABOUT_SPARQL_QUERY =
-'SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?date ?image WHERE {' + NL +
-'  ?marker wdt:P31 wd:Q21562164 ;' + NL +
-'          p:P625 ?coordStatement .' + NL +
-'  ?coordStatement ps:P625 ?coord .' + NL +
-'  FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }' + NL +
-'  FILTER (!ISBLANK(?coord)) .' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P1476 ?titleStatement .' + NL +
-'    ?titleStatement ps:P1476 ?title .' + NL +
-'    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P571 ?dateStatement .' + NL +
-'    ?dateStatement psv:P571 ?dateValue .' + NL +
-'    ?dateValue wikibase:timeValue ?date .' + NL +
-'  }' + NL +
-'  OPTIONAL {' + NL +
-'    ?marker p:P18 ?imageStatement .' + NL +
-'    ?imageStatement ps:P18 ?image .' + NL +
-'    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }' + NL +
-'  }' + NL +
-'  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }' + NL +
-'}';
+`SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?date ?image WHERE {
+  ?marker wdt:P31 wd:Q21562164 ;
+          p:P625 ?coordStatement .
+  ?coordStatement ps:P625 ?coord .
+  FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }
+  FILTER (!ISBLANK(?coord)) .
+  OPTIONAL {
+    ?marker p:P1476 ?titleStatement .
+    ?titleStatement ps:P1476 ?title .
+    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }
+  }
+  OPTIONAL {
+    ?marker p:P571 ?dateStatement .
+    ?dateStatement psv:P571 ?dateValue .
+    ?dateValue wikibase:timeValue ?date .
+  }
+  OPTIONAL {
+    ?marker p:P18 ?imageStatement .
+    ?imageStatement ps:P18 ?image .
+    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}`;
 const ADDRESS_LABEL_REPLACEMENT = {
   Q245546 : '6th arrondissement',
 };

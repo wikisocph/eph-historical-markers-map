@@ -31,7 +31,7 @@ var AppIsInitialized;
 window.addEventListener('load', init);
 
 
-// This initializes the app once the page has been loaded.
+// Initializes the app once the page has been loaded.
 function init() {
   initMap();
   loadPrimaryData();
@@ -40,7 +40,7 @@ function init() {
 }
 
 
-// This initializes the Leaflet-based map.
+// Initializes the Leaflet-based map.
 function initMap() {
 
   // Create map and set initial view
@@ -85,8 +85,7 @@ function initMap() {
 }
 
 
-// This enables the app and should be called after the Wikidata query has been
-// processed.
+// Enables the app. Should be called after the Wikidata queries have been processed.
 function enableApp() {
   // Remove the app initialization spinner and activate the hashchange handler
   AppIsInitialized = true;
@@ -95,7 +94,7 @@ function enableApp() {
 }
 
 
-// This event handler handles any change in the window URL hash.
+// Event handler that handles any change in the window URL hash.
 function processHashChange() {
 
   if (!AppIsInitialized) return;
@@ -115,13 +114,13 @@ function processHashChange() {
 }
 
 
-// This displays the element with the specified ID on the side panel and
+// Displays the element with the specified ID on the side panel and
 // updates the navigation menu state as well.
 function displayPanelContent(contentId) {
-  document.querySelectorAll('.panel-content').forEach(function(content) {
+  document.querySelectorAll('.panel-content').forEach(content => {
     content.style.display = (content.id === contentId) ? content.dataset.display : 'none';
   });
-  document.querySelectorAll('nav li').forEach(function(li) {
+  document.querySelectorAll('nav li').forEach(li => {
     if (li.childNodes[0].getAttribute('href') === '#' + contentId) {
       li.classList.add('selected');
     }
@@ -182,34 +181,34 @@ function displayFigure(filename, figure) {
       if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
         licenseHtml = metadata.LicenseShortName.value.replace(/ /g, '&nbsp;');
         licenseHtml = licenseHtml.replace(/-/g, '&#8209;');
-        licenseHtml = '[' + licenseHtml + ']';
+        licenseHtml = `[${licenseHtml}]`;
         if ('LicenseUrl' in metadata) {
-          licenseHtml = '<a href="' + metadata.LicenseUrl.value + '">' + licenseHtml + '</a>';
+          licenseHtml = `<a href="${metadata.LicenseUrl.value}">${licenseHtml}</a>`;
         }
         licenseHtml = ' ' + licenseHtml;
       }
-      figure.insertAdjacentHTML('beforeend', '<figcaption>' + artistHtml + licenseHtml + '</figcaption>');
+      figure.insertAdjacentHTML('beforeend', `<figcaption>${artistHtml}${licenseHtml}</figcaption>`);
     }
   );
 }
 
 
-// This takes a WDQS query result Wikidata item data and returns the QID.
+// Given a WDQS query result Wikidata item data, returns the QID.
 function getQid(queryItem) {
   if (!queryItem) return '';
   return queryItem.value.split('/')[4];
 }
 
 
-// This takes a WDQS query result image data and returns the image filename.
+// Given a WDQS query result image data, returns the base image filename.
 function extractImageFilename(image) {
   let regex = /https?:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//;
-  return unescape(image.value.replace(regex, ''));
+  return decodeURIComponent(image.value.replace(regex, ''));
 }
 
 
-// This takes a WDQS result record, takes the date value based on the specified
-// key name and then returns a formatted date string.
+// Given a WDQS result record and key name, takes the date value based on
+// the key name and then returns a formatted date string.
 function parseDate(result, keyName) {
   let dateVal = result[keyName].value;
   if (result[keyName + 'Precision'].value === YEAR_PRECISION) {

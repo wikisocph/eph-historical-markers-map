@@ -1,14 +1,14 @@
 'use strict';
 
 
-// This loads and parses all the primary data that can be obtained from WDQS
+// Loads and parses all the primary data that can be obtained from WDQS
 // in several batches then enables the app.
 function loadPrimaryData() {
   let promise;
 
   generateTopLevelData()
     .then(constructSparqlValuesClause)
-    .then(function() {
+    .then(() => {
       return Promise.all([
         generateAddressData(),
         generateTitleData(),
@@ -23,16 +23,16 @@ function loadPrimaryData() {
 }
 
 
-// This queries WDQS for the historical marker Wikidata items that have current
+// Queries WDQS for the historical marker Wikidata items that have current
 // coordinates, then based on the query sets the "lat", "lon", "qidSortKey"
 // fields of the Markers database, then returns a promise which resolves upon
 // completion of the process.
 function generateTopLevelData() {
   let promise = queryWikidataQueryService(SPARQL_QUERY_0);
-  promise.then(function(data) {
+  promise.then(data => {
 
     // Query parsing
-    data.results.bindings.forEach(function(result) {
+    data.results.bindings.forEach(result => {
       let qid = getQid(result.marker);
       if (!(qid in Markers)) Markers[qid] = new MarkerRecord;
       let record = Markers[qid];
@@ -42,59 +42,57 @@ function generateTopLevelData() {
     });
 
     // Post-processing: Get the average of the coordinates
-    Object.values(Markers).forEach(function(record) {
+    Object.values(Markers).forEach(record => {
       let numCoords = record.lat.length;
       let sumLats = 0;
       let sumLons = 0;
-      record.lat.forEach(function(lat) { sumLats += lat });
-      record.lon.forEach(function(lon) { sumLons += lon });
+      record.lat.forEach(lat => { sumLats += lat });
+      record.lon.forEach(lon => { sumLons += lon });
       record.lat = sumLats / numCoords;
       record.lon = sumLons / numCoords;
     });
 
     // Post-processing: Generate QID sort key
-    Object.keys(Markers).forEach(function(qid) {
+    Object.keys(Markers).forEach(qid => {
       Markers[qid].qidSortKey = Number(qid.substring(1));
     });
 
     // Update stats
     let numMarkers = Object.keys(Markers).length;
-    document.getElementById('stats').innerHTML = 'Showing a total of ' + numMarkers + ' markers';
+    document.getElementById('stats').innerHTML = `Showing a total of ${numMarkers} markers`;
   });
   return promise;
 }
 
 
-// This generates the SPARQL "VALUES" clause that will be used by subsequent queries
+// Generates the SPARQL "VALUES" clause that will be used by subsequent queries
 function constructSparqlValuesClause() {
-  SparqlValuesClause =
-    'VALUES ?marker {' +
-    Object.keys(Markers).map(function(qid) { return 'wd:' + qid }).join(' ') +
-    '}';
+  SparqlValuesClause = 'VALUES ?marker {' + Object.keys(Markers).map(qid => `wd:${qid}`).join(' ') + '}';
 }
 
 
-// This queries WDQS and sets the "location" field of the Markers database,
+// Queries WDQS and sets the "location" field of the Markers database,
 // then returns a promise which resolves upon completion of the process.
 function generateAddressData() {
   let query = SPARQL_QUERY_1.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
   let promise = queryWikidataQueryService(query);
-  promise.then(function(data) {
-    data.results.bindings.forEach(function(result) {
+  promise.then(data => {
+    data.results.bindings.forEach(result => {
 
       // Combine admin parts into array of objects and ignore countries
       let adminData = [];
       for (let i = 0; i < ADMIN_LEVELS; i++) {
-        if (!(('admin' + i) in result)) break;
-        if (result['admin' + i].value === result.country.value) break;
-        let qid = getQid(result['admin' + i]);
+        let key = `admin${i}`;
+        if (!(key in result)) break;
+        if (result[key].value === result.country.value) break;
+        let qid = getQid(result[key]);
         adminData[i] = {
           qid   : qid,
-          type  : getQid(result['admin' + i + 'Type']),
+          type  : getQid(result[key + 'Type']),
         };
         adminData[i].label = qid in ADDRESS_LABEL_REPLACEMENT
           ? ADDRESS_LABEL_REPLACEMENT[qid]
-          : result['admin' + i + 'Label'].value
+          : result[key + 'Label'].value
       }
 
       // Construct address as array
@@ -150,16 +148,16 @@ function generateAddressData() {
 }
 
 
-// This queries WDQS and sets the "indexTitle", "title", "alphaSortKey",
+// Queries WDQS and sets the "indexTitle", "title", "alphaSortKey",
 // "popupHtml", "indexLi" fields of the Markers database, then returns a promise
 // which resolves upon completion of the process.
 function generateTitleData() {
   let query = SPARQL_QUERY_2.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
   let promise = queryWikidataQueryService(query);
-  promise.then(function(data) {
+  promise.then(data => {
 
     // Query parsing
-    data.results.bindings.forEach(function(result) {
+    data.results.bindings.forEach(result => {
 
       let record = Markers[getQid(result.marker)];
 
@@ -176,7 +174,7 @@ function generateTitleData() {
         }
         // ASSUME: All markers have an English label on Wikidata
         let substituteTitle = result.markerLabel.value.replace(/ *historical marker/i, '');
-        record.indexTitle = '[' + substituteTitle + ']';
+        record.indexTitle = `[${substituteTitle}]`;
       }
       else if ('title' in result) {
         record.title[langCode] = {
@@ -188,7 +186,7 @@ function generateTitleData() {
 
     // Post-processing: Generate the map marker popup HTML and index entry
     let listIndex = document.getElementById('index-list');
-    Object.keys(Markers).forEach(function(qid) {
+    Object.keys(Markers).forEach(qid => {
 
       let record = Markers[qid];
 
@@ -200,7 +198,7 @@ function generateTitleData() {
         if (title.sub) {
           record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ');
           record.indexTitle += title.sub.replace(/<br\s*\/?>/g, ' ');
-          popupHtml += '<div class="subtitle">' + title.sub + '</div>';
+          popupHtml += `<div class="subtitle">${title.sub}</div>`;
         }
       }
       else {
@@ -212,7 +210,7 @@ function generateTitleData() {
       record.alphaSortKey = record.indexTitle.replace(/^[^A-Za-z0-9]/, '');
       record.alphaSortKey = record.alphaSortKey.replace(/^(?:The |Ang )/, '');
       let li = document.createElement('li');
-      li.innerHTML = '<a href="#' + qid + '">' + record.indexTitle + '</a>';
+      li.innerHTML = `<a href="#${qid}">${record.indexTitle}</a>`;
       listIndex.appendChild(li);
       record.indexLi = li;
     });
@@ -221,13 +219,13 @@ function generateTitleData() {
 }
 
 
-// This queries WDQS and sets the "inscription" field of the Markers database,
+// Queries WDQS and sets the "inscription" field of the Markers database,
 // then returns a promise which resolves upon completion of the process.
 function generateShortInscriptionData() {
   let query = SPARQL_QUERY_3.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
   let promise = queryWikidataQueryService(query);
-  promise.then(function(data) {
-    data.results.bindings.forEach(function(result) {
+  promise.then(data => {
+    data.results.bindings.forEach(result => {
       let record = Markers[getQid(result.marker)];
       if ('inscription' in result) {
         record.inscription[result.inscription['xml:lang']] = formatInscription(result.inscription.value);
@@ -241,13 +239,13 @@ function generateShortInscriptionData() {
 }
 
 
-// This queries WDQS and sets the "date" field of the Markers database,
+// Queries WDQS and sets the "date" field of the Markers database,
 // then returns a promise which resolves upon completion of the process.
 function generateUnveilingDateData() {
   let query = SPARQL_QUERY_4.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
   let promise = queryWikidataQueryService(query);
-  promise.then(function(data) {
-    data.results.bindings.forEach(function(result) {
+  promise.then(data => {
+    data.results.bindings.forEach(result => {
       let record = Markers[getQid(result.marker)];
       let date = parseDate(result, 'date');
       if ('targetLang' in result) {
@@ -263,16 +261,14 @@ function generateUnveilingDateData() {
 }
 
 
-// This queries WDQS and sets the "imageFilename" and "vicinity" fields of the
+// Queries WDQS and sets the "imageFilename" and "vicinity" fields of the
 // Markers database, then returns a promise which resolves upon completion
 // of the process.
 function generatePhotoData() {
   let query = SPARQL_QUERY_5.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
   let promise = queryWikidataQueryService(query);
-  promise.then(function(data) {
-
-    // Query parsing
-    data.results.bindings.forEach(function(result) {
+  promise.then(data => {
+    data.results.bindings.forEach(result => {
       let record = Markers[getQid(result.marker)];
       if ('image' in result) {
         let filename = extractImageFilename(result.image);
@@ -297,13 +293,13 @@ function generatePhotoData() {
 }
 
 
-// This queries WDQS and sets the "commemorates" field of the Markers database,
+// Queries WDQS and sets the "commemorates" field of the Markers database,
 // then returns a promise which resolves upon completion of the process.
 function generateCommemoratesData() {
   let query = SPARQL_QUERY_6.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
   let promise = queryWikidataQueryService(query);
-  promise.then(function(data) {
-    data.results.bindings.forEach(function(result) {
+  promise.then(data => {
+    data.results.bindings.forEach(result => {
       let record = Markers[getQid(result.marker)];
       if (!record.commemorates) record.commemorates = {};
       record.commemorates[getQid(result.commemorates)] = {
@@ -316,10 +312,10 @@ function generateCommemoratesData() {
 }
 
 
-// This queries WDQS using the specified query and returns a promise that
+// Queries WDQS using the specified query and returns a promise that
 // resolves with the parsed query JSON data or rejects with an HTTP error code.
 function queryWikidataQueryService(query) {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
       if (xhr.readyState !== xhr.DONE) return;
@@ -334,17 +330,17 @@ function queryWikidataQueryService(query) {
     xhr.open('POST', WDQS_API_URL, true);
     xhr.overrideMimeType('text/plain');
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send('format=json&query=' + escape(query));
+    xhr.send('format=json&query=' + encodeURIComponent(query));
   });
 }
 
 
-// This does any further data post-processing including generating the map markers.
+// Performs further data post-processing including generating the map markers.
 // Also sets the "mapMarker", "popup", "languages" fields of the Markers database.
 function preEnableApp() {
 
   // Do further data post-processing
-  Object.keys(Markers).forEach(function(qid) {
+  Object.keys(Markers).forEach(qid => {
 
     let record = Markers[qid];
 
@@ -367,7 +363,7 @@ function preEnableApp() {
 
     // Generate the list of codes of the languages of the historical marker
     // and indicate missing language values
-    ORDERED_LANGUAGES.forEach(function(langCode) {
+    ORDERED_LANGUAGES.forEach(langCode => {
       if (
         record.inscription   && typeof record.inscription   === 'object' && langCode in record.inscription ||
         record.title         && typeof record.title         === 'object' && langCode in record.title       ||
@@ -400,12 +396,12 @@ function preEnableApp() {
 
   // Set the about page WDQS link
   let anchorElem = document.getElementById('wdqs-link');
-  anchorElem.href = 'https://query.wikidata.org/#' + escape(ABOUT_SPARQL_QUERY);
+  anchorElem.href = 'https://query.wikidata.org/#' + encodeURIComponent(ABOUT_SPARQL_QUERY);
 }
 
 
-// This checks if the specified URL fragment is the QID of a valid historical
-// marker and activates the display of that marker if so.
+// Given a URL fragment, checks if it is the QID of a valid historical marker
+// and activates the display of that marker if so.
 // Returns true if the fragment is valid and false otherwise.
 function processFragment(fragment) {
   if (!(fragment in Markers)) return false;
@@ -414,28 +410,29 @@ function processFragment(fragment) {
 }
 
 
-// This takes a historical marker QID and updates the map to show the
-// corresponding map marker, opens its popup if it isn't open yet, and
-// displays the historical marker's details on the side panel.
+// Given the historical marker QID, updates the map to show the corresponding
+// map marker, opens its popup if it isn't open yet, and displays the historical
+// marker's details on the side panel.
 function activateMarker(qid) {
   displayRecordDetails(qid);
   let record = Markers[qid];
-  Cluster.zoomToShowLayer(record.mapMarker, function() {
-    Map.setView([record.lat, record.lon], Map.getZoom());
-    if (!record.popup.isOpen()) {
-      record.mapMarker.openPopup();
-    }
-  });
+  Cluster.zoomToShowLayer(
+    record.mapMarker,
+    function() {
+      Map.setView([record.lat, record.lon], Map.getZoom());
+      if (!record.popup.isOpen()) record.mapMarker.openPopup();
+    },
+  );
 }
 
 
-// This function displays the historical marker's details on the side panel.
+// Displays the historical marker's details on the side panel.
 function displayRecordDetails(qid) {
 
   let record = Markers[qid];
 
   // Set URL hash and window title
-  window.location.hash = '#' + qid;
+  window.location.hash = `#${qid}`;
   let title = getTranslation(record.title);
   document.title = (title ? title.main : record.indexTitle) + ' – ' + BASE_TITLE;
 
@@ -447,29 +444,28 @@ function displayRecordDetails(qid) {
 }
 
 
-// This generates the details content of a historical marker for the side panel.
+// Generates the details content of a historical marker for the side panel.
 function generateMarkerDetails(qid, record) {
 
   let langBarHtml = '';
   if (record.languages.length > 1) {
-    langBarHtml = '<ol class="language-bar">';
-    record.languages.forEach(function(langCode) {
-      langBarHtml +=
-        '<li onclick="selectLanguage(\'' + langCode + '\')"' +
-        (langCode === record.languages[0] ? ' class="selected"' : '') +
-        ' data-lang-code="' + langCode + '">' +
-        LANGUAGES[langCode].name + '</li>';
-    });
-    langBarHtml += '</ol>';
+    langBarHtml =
+      '<ol class="language-bar">' +
+      record.languages.map((langCode, idx) =>
+        `<li onclick="selectLanguage('${langCode}')"` +
+        (idx === 0 ? ' class="selected"' : '') +
+        ` data-lang-code="${langCode}">${LANGUAGES[langCode].name}</li>`
+      ).join('') +
+      '</ol>';
   }
 
   let titleHtml = '';
   if (record.title) {
-    Object.keys(record.title).forEach(function(langCode) {
-      titleHtml += '<h1 class="l10n ' + langCode + '">';
+    Object.keys(record.title).forEach(langCode => {
+      titleHtml += `<h1 class="l10n ${langCode}">`;
       let titleData = record.title[langCode] || getTranslation(record.title);
       titleHtml += titleData.main;
-      if (titleData.sub) titleHtml += ' <span class="subtitle">' + titleData.sub + '</span>';
+      if (titleData.sub) titleHtml += ` <span class="subtitle">${titleData.sub}</span>`;
       titleHtml += '</h1>';
     });
   }
@@ -490,17 +486,17 @@ function generateMarkerDetails(qid, record) {
     else if (Array.isArray(record.imageFilename)) {
       for (let idx = 0; idx < record.imageFilename.length; idx++) {
         let filename = record.imageFilename[idx];
-        markerFigureHtml += '<figure class="marker list' + idx + '"><div class="loader"></div></figure>';
-        figureLoaders.push({ filename: filename, selector: 'figure.marker.list' + idx });
+        markerFigureHtml += `<figure class="marker list${idx}"><div class="loader"></div></figure>`;
+        figureLoaders.push({ filename: filename, selector: `figure.marker.list${idx}` });
       }
     }
     else {
-      record.languages.forEach(function(langCode) {
+      record.languages.forEach(langCode => {
         let filename = record.imageFilename[langCode];
-        markerFigureHtml += '<figure class="marker l10n ' + langCode;
+        markerFigureHtml += `<figure class="marker l10n ${langCode}`;
         if (filename) {
           markerFigureHtml += '"><div class="loader"></div>';
-          figureLoaders.push({ filename: filename, selector: 'figure.marker.' + langCode });
+          figureLoaders.push({ filename: filename, selector: `figure.marker.${langCode}` });
         }
         else {
           markerFigureHtml += ' nodata">No photo available';
@@ -517,13 +513,13 @@ function generateMarkerDetails(qid, record) {
   }
   else {
     inscriptionHtml = '<div class="inscription main-text">';
-    record.languages.forEach(function(langCode) {
+    record.languages.forEach(langCode => {
       let inscription = record.inscription[langCode];
       if (inscription) {
-        inscriptionHtml += '<div class="l10n ' + langCode + '">' + inscription + '</div>';
+        inscriptionHtml += `<div class="l10n ${langCode}">${inscription}</div>`;
       }
       else {
-        inscriptionHtml += '<div class="l10n ' + langCode + ' loading"><div class="loader"></div></div>';
+        inscriptionHtml += `<div class="l10n ${langCode} loading"><div class="loader"></div></div>`;
         longInscriptionShouldBeChecked = true;
       }
     });
@@ -537,24 +533,24 @@ function generateMarkerDetails(qid, record) {
   let unveiledHtml = '';
   if (record.date) {
     if (typeof record.date === 'object') {
-      record.languages.forEach(function(langCode) {
+      record.languages.forEach(langCode => {
         let date = record.date[langCode];
         if (date) {
+          let dateTypeLabel = (date.length === 4 ? 'Year' : 'Date');
           unveiledHtml +=
-            '<h2 class="l10n ' + langCode + '">' + (date.length === 4 ? 'Year' : 'Date') + ' unveiled</h2>' +
-            '<p class="l10n ' + langCode + '">' + date + '</p>';
+            `<h2 class="l10n ${langCode}">${dateTypeLabel} unveiled</h2>` +
+            `<p class="l10n ${langCode}">${date}</p>`;
         }
         else {
           unveiledHtml +=
-            '<h2 class="l10n ' + langCode + '">Date unveiled</h2>' +
-            '<p class="nodata l10n ' + langCode + '"">Unknown</p>';
+            `<h2 class="l10n ${langCode}">Date unveiled</h2>` +
+            `<p class="nodata l10n ${langCode}"">Unknown</p>`;
         }
       });
     }
     else {
-      unveiledHtml =
-        '<h2>' + (record.date.length === 4 ? 'Year' : 'Date') + ' unveiled</h2>' +
-        '<p>' + record.date + '</p>';
+      let dateTypeLabel = (record.date.length === 4 ? 'Year' : 'Date');
+      unveiledHtml = `<h2>${dateTypeLabel} unveiled</h2><p>${record.date}</p>`;
     }
   }
   else {
@@ -566,16 +562,16 @@ function generateMarkerDetails(qid, record) {
     let commemoratesIds = Object.keys(record.commemorates);
     let tagName = commemoratesIds.length > 1 ? 'li' : 'p';
     commemoratesHtml = commemoratesIds.length > 1 ? '<ul>' : '';
-    commemoratesIds.forEach(function(qid) {
+    commemoratesIds.forEach(qid => {
       let commemoratesData = record.commemorates[qid];
-      commemoratesHtml += '<' + tagName + '>' + commemoratesData.title;
-      commemoratesHtml += '<a class="image" href="https://www.wikidata.org/wiki/' + qid + '" title="View in Wikidata">';
+      commemoratesHtml += `<${tagName}>` + commemoratesData.title;
+      commemoratesHtml += `<a class="image" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">`;
       commemoratesHtml += '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>';
       if (commemoratesData.wp_url) {
-        commemoratesHtml += '<a class="image" href="' + commemoratesData.wp_url + '" title="View in Wikipedia">';
+        commemoratesHtml += `<a class="image" href="${commemoratesData.wp_url}" title="View in Wikipedia">`;
         commemoratesHtml += '<img src="img/wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>';
       }
-      commemoratesHtml += '</' + tagName + '>';
+      commemoratesHtml += `</${tagName}>`;
     });
     commemoratesHtml += commemoratesIds.length > 1 ? '</ul>' : '';
   }
@@ -591,7 +587,7 @@ function generateMarkerDetails(qid, record) {
 
   let addressHtml;
   if (record.location.address) {
-    addressHtml = '<p class="address">' + record.location.address + '</p>';
+    addressHtml = `<p class="address">${record.location.address}</p>`;
   }
   else {
     addressHtml = '<p class="nodata">Unspecified</p>';
@@ -605,14 +601,14 @@ function generateMarkerDetails(qid, record) {
       figureLoaders.push({ filename: record.vicinity.imageFilename, selector: 'figure.vicinity' });
     }
     if (record.vicinity.description) {
-      vicinityHtml += '<p>' + record.vicinity.description + '</p>';
+      vicinityHtml += `<p>${record.vicinity.description}</p>`;
     }
     vicinityHtml += '</div>'
   }
 
   let detailsHtml =
     langBarHtml +
-    '<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/' + qid + '" title="View in Wikidata">' +
+    `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">` +
     '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
     titleHtml +
     markerFigureHtml +
@@ -631,7 +627,7 @@ function generateMarkerDetails(qid, record) {
   record.panelElem = panelElem;
 
   // Load images
-  figureLoaders.forEach(function(loaderData) {
+  figureLoaders.forEach(loaderData => {
     let figure = panelElem.querySelector(loaderData.selector);
     displayFigure(loaderData.filename, figure);
   });
@@ -641,9 +637,9 @@ function generateMarkerDetails(qid, record) {
 }
 
 
-// This takes a historical marker QID and the corresponding record and checks if
-// there are {{LongInscription}} templates in the Wikidata talk page. If there
-// are, this parses the templates, stores the inscriptions into the record, then
+// Given a historical marker QID and its corresponding record, checks if there
+// are {{LongInscription}} templates in the Wikidata talk page. If there
+// are, parses the templates, stores the inscriptions into the record, then
 // inserts the preferred inscription into the details content.
 function checkAndDisplayLongInscription(qid, record) {
   loadJsonp(
@@ -653,7 +649,7 @@ function checkAndDisplayLongInscription(qid, record) {
       format : 'json',
       prop   : 'revisions',
       rvprop : 'content',
-      titles : 'Talk:' + qid,
+      titles : `Talk:${qid}`,
     },
     function(data) {
 
@@ -663,7 +659,7 @@ function checkAndDisplayLongInscription(qid, record) {
         let talkContent = data.query.pages[pageId].revisions[0]['*'];
         let templateStrings = talkContent.match(/{{\s*LongInscription[^]+?}}/g);
         if (templateStrings) {
-          templateStrings.forEach(function(string) {
+          templateStrings.forEach(string => {
             let langQid = string.match(/\|\s*langqid\s*=\s*(Q[0-9]+)/)[1];
             let inscription = string.match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
             for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
@@ -683,8 +679,8 @@ function checkAndDisplayLongInscription(qid, record) {
 
       // Populate the details content with the inscription,
       // or indicate that there's none
-      record.languages.forEach(function(langCode) {
-        let inscriptionElem = record.panelElem.querySelector('.inscription .l10n.' + langCode);
+      record.languages.forEach(langCode => {
+        let inscriptionElem = record.panelElem.querySelector(`.inscription .l10n.${langCode}`);
         if (!inscriptionElem.classList.contains('loading')) return;
         inscriptionElem.classList.remove('loading');
         let inscription = record.inscription[langCode];
@@ -701,7 +697,7 @@ function checkAndDisplayLongInscription(qid, record) {
 }
 
 
-// This toggles the sort mode and then sorts the index list.
+// Toggles the sort mode and then sorts the index list.
 function switchSortMode() {
 
   CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SORT_MODES.length;
@@ -711,30 +707,27 @@ function switchSortMode() {
 
   let list = document.getElementById('index-list');
   list.innerHTML = '';
-  Object.keys(Markers).map(
-    function(qid) {
-      return {
-        key  : Markers[qid][currentSortModeId + 'SortKey'],
-        item : Markers[qid].indexLi,
-      };
-    }
-  ).sort(
+  Object.keys(Markers).map(qid => {
+    return {
+      key  : Markers[qid][currentSortModeId + 'SortKey'],
+      item : Markers[qid].indexLi,
+    };
+  })
+  .sort(
     currentSortModeId === 'alpha'
-    ? function(a, b) { return a.key > b.key ? 1 : -1 }
-    : function(a, b) { return a.key - b.key          }
-  ).map(
-    function(el) { return el.item }
-  ).forEach(
-    function(li) { list.appendChild(li); }
-  );
+    ? ((a, b) => a.key > b.key ? 1 : -1)
+    : ((a, b) => a.key - b.key)
+  )
+  .map(sortDatum => sortDatum.item)
+  .forEach(li => { list.appendChild(li) });
 }
 
 
-// This activates the specified language in the current
-// multilingual historical marker's details content.
+// Activates the specified language in the current multilingual historical
+// marker's details content.
 function selectLanguage(langCode) {
-  document.querySelector('#details .l10n-top').className = 'l10n-top ' + langCode;
-  document.querySelectorAll('#details .language-bar li').forEach(function(elem) {
+  document.querySelector('#details .l10n-top').className = `l10n-top ${langCode}`;
+  document.querySelectorAll('#details .language-bar li').forEach(elem => {
     if (elem.dataset.langCode === langCode) {
       elem.classList.add('selected');
     }
@@ -745,27 +738,27 @@ function selectLanguage(langCode) {
 }
 
 
-// This takes an inscription text from Wikidata and reformats it into
-// paragraphs.
+// Given a raw inscription text from Wikidata,
+// returns it reformatted into paragraphs.
 function formatInscription(text) {
   return '<p>' + text.replace(/\s*<br\s*\/?>\s*<br\s*\/?>\s*/gi, '</p><p>') + '</p>';
 }
 
 
-// This takes a WDQS query result language Wikidata item data
-// and returns the language code.
+// Given a WDQS query result language Wikidata item data,
+// returns the language code (undefined if not recognized).
 function getLangCode(queryItem) {
   let langCode;
-  Object.keys(LANGUAGES).forEach(function(code) {
+  Object.keys(LANGUAGES).forEach(code => {
     if (LANGUAGES[code].qid === getQid(queryItem)) langCode = code;
   });
   return langCode;
 }
 
 
-// This takes a dictionary keyed by language code and an optional language code
-// and returns the value for the code if it exists in the dictionary. Otherwise
-// it returns the first value that matches an ordered list of language codes.
+// Given a dictionary keyed by language code and an optional language code,
+// returns the value for the code if it exists in the dictionary. Otherwise
+// returns the first value that matches an ordered list of language codes.
 // Returns null if the dict is not valid and the empty string if there is no
 // suitable language code existing in the dictionary.
 function getTranslation(dict, langCode) {
