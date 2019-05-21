@@ -111,14 +111,13 @@ nav li.selected a:hover {
 }
 
 #init {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   flex: 1;
   margin: 0 0 20px 0;
   padding: 20px;
   background: #fff;
-}
-
-#init .loader {
-  margin: 20px auto;
 }
 
 .panel-content {
@@ -217,10 +216,6 @@ nav li.selected a:hover {
   transition-duration: 0.5s;
 }
 
-#details figure .loader {
-  margin: 20px auto;
-}
-
 #details figure.nodata {
   height: 100px;
   line-height: 100px;
@@ -271,12 +266,8 @@ nav li.selected a:hover {
   padding: 0 170px 0 0;
 }
 
-#details .main-text.loading {
-  margin: 40px 0;
-}
-
 #details .main-text .loader {
-  margin: 0 auto;
+  margin: 40px auto 0;
 }
 
 #details .main-text.nodata,
