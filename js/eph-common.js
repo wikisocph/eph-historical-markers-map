@@ -23,9 +23,12 @@ const MIN_PH_LON              = 116.5;
 const MAX_PH_LON              = 126.5;
 
 // Globals
-var Map;      // Leaflet map object
-var Cluster;  // Leaflet map cluster
-var AppIsInitialized;
+var Records = {};        // Main app database, keyed by QID
+var SparqlValuesClause;  // SPARQL "VALUES" clause containing the QIDs of all main Wikidata items
+var Map;                 // Leaflet map object
+var Cluster;             // Leaflet map cluster
+var BootstrapDataIsLoaded = false;  // Whether the data needed to populate the map and index is loaded
+var PrimaryDataIsLoaded   = false;  // Whether the non-lazy data is loaded
 
 // ------------------------------------------------------------
 
@@ -86,49 +89,130 @@ function initMap() {
 }
 
 
+// Given a SPARQL query string, a per-result processing callback, and an optional
+// post-processing callback, queries WDQS using the given query, parses the query
+// results and calls the per-result callback on each result, calls the
+// post-processing callback after all results have been processed, then returns
+// a promise that resolves after all the processing or rejects with an HTTP
+// error code if there is an error querying WDQS. If SparqlValuesClause is not false,
+// this also updates the given query with the SparqlValuesClause value prior to
+// querying WDQS.
+function queryWdqsThenProcess(query, processEachResult, postprocessCallback) {
+
+  let promise = new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== xhr.DONE) return;
+      if (xhr.status === 200) {
+        resolve(JSON.parse(xhr.responseText));
+      }
+      else {
+        reject(xhr.status);
+      }
+    };
+    xhr.open('POST', WDQS_API_URL, true);
+    xhr.overrideMimeType('text/plain');
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    if (SparqlValuesClause) query = query.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
+    xhr.send('format=json&query=' + encodeURIComponent(query));
+  });
+
+  promise = promise.then(data => {
+    data.results.bindings.forEach(processEachResult);
+  });
+
+  if (postprocessCallback) promise = promise.then(postprocessCallback);
+
+  return promise;
+}
+
+
 // Enables the app. Should be called after the Wikidata queries have been processed.
 function enableApp() {
-  // Remove the app initialization spinner and activate the hashchange handler
-  AppIsInitialized = true;
-  document.getElementById('init').remove();
+  PrimaryDataIsLoaded = true;
   processHashChange();
 }
 
 
-// Event handler that handles any change in the window URL hash.
+// Event handler that handles any change in the window URL hash. When all the
+// data is loaded, this updates the correct panel section and window title and
+// optionally updates the map to the relevant location. Otherwise, the panel
+// contents will show a loading indicator and the window will be the basic title.
+// This is also called when data has been progressively loaded in order
+// to update the panel during app initialization.
 function processHashChange() {
-
-  if (!AppIsInitialized) return;
-
   let fragment = window.location.hash.replace('#', '');
-  if (!processFragment(fragment)) {
-    if (fragment === 'about') {
-      document.title = 'About – ' + BASE_TITLE;
-      displayPanelContent('about');
+  if (fragment === 'about') {
+    document.title = 'About – ' + BASE_TITLE;
+    displayPanelContent('about');
+  }
+  else {
+    if (!BootstrapDataIsLoaded) {
+      displayPanelContent('loading');
     }
     else {
-      window.location.hash = '';  // Disable invalid fragments
-      document.title = BASE_TITLE;
-      displayPanelContent('index');
+      if (fragment === '' || !(fragment in Records)) {
+        window.location.hash = '';  // Disable invalid fragments
+        document.title = BASE_TITLE;
+        displayPanelContent('index');
+      }
+      else {
+        activateMapMarker(fragment);
+        displayRecordDetails(fragment);
+      }
     }
   }
 }
 
 
-// Displays the element with the specified ID on the side panel and
-// updates the navigation menu state as well.
-function displayPanelContent(contentId) {
+// Given a record QID, if the record has a map marker, updates the map to show
+// and center on the map marker and open its popup if needed.
+function activateMapMarker(qid) {
+  let record = Records[qid];
+  if (!record.mapMarker) return;  // Some records (grouped heritage sites) don't have markers
+  Cluster.zoomToShowLayer(
+    record.mapMarker,
+    function() {
+      Map.setView([record.lat, record.lon], Map.getZoom());
+      if (!record.popup.isOpen()) record.mapMarker.openPopup();
+    },
+  );
+}
+
+
+// Given the ID of the panel content ID, displays the corresponding
+// panel content and updates the navigation menu state as well.
+function displayPanelContent(id) {
   document.querySelectorAll('.panel-content').forEach(content => {
-    content.style.display = (content.id === contentId) ? content.dataset.display : 'none';
+    content.style.display = (content.id === id) ? content.dataset.display : 'none';
   });
   document.querySelectorAll('nav li').forEach(li => {
-    if (li.childNodes[0].getAttribute('href') === '#' + contentId) {
+    if (li.childNodes[0].getAttribute('href') === '#' + id) {
       li.classList.add('selected');
     }
     else {
       li.classList.remove('selected');
     }
   });
+}
+
+
+// Given a record QID, displays the record's details on the side panel,
+// generating it as needed. Also updates the window title and URL hash.
+// If the primary data is not yet loaded, shows the loading panel.
+function displayRecordDetails(qid) {
+  let record = Records[qid];
+  window.location.hash = `#${qid}`;
+  document.title = `${record.indexTitle} – ${BASE_TITLE}`
+  if (PrimaryDataIsLoaded) {
+    if (!record.panelElem) generateRecordDetails(qid);
+    let detailsElem = document.getElementById('details');
+    detailsElem.replaceChild(record.panelElem, detailsElem.childNodes[0]);
+    displayPanelContent('details');
+  }
+  else {
+    displayPanelContent('loading');
+  }
 }
 
 
@@ -182,13 +266,6 @@ function generateFigure(filename, classNames = []) {
   else {
     return `<figure class="${classNames.join(' ')} nodata">No photo available</figure>`;
   }
-}
-
-
-// Given a WDQS query result Wikidata item data, returns the QID.
-function getQid(queryItem) {
-  if (!queryItem) return '';
-  return queryItem.value.split('/')[4];
 }
 
 

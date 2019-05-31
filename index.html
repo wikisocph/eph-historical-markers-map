@@ -22,7 +22,9 @@
       <li><a href="#about">About</a></li>
     </ul>
   </nav>
-  <div id="init"><div class="loader"></div></div>
+  <div id="loading" class="panel-content" data-display="flex">
+    <div class="loader"></div>
+  </div>
   <section id="index" class="panel-content" data-display="flex">
     <header>
       <p id="stats"></p>
@@ -31,26 +33,24 @@
     <ol id="index-list"></ol>
   </section>
   <section id="details" class="panel-content" data-display="block"><!-- dummy node --></section>
-  <aside id="about" class="panel-content" data-display="block">
-    <section>
-      <img id="eph" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg" alt="Encyclopedia of Philippine Heritage">
-      <p>The <b>Historical Markers Map</b> is a web app that shows the location of extant historical markers that have
-        been installed by the <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National
-        Historical Commission of the Philippines</a> and its predecessor agencies. Each historical marker is represented
-        by a map marker that when clicked provides more information about the historical marker, including a photo of the
-        marker and its inscription. This web app is part of the <i><b>Encyclopedia of Philippine Heritage</b></i>,
-        a program of the Wiki Society of the Philippines.</p>
-      <h2>Technical details</h2>
-      <p>The data on these historical markers is dynamically retrieved from <a href="https://www.wikidata.org/">Wikidata</a>
-        and the photographs are stored in <a href="https://commons.wikimedia.org/">Wikimedia Commons</a>, both of which are
-        sister projects of Wikipedia. If you want to help add and improve the data, please refer to this
-        <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject page</a>.</p>
-      <p>If you are familiar with the Wikidata Query Service and want to obtain or explore the raw data, please refer
-        to this <a href="#" id="wdqs-link">query</a>.</p>
-      <p>To report bugs, suggest improvements, or see the source code of this web app, please refer to this
-        <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub repository</a>.</p>
-    </section>
-  </aside>
+  <section id="about" class="panel-content" data-display="block">
+    <img id="eph" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/Encyclopedia_of_Philippine_Heritage_logo.svg" alt="Encyclopedia of Philippine Heritage">
+    <p>The <b>Historical Markers Map</b> is a web app that shows the location of extant historical markers that have
+      been installed by the <a href="https://en.wikipedia.org/wiki/National_Historical_Commission_of_the_Philippines">National
+      Historical Commission of the Philippines</a> and its predecessor agencies. Each historical marker is represented
+      by a map marker that when clicked provides more information about the historical marker, including a photo of the
+      marker and its inscription. This web app is part of the <i><b>Encyclopedia of Philippine Heritage</b></i>,
+      a program of the Wiki Society of the Philippines.</p>
+    <h2>Technical details</h2>
+    <p>The data on these historical markers is dynamically retrieved from <a href="https://www.wikidata.org/">Wikidata</a>
+      and the photographs are stored in <a href="https://commons.wikimedia.org/">Wikimedia Commons</a>, both of which are
+      sister projects of Wikipedia. If you want to help add and improve the data, please refer to this
+      <a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Philippine_historical_markers">WikiProject page</a>.</p>
+    <p>If you are familiar with the Wikidata Query Service and want to obtain or explore the raw data, please refer
+      to this <a href="#" id="wdqs-link">query</a>.</p>
+    <p>To report bugs, suggest improvements, or see the source code of this web app, please refer to this
+      <a href="https://github.com/WMPH/eph-historical-markers-map">GitHub repository</a>.</p>
+  </section>
 </section>
 <section id="map"></section>
 <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>

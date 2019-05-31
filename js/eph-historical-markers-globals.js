@@ -14,18 +14,39 @@ const LANGUAGES = {
 };
 const ORDERED_LANGUAGES = ['en', 'tl', 'ceb', 'ilo', 'pam', 'es', 'de', 'fr'];
 const SPARQL_QUERY_0 =
-`SELECT ?marker ?coord WHERE {
+`SELECT ?markerQid ?coord WHERE {
   ?marker wdt:P31 wd:Q21562164 ;
           p:P625 ?coordStatement .
   ?coordStatement ps:P625 ?coord .
   FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }
   FILTER (!ISBLANK(?coord)) .
+  BIND (SUBSTR(STR(?marker), 32) AS ?markerQid)
 }`;
 const SPARQL_QUERY_1 =
-`SELECT ?marker ?location ?locationLabel ?locationImage ?streetAddress
-       ?islandLabel ?islandAdminType ?country ?countryLabel ?directions
-       ?admin0 ?admin0Label ?admin0Type ?admin1 ?admin1Label ?admin1Type
-       ?admin2 ?admin2Label ?admin2Type ?admin3 ?admin3Label ?admin3Type
+`SELECT ?markerQid ?markerLabel ?title ?targetLangQid ?subtitle ?titleNoValue
+WHERE {
+  <SPARQLVALUESCLAUSE>
+  ?marker p:P1476 ?titleStatement .
+  OPTIONAL {
+    ?titleStatement ps:P1476 ?title .
+    OPTIONAL { ?titleStatement pq:P518 ?targetLang }
+    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }
+  }
+  OPTIONAL {
+    ?titleStatement a ?titleNoValue .
+    FILTER (?titleNoValue = wdno:P1476)
+    OPTIONAL { ?titleStatement pq:P518 ?targetLang }
+    ?marker rdfs:label ?markerLabel .
+    FILTER (LANG(?markerLabel) = "en")
+  }
+  BIND (SUBSTR(STR(?marker    ), 32) AS ?markerQid    ) .
+  BIND (SUBSTR(STR(?targetLang), 32) AS ?targetLangQid) .
+}`;
+const SPARQL_QUERY_2 =
+`SELECT ?markerQid ?locationQid ?locationLabel ?locationImage ?streetAddress
+       ?islandLabel ?islandAdminTypeQid ?countryQid ?countryLabel ?directions
+       ?admin0Qid ?admin0Label ?admin0TypeQid ?admin1Qid ?admin1Label ?admin1TypeQid
+       ?admin2Qid ?admin2Label ?admin2TypeQid ?admin3Qid ?admin3Label ?admin3TypeQid
 WHERE {
   <SPARQLVALUESCLAUSE>
   ?marker wdt:P17 ?country
@@ -91,8 +112,7 @@ WHERE {
   OPTIONAL {
     ?marker wdt:P706 ?island .
     FILTER EXISTS { ?island wdt:P31/wdt:P279* wd:Q23442 }
-    ?island wdt:P131 ?islandAdmin .
-    ?islandAdmin wdt:P31 ?islandAdminType .
+    ?island wdt:P131/wdt:P31 ?islandAdminType .
     FILTER (
       ?islandAdminType = wd:Q104157   ||
       ?islandAdminType = wd:Q29946056 ||
@@ -102,27 +122,21 @@ WHERE {
     )
   }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
-}`;
-const SPARQL_QUERY_2 =
-`SELECT ?marker ?markerLabel ?title ?targetLang ?subtitle ?titleNoValue
-WHERE {
-  <SPARQLVALUESCLAUSE>
-  ?marker p:P1476 ?titleStatement .
-  OPTIONAL {
-    ?titleStatement ps:P1476 ?title .
-    OPTIONAL { ?titleStatement pq:P518 ?targetLang }
-    OPTIONAL { ?titleStatement pq:P1680 ?subtitle }
-  }
-  OPTIONAL {
-    ?titleStatement a ?titleNoValue .
-    FILTER (?titleNoValue = wdno:P1476)
-    OPTIONAL { ?titleStatement pq:P518 ?targetLang }
-    ?marker rdfs:label ?markerLabel .
-    FILTER (LANG(?markerLabel) = "en")
-  }
+  BIND (SUBSTR(STR(?marker         ), 32) AS ?markerQid         ) .
+  BIND (SUBSTR(STR(?location       ), 32) AS ?locationQid       ) .
+  BIND (SUBSTR(STR(?islandAdminType), 32) AS ?islandAdminTypeQid) .
+  BIND (SUBSTR(STR(?country        ), 32) AS ?countryQid        ) .
+  BIND (SUBSTR(STR(?admin0         ), 32) AS ?admin0Qid         ) .
+  BIND (SUBSTR(STR(?admin1         ), 32) AS ?admin1Qid         ) .
+  BIND (SUBSTR(STR(?admin2         ), 32) AS ?admin2Qid         ) .
+  BIND (SUBSTR(STR(?admin3         ), 32) AS ?admin3Qid         ) .
+  BIND (SUBSTR(STR(?adminType0     ), 32) AS ?admin0TypeQid     ) .
+  BIND (SUBSTR(STR(?adminType1     ), 32) AS ?admin1TypeQid     ) .
+  BIND (SUBSTR(STR(?adminType2     ), 32) AS ?admin2TypeQid     ) .
+  BIND (SUBSTR(STR(?adminType3     ), 32) AS ?admin3TypeQid     ) .
 }`;
 const SPARQL_QUERY_3 =
-`SELECT ?marker ?inscription ?inscriptionNoValue
+`SELECT ?markerQid ?inscription ?inscriptionNoValue
 WHERE {
   <SPARQLVALUESCLAUSE>
   ?marker p:P1684 ?inscriptionStatement .
@@ -131,9 +145,10 @@ WHERE {
     ?inscriptionStatement a ?inscriptionNoValue .
     FILTER (?inscriptionNoValue = wdno:P1684)
   }
+  BIND (SUBSTR(STR(?marker), 32) AS ?markerQid)
 }`;
 const SPARQL_QUERY_4 =
-`SELECT ?marker ?date ?datePrecision ?targetLang
+`SELECT ?markerQid ?date ?datePrecision ?targetLangQid
 WHERE {
   <SPARQLVALUESCLAUSE>
   ?marker p:P571 ?dateStatement .
@@ -141,9 +156,11 @@ WHERE {
   ?dateStatement psv:P571 ?dateValue .
   ?dateValue wikibase:timeValue ?date .
   ?dateValue wikibase:timePrecision ?datePrecision .
+  BIND (SUBSTR(STR(?marker    ), 32) AS ?markerQid    ) .
+  BIND (SUBSTR(STR(?targetLang), 32) AS ?targetLangQid) .
 }`;
 const SPARQL_QUERY_5 =
-`SELECT ?marker ?image ?targetLang ?ordinal ?vicinityImage
+`SELECT ?markerQid ?image ?targetLangQid ?ordinal ?vicinityImage
 WHERE {
   <SPARQLVALUESCLAUSE>
   ?marker p:P18 ?imageStatement .
@@ -157,9 +174,11 @@ WHERE {
     ?imageStatement ps:P18 ?vicinityImage .
     FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
   }
+  BIND (SUBSTR(STR(?marker    ), 32) AS ?markerQid    ) .
+  BIND (SUBSTR(STR(?targetLang), 32) AS ?targetLangQid) .
 }`;
 const SPARQL_QUERY_6 =
-`SELECT ?marker ?commemorates ?commemoratesLabel ?commemoratesArticle
+`SELECT ?markerQid ?commemoratesQid ?commemoratesLabel ?commemoratesArticle
 WHERE {
   <SPARQLVALUESCLAUSE>
   ?marker wdt:P547 ?commemorates .
@@ -169,6 +188,8 @@ WHERE {
     ?commemoratesArticle schema:about ?commemorates ;
                          schema:isPartOf <https://en.wikipedia.org/> .
   }
+  BIND (SUBSTR(STR(?marker      ), 32) AS ?markerQid      ) .
+  BIND (SUBSTR(STR(?commemorates), 32) AS ?commemoratesQid) .
 }`;
 const ABOUT_SPARQL_QUERY =
 `SELECT ?marker ?markerLabel ?coord ?title ?subtitle ?date ?image WHERE {
@@ -182,11 +203,7 @@ const ABOUT_SPARQL_QUERY =
     ?titleStatement ps:P1476 ?title .
     OPTIONAL { ?titleStatement pq:P1680 ?subtitle }
   }
-  OPTIONAL {
-    ?marker p:P571 ?dateStatement .
-    ?dateStatement psv:P571 ?dateValue .
-    ?dateValue wikibase:timeValue ?date .
-  }
+  OPTIONAL { ?marker wdt:P571 ?date }
   OPTIONAL {
     ?marker p:P18 ?imageStatement .
     ?imageStatement ps:P18 ?image .
@@ -212,6 +229,4 @@ const SORT_MODES              = [
 ];
 
 // Globals
-var Markers = {};  // Hash to contain data about the historical markers
-var SparqlValuesClause;  // SPARQL "VALUES" clause containing the QIDs of all relevant historical marker Wikidata items
 var CurrentSortModeIdx;

@@ -4,91 +4,143 @@
 // Loads and parses all the primary data that can be obtained from WDQS
 // in several batches then enables the app.
 function loadPrimaryData() {
-  let promise;
-
-  generateTopLevelData()
-    .then(constructSparqlValuesClause)
+  doPreProcessing();
+  populateCoordinatesData()
+    .then(populateTitleData)
+    .then(populateMapAndIndex)
     .then(() => {
       return Promise.all([
-        generateAddressData(),
-        generateTitleData(),
-        generateShortInscriptionData(),
-        generateUnveilingDateData(),
-        generatePhotoData(),
-        generateCommemoratesData(),
+        populateLocationData(),
+        populateInscriptionData(),
+        populateDateData(),
+        populatePhotoData(),
+        populateCommemoratesData(),
       ]);
     })
-    .then(preEnableApp)
+    .then(doFinalPostProcessing)
     .then(enableApp);
 }
 
 
-// Queries WDQS for the historical marker Wikidata items that have current
-// coordinates, then based on the query sets the "lat", "lon", "qidSortKey"
-// fields of the Markers database, then returns a promise which resolves upon
-// completion of the process.
-function generateTopLevelData() {
-  let promise = queryWikidataQueryService(SPARQL_QUERY_0);
-  promise.then(data => {
+// Performs pre data post-processing: mainly initialize static content
+function doPreProcessing() {
 
-    // Query parsing
-    data.results.bindings.forEach(result => {
-      let qid = getQid(result.marker);
-      if (!(qid in Markers)) Markers[qid] = new MarkerRecord;
-      let record = Markers[qid];
+  // Set the about page WDQS link
+  let anchorElem = document.getElementById('wdqs-link');
+  anchorElem.href = 'https://query.wikidata.org/#' + encodeURIComponent(ABOUT_SPARQL_QUERY);
+
+  // Update panel in case of static content
+  processHashChange();
+}
+
+
+// Queries WDQS for the historical marker Wikidata items that have current
+// coordinates, then generates a Record object if needed and sets the "lat",
+// "lon", and "qidSortKey" Records fields and the SparqlValuesClause value,
+// then updates the number of historical markers stats.
+function populateCoordinatesData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_0,
+    function(result) {
+      let qid = result.markerQid.value;
+      if (!(qid in Records)) Records[qid] = new Record;
+      let record = Records[qid];
       let wktBits = result.coord.value.split(/\(|\)| /);  // Note: format is Point WKT
       record.lat.push(parseFloat(wktBits[2]));
       record.lon.push(parseFloat(wktBits[1]));
-    });
+    },
+    function() {
 
-    // Post-processing: Get the average of the coordinates
-    Object.values(Markers).forEach(record => {
-      let numCoords = record.lat.length;
-      let sumLats = 0;
-      let sumLons = 0;
-      record.lat.forEach(lat => { sumLats += lat });
-      record.lon.forEach(lon => { sumLons += lon });
-      record.lat = sumLats / numCoords;
-      record.lon = sumLons / numCoords;
-    });
+      // Get the average of the coordinates
+      Object.values(Records).forEach(record => {
+        let numCoords = record.lat.length;
+        if (numCoords === 1) {
+          record.lat = record.lat[0];
+          record.lon = record.lon[0];
+        }
+        else {
+          let sumLats = 0;
+          let sumLons = 0;
+          record.lat.forEach(lat => { sumLats += lat });
+          record.lon.forEach(lon => { sumLons += lon });
+          record.lat = sumLats / numCoords;
+          record.lon = sumLons / numCoords;
+        }
+      });
 
-    // Post-processing: Generate QID sort key
-    Object.keys(Markers).forEach(qid => {
-      Markers[qid].qidSortKey = Number(qid.substring(1));
-    });
+      // Generate QID sort key
+      Object.entries(Records).forEach(entry => {
+        entry[1].qidSortKey = Number(entry[0].substring(1));
+      });
 
-    // Update stats
-    let numMarkers = Object.keys(Markers).length;
-    document.getElementById('stats').innerHTML = `Showing a total of ${numMarkers} markers`;
-  });
-  return promise;
+      // Generate SPARQL VALUES clause for subsequent queries
+      SparqlValuesClause = 'VALUES ?marker {' + Object.keys(Records).map(qid => `wd:${qid}`).join(' ') + '}';
+
+      // Update stats
+      let numRecords = Object.keys(Records).length;
+      document.getElementById('stats').innerHTML = `Showing a total of ${numRecords} markers`;
+    },
+  );
 }
 
 
-// Generates the SPARQL "VALUES" clause that will be used by subsequent queries
-function constructSparqlValuesClause() {
-  SparqlValuesClause = 'VALUES ?marker {' + Object.keys(Markers).map(qid => `wd:${qid}`).join(' ') + '}';
+// Queries WDQS, sets the "title" and "indexTitle" (for untitled markers)
+// Records fields, and sets the BootstrapDataIsLoaded status.
+function populateTitleData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_1,
+    function(result) {
+
+      let langCode;
+      if ('targetLangQid' in result) {
+        langCode = getLangCode(result.targetLangQid.value);
+      }
+      else if ('title' in result) {
+        langCode = result.title['xml:lang'];
+      }
+
+      let record = Records[result.markerQid.value];
+      if ('title' in result) {
+        record.title[langCode] = {
+          main : result.title.value,
+          sub  : ('subtitle' in result) ? result.subtitle.value : null,
+        };
+      }
+      else if ('titleNoValue' in result) {
+        if (langCode) {
+          record.title[langCode] = null;
+        }
+        else {
+          record.title = null;
+        }
+        // ASSUME: All markers have an English label on Wikidata
+        let substituteTitle = result.markerLabel.value.replace(/ *historical marker/i, '');
+        record.indexTitle = `[${substituteTitle}]`;
+      }
+    },
+    function() {
+      BootstrapDataIsLoaded = true;
+    },
+  );
 }
 
 
-// Queries WDQS and sets the "location" field of the Markers database,
-// then returns a promise which resolves upon completion of the process.
-function generateAddressData() {
-  let query = SPARQL_QUERY_1.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
-  let promise = queryWikidataQueryService(query);
-  promise.then(data => {
-    data.results.bindings.forEach(result => {
+// Queries WDQS and sets the "location" and "vicinty.description" Records fields.
+function populateLocationData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_2,
+    function(result) {
 
       // Combine admin parts into array of objects and ignore countries
       let adminData = [];
       for (let i = 0; i < ADMIN_LEVELS; i++) {
         let key = `admin${i}`;
-        if (!(key in result)) break;
-        if (result[key].value === result.country.value) break;
-        let qid = getQid(result[key]);
+        if (!(`${key}Qid` in result)) break;
+        if (result[key + 'Qid'].value === result.countryQid.value) break;
+        let qid = result[key + 'Qid'];
         adminData[i] = {
           qid   : qid,
-          type  : getQid(result[key + 'Type']),
+          type  : result[key + 'TypeQid'],
         };
         adminData[i].label = qid in ADDRESS_LABEL_REPLACEMENT
           ? ADDRESS_LABEL_REPLACEMENT[qid]
@@ -97,14 +149,14 @@ function generateAddressData() {
 
       // Construct address as array
       let addressParts = [];
-      if ('location' in result && !(getQid(result.location) in SKIPPED_ADDRESS_LABELS)) {
+      if ('locationQid' in result && !(result.locationQid.value in SKIPPED_ADDRESS_LABELS)) {
         addressParts.push(result.locationLabel.value);
       }
       if ('streetAddress' in result) {
         addressParts.push(result.streetAddress.value);
       }
       let islandAdminTypeQid;
-      if ('islandLabel' in result) islandAdminTypeQid = getQid(result.islandAdminType);
+      if ('islandLabel' in result) islandAdminTypeQid = result.islandAdminTypeQid.value;
       for (let i = 0; i < ADMIN_LEVELS; i++) {
         if (
           adminData[i] && adminData[i].label && (
@@ -128,11 +180,11 @@ function generateAddressData() {
           break;
         }
       }
-      if (getQid(result.country) !== PH_QID) {
+      if (result.countryQid.value !== PH_QID) {
         addressParts.push(result.countryLabel.value);
       }
 
-      let record = Markers[getQid(result.marker)];
+      let record = Records[result.markerQid.value];
       record.location.address = addressParts.join(', ');
 
       if ('locationImage' in result) {
@@ -142,139 +194,59 @@ function generateAddressData() {
       if ('directions' in result) {
         record.vicinity.description = result.directions.value;
       }
-    });
-  });
-  return promise;
+    },
+  );
 }
 
 
-// Queries WDQS and sets the "indexTitle", "title", "alphaSortKey",
-// "popupHtml", "indexLi" fields of the Markers database, then returns a promise
-// which resolves upon completion of the process.
-function generateTitleData() {
-  let query = SPARQL_QUERY_2.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
-  let promise = queryWikidataQueryService(query);
-  promise.then(data => {
-
-    // Query parsing
-    data.results.bindings.forEach(result => {
-
-      let record = Markers[getQid(result.marker)];
-
-      let langCode;
-      if ('title' in result) langCode = result.title['xml:lang'];
-      if ('targetLang' in result) langCode = getLangCode(result.targetLang);
-
-      if ('titleNoValue' in result) {
-        if (langCode) {
-          record.title[langCode] = null;
-        }
-        else {
-          record.title = null;
-        }
-        // ASSUME: All markers have an English label on Wikidata
-        let substituteTitle = result.markerLabel.value.replace(/ *historical marker/i, '');
-        record.indexTitle = `[${substituteTitle}]`;
-      }
-      else if ('title' in result) {
-        record.title[langCode] = {
-          main : result.title.value,
-          sub  : ('subtitle' in result) ? result.subtitle.value : null,
-        };
-      }
-    });
-
-    // Post-processing: Generate the map marker popup HTML and index entry
-    let listIndex = document.getElementById('index-list');
-    Object.keys(Markers).forEach(qid => {
-
-      let record = Markers[qid];
-
-      let popupHtml;
-      if (record.title && Object.keys(record.title).length > 0) {
-        let title = getTranslation(record.title);
-        record.indexTitle = title.main.replace(/<br\s*\/?>/g, ' ');
-        popupHtml = title.main;
-        if (title.sub) {
-          record.indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ');
-          record.indexTitle += title.sub.replace(/<br\s*\/?>/g, ' ');
-          popupHtml += `<div class="subtitle">${title.sub}</div>`;
-        }
-      }
-      else {
-        popupHtml = record.indexTitle;
-      }
-      record.popupHtml = popupHtml;
-
-      // Generate alphabetical sort key and create an index entry and add to the index
-      record.alphaSortKey = record.indexTitle.replace(/^[^A-Za-z0-9]/, '');
-      record.alphaSortKey = record.alphaSortKey.replace(/^(?:The |Ang )/, '');
-      let li = document.createElement('li');
-      li.innerHTML = `<a href="#${qid}">${record.indexTitle}</a>`;
-      listIndex.appendChild(li);
-      record.indexLi = li;
-    });
-  });
-  return promise;
-}
-
-
-// Queries WDQS and sets the "inscription" field of the Markers database,
-// then returns a promise which resolves upon completion of the process.
-function generateShortInscriptionData() {
-  let query = SPARQL_QUERY_3.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
-  let promise = queryWikidataQueryService(query);
-  promise.then(data => {
-    data.results.bindings.forEach(result => {
-      let record = Markers[getQid(result.marker)];
+// Queries WDQS and sets the non-lazy "inscription" Records field.
+function populateInscriptionData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_3,
+    function(result) {
+      let record = Records[result.markerQid.value];
       if ('inscription' in result) {
         record.inscription[result.inscription['xml:lang']] = formatInscription(result.inscription.value);
       }
       else if ('inscriptionNoValue' in result) {
         record.inscription = null;
       }
-    });
-  });
-  return promise;
+    },
+  );
 }
 
 
-// Queries WDQS and sets the "date" field of the Markers database,
-// then returns a promise which resolves upon completion of the process.
-function generateUnveilingDateData() {
-  let query = SPARQL_QUERY_4.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
-  let promise = queryWikidataQueryService(query);
-  promise.then(data => {
-    data.results.bindings.forEach(result => {
-      let record = Markers[getQid(result.marker)];
+// Queries WDQS and sets the "date" Records field.
+function populateDateData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_4,
+    function(result) {
+      let record = Records[result.markerQid.value];
       let date = parseDate(result, 'date');
-      if ('targetLang' in result) {
+      if ('targetLangQid' in result) {
         if (!record.date) record.date = {};
-        record.date[getLangCode(result.targetLang)] = date;
+        record.date[getLangCode(result.targetLangQid.value)] = date;
       }
       else {
         record.date = date;
       }
-    });
-  });
-  return promise;
+    },
+  );
 }
 
 
-// Queries WDQS and sets the "imageFilename" and "vicinity" fields of the
-// Markers database, then returns a promise which resolves upon completion
-// of the process.
-function generatePhotoData() {
-  let query = SPARQL_QUERY_5.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
-  let promise = queryWikidataQueryService(query);
-  promise.then(data => {
-    data.results.bindings.forEach(result => {
-      let record = Markers[getQid(result.marker)];
+// Queries WDQS and sets the "imageFilename" and "vicinity.imageFilename"
+// Records fields.
+function populatePhotoData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_5,
+    function(result) {
+      let record = Records[result.markerQid.value];
       if ('image' in result) {
         let filename = extractImageFilename(result.image);
-        if ('targetLang' in result) {
+        if ('targetLangQid' in result) {
           if (!record.imageFilename) record.imageFilename = {};
-          record.imageFilename[getLangCode(result.targetLang)] = filename;
+          record.imageFilename[getLangCode(result.targetLangQid.value)] = filename;
         }
         else if ('ordinal' in result) {
           if (!record.imageFilename) record.imageFilename = [];
@@ -287,79 +259,99 @@ function generatePhotoData() {
       if ('vicinityImage' in result) {
         record.vicinity.imageFilename = extractImageFilename(result.vicinityImage);
       }
-    });
-  });
-  return promise;
+    },
+  );
 }
 
 
-// Queries WDQS and sets the "commemorates" field of the Markers database,
-// then returns a promise which resolves upon completion of the process.
-function generateCommemoratesData() {
-  let query = SPARQL_QUERY_6.replace('<SPARQLVALUESCLAUSE>', SparqlValuesClause);
-  let promise = queryWikidataQueryService(query);
-  promise.then(data => {
-    data.results.bindings.forEach(result => {
-      let record = Markers[getQid(result.marker)];
+// Queries WDQS and sets the "commemorates" Records field.
+function populateCommemoratesData() {
+  return queryWdqsThenProcess(
+    SPARQL_QUERY_6,
+    function(result) {
+      let record = Records[result.markerQid.value];
       if (!record.commemorates) record.commemorates = {};
-      record.commemorates[getQid(result.commemorates)] = {
+      record.commemorates[result.commemoratesQid.value] = {
         title  : result.commemoratesLabel.value,
         wp_url : ('commemoratesArticle' in result) ? result.commemoratesArticle.value : null,
       };
-    });
-  });
-  return promise;
+    },
+  );
 }
 
 
-// Queries WDQS using the specified query and returns a promise that
-// resolves with the parsed query JSON data or rejects with an HTTP error code.
-function queryWikidataQueryService(query) {
-  return new Promise((resolve, reject) => {
-    let xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== xhr.DONE) return;
-      if (xhr.status === 200){
-        var data = JSON.parse(xhr.responseText);
-        resolve(data);
+// Populates the map with map markers and the index list with items and sets the
+// "indexTitle" (for titled markers), "alphaSortKey", "mapMarker", "popup", and
+// "indexLi" Records field. This also enables the sorting function and does the
+// initial sort. This should be called as soon as the bootstrap data
+// (coordinates and titles) have been loaded.
+function populateMapAndIndex() {
+
+  // Populate map and index
+  let listIndex = document.getElementById('index-list');
+  let mapMarkers = [];
+  Object.entries(Records).forEach(entry => {
+
+    let qid = entry[0], record = entry[1];
+
+    // Generate map marker popup HTML, index title, and alpha sort key
+    let popupHtml  = record.indexTitle;  // For untitled historical markers
+    let indexTitle = record.indexTitle;  // For untitled historical markers
+    if (record.title && Object.keys(record.title).length > 0) {
+      let title = getTranslation(record.title);
+      popupHtml = title.main;
+      indexTitle = title.main;
+      if (title.sub) {
+        popupHtml += `<div class="subtitle">${title.sub}</div>`;
+        indexTitle += (title.sub.substr(0, 1) === '(' ? ' ' : ': ') + title.sub;
       }
-      else {
-        reject(xhr.status);
-      }
-    };
-    xhr.open('POST', WDQS_API_URL, true);
-    xhr.overrideMimeType('text/plain');
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send('format=json&query=' + encodeURIComponent(query));
-  });
-}
+      indexTitle = indexTitle.replace(/<br\s*\/?>/g, ' ');
+      record.indexTitle = indexTitle;
+    }
+    record.alphaSortKey =
+      indexTitle.replace(/^[^A-Za-z0-9]/, '').replace(/^(?:The |Ang )/, '');
 
-
-// Performs further data post-processing including generating the map markers.
-// Also sets the "mapMarker", "popup", "languages" fields of the Markers database.
-function preEnableApp() {
-
-  // Do further data post-processing
-  Object.keys(Markers).forEach(qid => {
-
-    let record = Markers[qid];
-
-    // Indicate missing vicinity data
-    if (!record.vicinity.imageFilename && !record.vicinity.description) record.vicinity = null;
-
-    // Generate map marker
+    // Generate map marker with popup
     let mapMarker = L.marker(
       [record.lat, record.lon],
       { icon: L.ExtraMarkers.icon({ icon: '', markerColor : 'cyan' }) },
     );
     record.mapMarker = mapMarker;
-    Cluster.addLayer(mapMarker);
-
-    // Generate map marker popup based on the stored HTML string
-    mapMarker.bindPopup(record.popupHtml, { closeButton: false });
+    mapMarker.bindPopup(popupHtml, { closeButton: false });
     let popup = record.mapMarker.getPopup();
     popup._qid = qid;
     record.popup = popup;
+    mapMarkers.push(mapMarker);
+
+    // Generate index list item
+    let li = document.createElement('li');
+    li.innerHTML = `<a href="#${qid}">${indexTitle}</a>`;
+    record.indexLi = li;
+    listIndex.appendChild(li);
+  });
+  Cluster.addLayers(mapMarkers);
+
+  // Enable the index sort button and add click event handler,
+  // and perform the initial sort
+  let elem = document.getElementById('sort');
+  elem.disabled = false;
+  elem.addEventListener('click', switchSortMode);
+  CurrentSortModeIdx = SORT_MODES.length - 1;
+  switchSortMode();
+  processHashChange();
+}
+
+
+// Performs final data post-processing:
+// - Nullifies the "vicinity" Records field if it is completely empty
+// - Populates the "languages" Records field and nullifies language-specific
+//   values for the "inscription", "title", "date", and "imageFilename" Records
+//   fields if there remain empty
+function doFinalPostProcessing() {
+  Object.values(Records).forEach(record => {
+
+    // Indicate missing vicinity data
+    if (!record.vicinity.imageFilename && !record.vicinity.description) record.vicinity = null;
 
     // Generate the list of codes of the languages of the historical marker
     // and indicate missing language values
@@ -378,74 +370,13 @@ function preEnableApp() {
       }
     });
   });
-
-  // If the URL indicates a permalinked marker, re-initialize the map view
-  let fragment = window.location.hash.replace('#', '');
-  if (fragment in Markers) {
-    let record = Markers[fragment];
-    Map.setView([record.lat, record.lon], TILE_LAYER_MAX_ZOOM);
-  }
-
-  // Enable the index sort button and add click event handler,
-  // and perform the initial sort
-  let elem = document.getElementById('sort');
-  elem.disabled = false;
-  elem.addEventListener('click', switchSortMode);
-  CurrentSortModeIdx = SORT_MODES.length - 1;
-  switchSortMode();
-
-  // Set the about page WDQS link
-  let anchorElem = document.getElementById('wdqs-link');
-  anchorElem.href = 'https://query.wikidata.org/#' + encodeURIComponent(ABOUT_SPARQL_QUERY);
-}
-
-
-// Given a URL fragment, checks if it is the QID of a valid historical marker
-// and activates the display of that marker if so.
-// Returns true if the fragment is valid and false otherwise.
-function processFragment(fragment) {
-  if (!(fragment in Markers)) return false;
-  activateMarker(fragment);
-  return true;
-}
-
-
-// Given the historical marker QID, updates the map to show the corresponding
-// map marker, opens its popup if it isn't open yet, and displays the historical
-// marker's details on the side panel.
-function activateMarker(qid) {
-  displayRecordDetails(qid);
-  let record = Markers[qid];
-  Cluster.zoomToShowLayer(
-    record.mapMarker,
-    function() {
-      Map.setView([record.lat, record.lon], Map.getZoom());
-      if (!record.popup.isOpen()) record.mapMarker.openPopup();
-    },
-  );
-}
-
-
-// Displays the historical marker's details on the side panel.
-function displayRecordDetails(qid) {
-
-  let record = Markers[qid];
-
-  // Set URL hash and window title
-  window.location.hash = `#${qid}`;
-  let title = getTranslation(record.title);
-  document.title = (title ? title.main : record.indexTitle) + ' – ' + BASE_TITLE;
-
-  // Update panel
-  if (!record.panelElem) generateMarkerDetails(qid, record);
-  displayPanelContent('details');
-  let detailsElem = document.querySelector('#details');
-  detailsElem.replaceChild(record.panelElem, detailsElem.childNodes[0]);
 }
 
 
 // Generates the details content of a historical marker for the side panel.
-function generateMarkerDetails(qid, record) {
+function generateRecordDetails(qid) {
+
+  let record = Records[qid];
 
   let langBarHtml = '';
   if (record.languages.length > 1) {
@@ -461,9 +392,9 @@ function generateMarkerDetails(qid, record) {
 
   let titleHtml = '';
   if (record.title) {
-    Object.keys(record.title).forEach(langCode => {
-      titleHtml += `<h1 class="l10n ${langCode}">`;
-      let titleData = record.title[langCode] || getTranslation(record.title);
+    Object.entries(record.title).forEach(entry => {
+      titleHtml += `<h1 class="l10n ${entry[0]}">`;
+      let titleData = entry[1] || getTranslation(record.title);
       titleHtml += titleData.main;
       if (titleData.sub) titleHtml += ` <span class="subtitle">${titleData.sub}</span>`;
       titleHtml += '</h1>';
@@ -492,10 +423,7 @@ function generateMarkerDetails(qid, record) {
 
   let inscriptionHtml = '';
   let longInscriptionShouldBeChecked = false;
-  if (!record.inscription) {
-    inscriptionHtml = '<div class="inscription main-text nodata"><p>This historical marker has no inscription.</p></div>';
-  }
-  else {
+  if (record.inscription) {
     inscriptionHtml = '<div class="inscription main-text">';
     record.languages.forEach(langCode => {
       let inscription = record.inscription[langCode];
@@ -512,6 +440,12 @@ function generateMarkerDetails(qid, record) {
       longInscriptionShouldBeChecked = true;
     }
     inscriptionHtml += '</div>';
+  }
+  else {
+    inscriptionHtml =
+      '<div class="inscription main-text nodata">' +
+        '<p>This historical marker has no inscription.</p>' +
+      '</div>';
   }
 
   let unveiledHtml = '';
@@ -548,12 +482,17 @@ function generateMarkerDetails(qid, record) {
     commemoratesHtml = commemoratesIds.length > 1 ? '<ul>' : '';
     commemoratesIds.forEach(qid => {
       let commemoratesData = record.commemorates[qid];
-      commemoratesHtml += `<${tagName}>` + commemoratesData.title;
-      commemoratesHtml += `<a class="image" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">`;
-      commemoratesHtml += '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>';
+      commemoratesHtml +=
+        `<${tagName}>` +
+          commemoratesData.title +
+          `<a class="image" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">` +
+            '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" />' +
+          '</a>';
       if (commemoratesData.wp_url) {
-        commemoratesHtml += `<a class="image" href="${commemoratesData.wp_url}" title="View in Wikipedia">`;
-        commemoratesHtml += '<img src="img/wikipedia_tiny_logo.png" alt="[view Wikipedia article]" /></a>';
+        commemoratesHtml +=
+          `<a class="image" href="${commemoratesData.wp_url}" title="View in Wikipedia">` +
+            '<img src="img/wikipedia_tiny_logo.png" alt="[view Wikipedia article]" />' +
+          '</a>';
       }
       commemoratesHtml += `</${tagName}>`;
     });
@@ -588,7 +527,9 @@ function generateMarkerDetails(qid, record) {
     vicinityHtml += '</div>'
   }
 
-  let detailsHtml =
+  let panelElem = document.createElement('div');
+  if (record.languages.length > 1) panelElem.classList.add('l10n-top', record.languages[0]);
+  panelElem.innerHTML =
     langBarHtml +
     `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">` +
     '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
@@ -602,22 +543,19 @@ function generateMarkerDetails(qid, record) {
     locationFigureHtml +
     addressHtml +
     vicinityHtml;
-
-  let panelElem = document.createElement('div');
-  if (record.languages.length > 1) panelElem.classList.add('l10n-top', record.languages[0]);
-  panelElem.innerHTML = detailsHtml;
   record.panelElem = panelElem;
 
   // Historical marker has missing inscriptions: check the talk page
-  if (longInscriptionShouldBeChecked) checkAndDisplayLongInscription(qid, record);
+  if (longInscriptionShouldBeChecked) checkAndDisplayLongInscription(qid);
 }
 
 
-// Given a historical marker QID and its corresponding record, checks if there
-// are {{LongInscription}} templates in the Wikidata talk page. If there
-// are, parses the templates, stores the inscriptions into the record, then
-// inserts the preferred inscription into the details content.
-function checkAndDisplayLongInscription(qid, record) {
+// Given a historical marker QID, checks if there are {{LongInscription}}
+// templates in the Wikidata talk page. If there are, parses the templates,
+// stores the inscriptions into the record, then inserts them into the details
+// content.
+function checkAndDisplayLongInscription(qid) {
+  let record = Records[qid];
   loadJsonp(
     'https://www.wikidata.org/w/api.php',
     {
@@ -629,7 +567,7 @@ function checkAndDisplayLongInscription(qid, record) {
     },
     function(data) {
 
-      // Extract inscriptions and add them to the database
+      // Extract inscriptions and add them to the Records database
       let pageId = Object.keys(data.query.pages)[0];
       if (pageId !== '-1') {
         let talkContent = data.query.pages[pageId].revisions[0]['*'];
@@ -640,14 +578,13 @@ function checkAndDisplayLongInscription(qid, record) {
             let inscription = string.match(/\|\s*inscription\s*=\s*([^]*?)(?:\||}})/)[1];
             for (let i = 0; i < ORDERED_LANGUAGES.length; i++) {
               let langCode = ORDERED_LANGUAGES[i];
-              if (langQid === LANGUAGES[langCode].qid) {
-                record.inscription[langCode] = formatInscription(inscription);
-                if (record.languages.length === 0) {
-                  record.languages.push(langCode);
-                  record.panelElem.querySelector('.inscription .loading').classList.add('l10n', langCode);
-                }
-                break;
+              if (langQid !== LANGUAGES[langCode].qid) continue;
+              record.inscription[langCode] = formatInscription(inscription);
+              if (record.languages.length === 0) {
+                record.languages.push(langCode);
+                record.panelElem.querySelector('.inscription .loading').classList.add('l10n', langCode);
               }
+              break;
             }
           });
         }
@@ -676,17 +613,19 @@ function checkAndDisplayLongInscription(qid, record) {
 // Toggles the sort mode and then sorts the index list.
 function switchSortMode() {
 
+  // Toggle sort mode
   CurrentSortModeIdx = (CurrentSortModeIdx + 1) % SORT_MODES.length;
   document.getElementById('sort').innerHTML =
     'Sort list ' + SORT_MODES[(CurrentSortModeIdx + 1) % SORT_MODES.length].label;
   let currentSortModeId = SORT_MODES[CurrentSortModeIdx].id;
 
+  // Perform sort
   let list = document.getElementById('index-list');
   list.innerHTML = '';
-  Object.keys(Markers).map(qid => {
+  Object.values(Records).map(record => {
     return {
-      key  : Markers[qid][currentSortModeId + 'SortKey'],
-      item : Markers[qid].indexLi,
+      key  : record[currentSortModeId + 'SortKey'],
+      item : record.indexLi,
     };
   })
   .sort(
@@ -723,10 +662,10 @@ function formatInscription(text) {
 
 // Given a WDQS query result language Wikidata item data,
 // returns the language code (undefined if not recognized).
-function getLangCode(queryItem) {
+function getLangCode(langCodeQid) {
   let langCode;
-  Object.keys(LANGUAGES).forEach(code => {
-    if (LANGUAGES[code].qid === getQid(queryItem)) langCode = code;
+  Object.entries(LANGUAGES).forEach(entry => {
+    if (entry[1].qid === langCodeQid) langCode = entry[0];
   });
   return langCode;
 }
@@ -750,12 +689,10 @@ function getTranslation(dict, langCode) {
 // ------------------------------------------------------------
 
 // Class declaration for representing a historical marker
-function MarkerRecord() {
-  this.qidSortKey    = undefined;
-  this.alphaSortKey  = undefined;
+function Record() {
   this.lat           = [];
   this.lon           = [];
-  this.indexTitle    = '';
+  this.indexTitle    = undefined;
   this.title         = {};  // empty if not encoded yet; null if novalue
   this.inscription   = {};  // empty if not encoded yet; null if novalue
   this.imageFilename = undefined;
@@ -764,9 +701,10 @@ function MarkerRecord() {
   this.location      = { address:     '', imageFilename: '' };
   this.vicinity      = { description: '', imageFilename: '' };
   this.languages     = [];
+  this.qidSortKey    = undefined;
+  this.alphaSortKey  = undefined;
   this.indexLi       = undefined;
   this.mapMarker     = undefined;
-  this.popupHtml     = undefined;
   this.popup         = undefined;
   this.panelElem     = undefined;
 }
