@@ -689,22 +689,24 @@ function getTranslation(dict, langCode) {
 // ------------------------------------------------------------
 
 // Class declaration for representing a historical marker
-function Record() {
-  this.lat           = [];
-  this.lon           = [];
-  this.indexTitle    = undefined;
-  this.title         = {};  // empty if not encoded yet; null if novalue
-  this.inscription   = {};  // empty if not encoded yet; null if novalue
-  this.imageFilename = undefined;
-  this.date          = undefined;
-  this.commemorates  = undefined;
-  this.location      = { address:     '', imageFilename: '' };
-  this.vicinity      = { description: '', imageFilename: '' };
-  this.languages     = [];
-  this.qidSortKey    = undefined;
-  this.alphaSortKey  = undefined;
-  this.indexLi       = undefined;
-  this.mapMarker     = undefined;
-  this.popup         = undefined;
-  this.panelElem     = undefined;
+class Record {
+  constructor() {
+    this.lat           = [];
+    this.lon           = [];
+    this.indexTitle    = undefined;
+    this.title         = {};  // empty if not encoded yet; null if novalue
+    this.inscription   = {};  // empty if not encoded yet; null if novalue
+    this.imageFilename = undefined;
+    this.date          = undefined;
+    this.commemorates  = undefined;
+    this.location      = { address:     '', imageFilename: '' };
+    this.vicinity      = { description: '', imageFilename: '' };
+    this.languages     = [];
+    this.qidSortKey    = undefined;
+    this.alphaSortKey  = undefined;
+    this.indexLi       = undefined;
+    this.mapMarker     = undefined;
+    this.popup         = undefined;
+    this.panelElem     = undefined;
+  }
 }
