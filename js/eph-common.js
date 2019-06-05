@@ -16,6 +16,8 @@ const OSM_LAYER_URL           = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.
 const OSM_LAYER_ATTRIBUTION   = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 const CARTO_LAYER_URL         = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png';
 const CARTO_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/">CARTO</a> (style)';
+const WIKI_LAYER_URL          = 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png';
+const WIKI_LAYER_ATTRIBUTION  = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/">Wikimedia Foundation</a> (style)';
 const TILE_LAYER_MAX_ZOOM     = 19;
 const MIN_PH_LAT              =   4.5;
 const MAX_PH_LAT              =  21.0;
@@ -52,16 +54,21 @@ function initMap() {
   Map.fitBounds([[MAX_PH_LAT, MAX_PH_LON], [MIN_PH_LAT, MIN_PH_LON]]);
 
   // Add tile layers
-  let osmLayer = new L.tileLayer(OSM_LAYER_URL, {
-    attribution : OSM_LAYER_ATTRIBUTION,
-    maxZoom     : TILE_LAYER_MAX_ZOOM,
-  })
   let cartoLayer = new L.tileLayer(CARTO_LAYER_URL, {
     attribution : CARTO_LAYER_ATTRIBUTION,
     maxZoom     : TILE_LAYER_MAX_ZOOM,
   }).addTo(Map);
+  let wikiLayer = new L.tileLayer(WIKI_LAYER_URL, {
+    attribution : WIKI_LAYER_ATTRIBUTION,
+    maxZoom     : TILE_LAYER_MAX_ZOOM,
+  });
+  let osmLayer = new L.tileLayer(OSM_LAYER_URL, {
+    attribution : OSM_LAYER_ATTRIBUTION,
+    maxZoom     : TILE_LAYER_MAX_ZOOM,
+  });
   let baseMaps = {
     'CARTO Voyager'       : cartoLayer,
+    'Wikimedia Maps'      : wikiLayer,
     'OpenStreetMap Carto' : osmLayer,
   };
   L.control.layers(baseMaps, null, {position: 'topleft'}).addTo(Map);
@@ -250,7 +257,8 @@ function generateFigure(filename, classNames = []) {
           }
           licenseHtml = ' ' + licenseHtml;
         }
-        document.querySelector(`figure.${classNames.join('.')} figcaption`).innerHTML = artistHtml + licenseHtml;
+        let selector = `figure${classNames.length ? '.' : ''}${classNames.join('.')} figcaption`;
+        document.querySelector(selector).innerHTML = artistHtml + licenseHtml;
       }
     );
 
