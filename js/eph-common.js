@@ -241,8 +241,7 @@ function generateFigure(filename, classNames = []) {
         titles : 'File:' + filename,
       },
       function(data) {
-        let pageId = Object.keys(data.query.pages)[0];
-        let metadata = data.query.pages[pageId].imageinfo[0].extmetadata;
+        let metadata = Object.values(data.query.pages)[0].imageinfo[0].extmetadata;
         let artistHtml = metadata.Artist.value;
         if (artistHtml.search('href="//') >= 0) {
           artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//, 'href="https://');
