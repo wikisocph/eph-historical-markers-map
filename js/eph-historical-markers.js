@@ -136,11 +136,11 @@ function populateLocationData() {
       for (let i = 0; i < ADMIN_LEVELS; i++) {
         let key = `admin${i}`;
         if (!(`${key}Qid` in result)) break;
-        if (result[key + 'Qid'].value === result.countryQid.value) break;
-        let qid = result[key + 'Qid'];
+        let qid = result[key + 'Qid'].value;
+        if (qid === result.countryQid.value) break;
         adminData[i] = {
-          qid   : qid,
-          type  : result[key + 'TypeQid'],
+          qid  : qid,
+          type : `${key}TypeQid` in result ? result[key + 'TypeQid'].value : null,
         };
         adminData[i].label = qid in ADDRESS_LABEL_REPLACEMENT
           ? ADDRESS_LABEL_REPLACEMENT[qid]

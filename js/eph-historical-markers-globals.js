@@ -60,50 +60,33 @@ WHERE {
     ?marker wdt:P131 ?admin0 .
     OPTIONAL {
       ?admin0 wdt:P31 ?admin0Type .
-      FILTER (
-        ?admin0Type = wd:Q24698    ||
-        ?admin0Type = wd:Q24746    ||
-        ?admin0Type = wd:Q104157   ||
-        ?admin0Type = wd:Q29946056 ||
-        ?admin0Type = wd:Q24764    ||
-        ?admin0Type = wd:Q15634883 ||
-        ?admin0Type = wd:Q61878
-      )
+      FILTER (?admin0Type IN (
+        wd:Q24698, wd:Q24746, wd:Q104157, wd:Q29946056, wd:Q24764,
+        wd:Q15634883, wd:Q61878
+      ))
     }
     OPTIONAL {
       ?admin0 wdt:P131 ?admin1 .
       OPTIONAL {
         ?admin1 wdt:P31 ?admin1Type .
-        FILTER (
-          ?admin1Type = wd:Q24698    ||
-          ?admin1Type = wd:Q24746    ||
-          ?admin1Type = wd:Q104157   ||
-          ?admin1Type = wd:Q29946056 ||
-          ?admin1Type = wd:Q24764    ||
-          ?admin1Type = wd:Q15634883 ||
-          ?admin1Type = wd:Q61878
-        )
+        FILTER (?admin1Type IN (
+          wd:Q24698, wd:Q24746, wd:Q104157, wd:Q29946056, wd:Q24764,
+          wd:Q15634883, wd:Q61878
+        ))
       }
       OPTIONAL {
         ?admin1 wdt:P131 ?admin2 .
         OPTIONAL {
           ?admin2 wdt:P31 ?admin2Type .
-          FILTER (
-            ?admin2Type = wd:Q24698    ||
-            ?admin2Type = wd:Q24746    ||
-            ?admin2Type = wd:Q104157   ||
-            ?admin2Type = wd:Q29946056 ||
-            ?admin2Type = wd:Q24764
-          )
+          FILTER (?admin2Type IN (
+            wd:Q24698, wd:Q24746, wd:Q104157, wd:Q29946056, wd:Q24764
+          ))
         }
         OPTIONAL {
           ?admin2 wdt:P131 ?admin3 .
           OPTIONAL {
             ?admin3 wdt:P31 ?admin3Type .
-            FILTER (
-              ?admin3Type = wd:Q24698    ||
-              ?admin3Type = wd:Q24746
-            )
+            FILTER (?admin3Type IN (wd:Q24698, wd:Q24746))
           }
         }
       }
@@ -113,15 +96,10 @@ WHERE {
     ?marker wdt:P706 ?island .
     FILTER EXISTS { ?island wdt:P31/wdt:P279* wd:Q23442 }
     ?island wdt:P131/wdt:P31 ?islandAdminType .
-    FILTER (
-      ?islandAdminType = wd:Q104157   ||
-      ?islandAdminType = wd:Q29946056 ||
-      ?islandAdminType = wd:Q24764    ||
-      ?islandAdminType = wd:Q15634883 ||
-      ?islandAdminType = wd:Q61878
-    )
+    FILTER (?islandAdminType IN (
+      wd:Q104157, wd:Q29946056, wd:Q24764, wd:Q15634883, wd:Q61878
+    ))
   }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
   BIND (SUBSTR(STR(?marker         ), 32) AS ?markerQid         ) .
   BIND (SUBSTR(STR(?location       ), 32) AS ?locationQid       ) .
   BIND (SUBSTR(STR(?islandAdminType), 32) AS ?islandAdminTypeQid) .
@@ -130,10 +108,11 @@ WHERE {
   BIND (SUBSTR(STR(?admin1         ), 32) AS ?admin1Qid         ) .
   BIND (SUBSTR(STR(?admin2         ), 32) AS ?admin2Qid         ) .
   BIND (SUBSTR(STR(?admin3         ), 32) AS ?admin3Qid         ) .
-  BIND (SUBSTR(STR(?adminType0     ), 32) AS ?admin0TypeQid     ) .
-  BIND (SUBSTR(STR(?adminType1     ), 32) AS ?admin1TypeQid     ) .
-  BIND (SUBSTR(STR(?adminType2     ), 32) AS ?admin2TypeQid     ) .
-  BIND (SUBSTR(STR(?adminType3     ), 32) AS ?admin3TypeQid     ) .
+  BIND (SUBSTR(STR(?admin0Type     ), 32) AS ?admin0TypeQid     ) .
+  BIND (SUBSTR(STR(?admin1Type     ), 32) AS ?admin1TypeQid     ) .
+  BIND (SUBSTR(STR(?admin2Type     ), 32) AS ?admin2TypeQid     ) .
+  BIND (SUBSTR(STR(?admin3Type     ), 32) AS ?admin3TypeQid     ) .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
 }`;
 const SPARQL_QUERY_3 =
 `SELECT ?markerQid ?inscription ?inscriptionNoValue
