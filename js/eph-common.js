@@ -261,10 +261,11 @@ function generateFigure(filename, classNames = []) {
       }
     );
 
+    let encodedFilename = encodeURIComponent(filename);
     return (
       `<figure class="${classNames.join(' ')}">` +
-        `<a href="${COMMONS_WIKI_URL_PREF}File:${filename}">` +
-          `<img class="loading" src="${COMMONS_WIKI_URL_PREF}Special:FilePath/${filename}?width=300" alt="" onload="this.className=''">` +
+        `<a href="${COMMONS_WIKI_URL_PREF}File:${encodedFilename}">` +
+          `<img class="loading" src="${COMMONS_WIKI_URL_PREF}Special:FilePath/${encodedFilename}?width=300" alt="" onload="this.className=''">` +
         '</a>' +
         '<figcaption>(Loading…)</figcaption>' +
       '</figure>'
