@@ -242,9 +242,11 @@ function generateFigure(filename, classNames = []) {
       },
       function(data) {
         let metadata = Object.values(data.query.pages)[0].imageinfo[0].extmetadata;
-        let artistHtml = metadata.Artist.value;
+        let artistHtml = metadata.Artist.value.trim();
+        // Remove all HTML except links
+        artistHtml = artistHtml.replace(/<(?!\/?a ?)[^>]+>/g, '');
         if (artistHtml.search('href="//') >= 0) {
-          artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//, 'href="https://');
+          artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//g, 'href="https://');
         }
         let licenseHtml = '';
         if ('AttributionRequired' in metadata && metadata.AttributionRequired.value === 'true') {
