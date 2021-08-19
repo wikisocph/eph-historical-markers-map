@@ -61,7 +61,7 @@ WHERE {
     OPTIONAL {
       ?admin0 wdt:P31 ?admin0Type .
       FILTER (?admin0Type IN (
-        wd:Q24698, wd:Q24746, wd:Q104157, wd:Q29946056, wd:Q24764,
+        wd:Q24698, wd:Q24746, wd:Q29946056, wd:Q106079704, wd:Q106078286, wd:Q24764,
         wd:Q15634883, wd:Q61878
       ))
     }
@@ -70,7 +70,7 @@ WHERE {
       OPTIONAL {
         ?admin1 wdt:P31 ?admin1Type .
         FILTER (?admin1Type IN (
-          wd:Q24698, wd:Q24746, wd:Q104157, wd:Q29946056, wd:Q24764,
+          wd:Q24698, wd:Q24746, wd:Q29946056, wd:Q106079704, wd:Q106078286, wd:Q24764,
           wd:Q15634883, wd:Q61878
         ))
       }
@@ -79,7 +79,7 @@ WHERE {
         OPTIONAL {
           ?admin2 wdt:P31 ?admin2Type .
           FILTER (?admin2Type IN (
-            wd:Q24698, wd:Q24746, wd:Q104157, wd:Q29946056, wd:Q24764
+            wd:Q24698, wd:Q24746, wd:Q29946056, wd:Q106079704, wd:Q106078286, wd:Q24764
           ))
         }
         OPTIONAL {
@@ -97,7 +97,7 @@ WHERE {
     FILTER EXISTS { ?island wdt:P31/wdt:P279* wd:Q23442 }
     ?island wdt:P131/wdt:P31 ?islandAdminType .
     FILTER (?islandAdminType IN (
-      wd:Q104157, wd:Q29946056, wd:Q24764, wd:Q15634883, wd:Q61878
+      wd:Q29946056, wd:Q106079704, wd:Q106078286, wd:Q29946056, wd:Q24764, wd:Q15634883, wd:Q61878
     ))
   }
   BIND (SUBSTR(STR(?marker         ), 32) AS ?markerQid         ) .
