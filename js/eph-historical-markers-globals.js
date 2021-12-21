@@ -147,11 +147,11 @@ WHERE {
     ?imageStatement ps:P18 ?image .
     OPTIONAL { ?imageStatement pq:P518 ?targetLang }
     OPTIONAL { ?imageStatement pq:P1545 ?ordinal }
-    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
+    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16189205 }
   }
   OPTIONAL {
     ?imageStatement ps:P18 ?vicinityImage .
-    FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
+    FILTER EXISTS { ?imageStatement pq:P3831 wd:Q16189205 }
   }
   BIND (SUBSTR(STR(?marker    ), 32) AS ?markerQid    ) .
   BIND (SUBSTR(STR(?targetLang), 32) AS ?targetLangQid) .
@@ -186,7 +186,7 @@ const ABOUT_SPARQL_QUERY =
   OPTIONAL {
     ?marker p:P18 ?imageStatement .
     ?imageStatement ps:P18 ?image .
-    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16968816 }
+    FILTER NOT EXISTS { ?imageStatement pq:P3831 wd:Q16189205 }
   }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
 }`;
