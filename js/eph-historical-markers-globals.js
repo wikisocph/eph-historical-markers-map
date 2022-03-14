@@ -19,7 +19,7 @@ const SPARQL_QUERY_0 =
           p:P625 ?coordStatement .
   ?coordStatement ps:P625 ?coord .
   FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }
-  FILTER (!wikibase:isSomeValue(?coord)) .
+  FILTER (!ISIRI(?coord)) .
   BIND (SUBSTR(STR(?marker), 32) AS ?markerQid)
 }`;
 const SPARQL_QUERY_1 =
@@ -176,7 +176,7 @@ const ABOUT_SPARQL_QUERY =
           p:P625 ?coordStatement .
   ?coordStatement ps:P625 ?coord .
   FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }
-  FILTER (!wikibase:isSomeValue(?coord)) .
+  FILTER (!ISIRI(?coord)) .
   OPTIONAL {
     ?marker p:P1476 ?titleStatement .
     ?titleStatement ps:P1476 ?title .
