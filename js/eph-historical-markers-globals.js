@@ -19,6 +19,7 @@ const SPARQL_QUERY_0 =
           p:P625 ?coordStatement .
   ?coordStatement ps:P625 ?coord .
   FILTER NOT EXISTS { ?coordStatement pq:P582 ?endTime }
+  FILTER NOT EXISTS { ?marker wdt:P576 [] }
   FILTER (!ISIRI(?coord)) .
   BIND (SUBSTR(STR(?marker), 32) AS ?markerQid)
 }`;
