@@ -176,6 +176,10 @@ nav li.selected a:hover {
   margin: 0 0 0 20px;
 }
 
+#details .main-wikidata-link img.icon {
+  width: 24px;
+}
+
 #details h1 {
   margin: 0 0 20px;
   padding: 0 0 10px;
@@ -307,9 +311,10 @@ nav li.selected a:hover {
   margin-left: 10px;
 }
 
-#details p  a.image img,
-#details li a.image img {
+#details p  a.image img.icon,
+#details li a.image img.icon {
   vertical-align: middle;
+  width: 24px;
 }
 
 #about {

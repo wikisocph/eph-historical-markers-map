@@ -486,12 +486,12 @@ function generateRecordDetails(qid) {
         `<${tagName}>` +
           commemoratesData.title +
           `<a class="image" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">` +
-            '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" />' +
+            '<img class="icon" src="img/wikidata_logo.svg" alt="[view Wikidata item]" />' +
           '</a>';
       if (commemoratesData.wp_url) {
         commemoratesHtml +=
           `<a class="image" href="${commemoratesData.wp_url}" title="View in Wikipedia">` +
-            '<img src="img/wikipedia_tiny_logo.png" alt="[view Wikipedia article]" />' +
+            '<img class="icon" src="img/wikipedia_logo.svg" alt="[view Wikipedia article]" />' +
           '</a>';
       }
       commemoratesHtml += `</${tagName}>`;
@@ -532,7 +532,7 @@ function generateRecordDetails(qid) {
   panelElem.innerHTML =
     langBarHtml +
     `<a class="main-wikidata-link" href="https://www.wikidata.org/wiki/${qid}" title="View in Wikidata">` +
-    '<img src="img/wikidata_tiny_logo.png" alt="[view Wikidata item]" /></a>' +
+    '<img class="icon" src="img/wikidata_logo.svg" alt="[view Wikidata item]" /></a>' +
     titleHtml +
     markerFigureHtml +
     inscriptionHtml +
