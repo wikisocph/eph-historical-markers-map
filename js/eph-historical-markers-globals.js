@@ -113,7 +113,7 @@ WHERE {
   BIND (SUBSTR(STR(?admin1Type     ), 32) AS ?admin1TypeQid     ) .
   BIND (SUBSTR(STR(?admin2Type     ), 32) AS ?admin2TypeQid     ) .
   BIND (SUBSTR(STR(?admin3Type     ), 32) AS ?admin3TypeQid     ) .
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,mul" }
 }`;
 const SPARQL_QUERY_3 =
 `SELECT ?markerQid ?inscription ?inscriptionNoValue
@@ -163,7 +163,7 @@ WHERE {
   <SPARQLVALUESCLAUSE>
   ?marker wdt:P547 ?commemorates .
   ?commemorates rdfs:label ?commemoratesLabel
-  FILTER (LANG(?commemoratesLabel) = "en")
+  FILTER (LANG(?commemoratesLabel) = "en" || LANG(?commemoratesLabel) = "mul")
   OPTIONAL {
     ?commemoratesArticle schema:about ?commemorates ;
                          schema:isPartOf <https://en.wikipedia.org/> .
