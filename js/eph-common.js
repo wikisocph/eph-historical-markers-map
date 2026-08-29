@@ -79,7 +79,7 @@ function initMap() {
   powered.addTo(Map);
 
   // Initialize the map marker cluster
-  Cluster = new L.markerClusterGroup({
+  Cluster = L.markerClusterGroup({
     maxClusterRadius: function(z) {
       if (z <=  15) return 50;
       if (z === 16) return 40;
