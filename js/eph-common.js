@@ -14,10 +14,10 @@ const ICC_QID                 = 'Q106079704';
 const CC_QID                  = 'Q106078286';
 const ADMIN_QIDS              = [REGION_QID, PROVINCE_QID, CITY_QID, HUC_QID, ICC_QID, CC_QID];
 const ADMIN_LEVELS            = 4;
+const CARTO_LAYER_URL         = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png?key=cb1_2ive_1_8cb3b21a9530406c881368ff';
+const CARTO_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/attributions">CARTO</a> (style)';
 const OSM_LAYER_URL           = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSM_LAYER_ATTRIBUTION   = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
-const CARTO_LAYER_URL         = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png';
-const CARTO_LAYER_ATTRIBUTION = 'Base map &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (data), <a href="https://carto.com/">CARTO</a> (style)';
 const TILE_LAYER_MAX_ZOOM     = 19;
 const MIN_PH_LAT              =   4.5;
 const MAX_PH_LAT              =  21.0;
@@ -54,12 +54,13 @@ function initMap() {
   Map.fitBounds([[MAX_PH_LAT, MAX_PH_LON], [MIN_PH_LAT, MIN_PH_LON]]);
 
   // Add tile layers
-  let osmLayer = new L.tileLayer(OSM_LAYER_URL, {
-    attribution : OSM_LAYER_ATTRIBUTION,
-    maxZoom     : TILE_LAYER_MAX_ZOOM,
-  }).addTo(Map);
   let cartoLayer = new L.tileLayer(CARTO_LAYER_URL, {
     attribution : CARTO_LAYER_ATTRIBUTION,
+    maxZoom     : TILE_LAYER_MAX_ZOOM,
+    subdomains  : 'abcd',
+  }).addTo(Map);
+  let osmLayer = new L.tileLayer(OSM_LAYER_URL, {
+    attribution : OSM_LAYER_ATTRIBUTION,
     maxZoom     : TILE_LAYER_MAX_ZOOM,
   });
   let baseMaps = {
