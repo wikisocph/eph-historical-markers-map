@@ -54,12 +54,12 @@ function initMap() {
   Map.fitBounds([[MAX_PH_LAT, MAX_PH_LON], [MIN_PH_LAT, MIN_PH_LON]]);
 
   // Add tile layers
-  let cartoLayer = new L.tileLayer(CARTO_LAYER_URL, {
-    attribution : CARTO_LAYER_ATTRIBUTION,
-    maxZoom     : TILE_LAYER_MAX_ZOOM,
-  }).addTo(Map);
   let osmLayer = new L.tileLayer(OSM_LAYER_URL, {
     attribution : OSM_LAYER_ATTRIBUTION,
+    maxZoom     : TILE_LAYER_MAX_ZOOM,
+  }).addTo(Map);
+  let cartoLayer = new L.tileLayer(CARTO_LAYER_URL, {
+    attribution : CARTO_LAYER_ATTRIBUTION,
     maxZoom     : TILE_LAYER_MAX_ZOOM,
   });
   let baseMaps = {
