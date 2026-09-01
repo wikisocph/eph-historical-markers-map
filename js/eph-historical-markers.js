@@ -309,7 +309,7 @@ function populateMapAndIndex() {
       record.indexTitle = indexTitle;
     }
     record.alphaSortKey =
-      indexTitle.replace(/^[^A-Za-z0-9]/, '').replace(/^(?:The |Ang )/, '');
+      indexTitle.replace(/^[^A-Za-z0-9]/, '').replace(/^(?:The|Ang( mga)?|Mga) /, '');
 
     // Generate map marker with popup
     let mapMarker = L.marker(
